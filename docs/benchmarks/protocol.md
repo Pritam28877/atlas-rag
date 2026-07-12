@@ -72,4 +72,3 @@ times in cold and warm modes; report median, p95, max, and confidence interval.
 | FI-16 | Delete during any stage | Cancellation and cleanup; no post-delete retrieval |
 | FI-17 | Tenant-filter bypass | Zero unauthorized result; security event |
 | FI-18 | Actions/attachments/external reference | No execution/egress; explicit policy result |
-

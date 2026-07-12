@@ -46,4 +46,3 @@ rejected.
 
 Record exact versions, image digests, model hashes, environment shape, test
 inputs, raw-result references, failures, and rejection rationale for every run.
-

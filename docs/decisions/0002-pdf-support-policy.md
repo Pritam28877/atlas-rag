@@ -72,4 +72,3 @@ claims.
 Legal hold revokes normal retrieval access but pauses physical deletion. OCR
 confidence is engine- and language-specific; the 0.70 benchmark value requires
 calibration on approved fixtures before use as a production quality gate.
-

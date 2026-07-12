@@ -81,4 +81,3 @@ are reproducible, all hard gates in the selection rubric pass, and this ADR is
 approved. A candidate may be rejected for licensing, egress, resource use,
 quality, tenancy-filtering, or operational reasons even if its median speed is
 best.
-
