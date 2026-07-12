@@ -1,0 +1,55 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+ENV/
+
+# Python bytecode, tooling, and test coverage
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Python build and package artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Local runtime data and logs
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# Generated benchmark artifacts; keep fixtures, goldens, and manifests tracked.
+benchmarks/results/
+benchmarks/fixtures/inventory.json
+benchmarks/fixtures/scan-source.png
+
+# Temporary local task state
+.tasks/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
