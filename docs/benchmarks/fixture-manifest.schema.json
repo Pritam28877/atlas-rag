@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PDF ingestion benchmark fixture manifest",
+  "type": "object",
+  "required": ["schema_version", "corpus", "fixtures"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "corpus": {
+      "type": "object",
+      "required": ["id", "immutable_version", "owner", "access_policy", "prohibited_content"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "immutable_version": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "access_policy": {"type": "string", "minLength": 1},
+        "prohibited_content": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "fixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/fixture"}
+    }
+  },
+  "$defs": {
+    "fixture": {
+      "type": "object",
+      "required": ["id", "class", "data_classification", "permission", "artifact", "characteristics", "expected_outcome", "benchmark_eligibility", "resource_profile"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "class": {"enum": ["born_digital", "scanned", "mixed", "rotated", "multi_column", "table_heavy", "multilingual", "encrypted", "corrupt", "limit_breach", "suspicious", "duplicate"]},
+        "data_classification": {"enum": ["synthetic", "public_redistributable", "public_restricted", "approved_redacted"]},
+        "permission": {
+          "type": "object",
+          "required": ["source_type", "license", "approval_ref", "redistribution_allowed"],
+          "properties": {
+            "source_type": {"enum": ["generated", "public", "approved_internal"]},
+            "license": {"type": "string", "minLength": 1},
+            "approval_ref": {"type": "string", "minLength": 1},
+            "redistribution_allowed": {"type": "boolean"}
+          },
+          "additionalProperties": false
+        },
+        "artifact": {
+          "type": "object",
+          "required": ["status", "object_ref", "sha256", "bytes", "page_count", "mime"],
+          "properties": {
+            "status": {"enum": ["planned", "approved", "verified"]},
+            "object_ref": {"type": "string", "minLength": 1},
+            "sha256": {"type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$"},
+            "bytes": {"type": ["integer", "null"], "minimum": 0},
+            "page_count": {"type": ["integer", "null"], "minimum": 0},
+            "mime": {"const": "application/pdf"}
+          },
+          "additionalProperties": false
+        },
+        "characteristics": {
+          "type": "object",
+          "required": ["languages", "has_native_text", "has_images", "expected_layout"],
+          "properties": {
+            "languages": {"type": "array", "items": {"type": "string"}},
+            "has_native_text": {"type": "boolean"},
+            "has_images": {"type": "boolean"},
+            "expected_layout": {"type": "array", "items": {"type": "string"}}
+          },
+          "additionalProperties": false
+        },
+        "expected_outcome": {
+          "type": "object",
+          "required": ["route", "terminal_state", "reason_code", "minimum_page_citation_coverage", "golden_ref"],
+          "properties": {
+            "route": {"enum": ["native_parse", "ocr", "mixed", "reject", "quarantine", "deduplicate"]},
+            "terminal_state": {"enum": ["READY", "READY_WITH_WARNINGS", "REJECTED", "QUARANTINED", "FAILED", "DEDUPLICATED"]},
+            "reason_code": {"type": ["string", "null"]},
+            "minimum_page_citation_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+            "golden_ref": {"type": ["string", "null"]}
+          },
+          "additionalProperties": false
+        },
+        "benchmark_eligibility": {"type": "array", "minItems": 1, "items": {"enum": ["parser", "ocr", "chunking", "embedding", "search", "failure"]}},
+        "resource_profile": {"enum": ["standard", "long", "limit", "adversarial"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

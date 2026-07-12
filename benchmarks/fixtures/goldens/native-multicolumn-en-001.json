@@ -1,0 +1,7 @@
+{
+  "fixture_id": "native-multicolumn-en-001",
+  "pages": [
+    "Left column begins. It contains the first ordered statement.",
+    "Right column begins. It contains the second ordered statement."
+  ]
+}
