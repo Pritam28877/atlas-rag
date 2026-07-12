@@ -3,8 +3,9 @@
   "pages": [
     {
       "page_number": 1,
-      "text": null,
-      "scorable_by_native_parser": false
+      "text": "SCANNED ARCHIVE RECORD This page intentionally contains pixels only. Its expected text is recovered by the OCR candidate, not by the native PDF parser.",
+      "scorable_by_native_parser": false,
+      "scorable_by_ocr": true
     }
   ]
 }

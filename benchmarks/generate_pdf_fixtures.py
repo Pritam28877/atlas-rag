@@ -22,6 +22,11 @@ ROOT = Path(__file__).resolve().parent
 FIXTURES_DIR = ROOT / "fixtures"
 GOLDENS_DIR = FIXTURES_DIR / "goldens"
 FONT_NAME = "BenchmarkDevanagari"
+OCR_SCAN_TEXT = (
+    "SCANNED ARCHIVE RECORD This page intentionally contains pixels only. "
+    "Its expected text is recovered by the OCR candidate, not by the native PDF parser."
+)
+OCR_ONLY_PAGES = {"scan-en-001": {1}, "mixed-en-001": {2}}
 
 
 def write_golden(name: str, pages: list[str | None] | None) -> None:
@@ -33,7 +38,10 @@ def write_golden(name: str, pages: list[str | None] | None) -> None:
             {
                 "page_number": index,
                 "text": text,
-                "scorable_by_native_parser": text is not None,
+                "scorable_by_native_parser": (
+                    text is not None and index not in OCR_ONLY_PAGES.get(name, set())
+                ),
+                "scorable_by_ocr": index in OCR_ONLY_PAGES.get(name, set()),
             }
             for index, text in enumerate(pages, start=1)
         ],
@@ -130,15 +138,15 @@ def create_table(path: Path) -> list[str]:
     return [" ".join(cell for row in rows for cell in row)]
 
 
-def create_scan(path: Path, image_path: Path) -> list[str | None]:
+def create_scan(path: Path, image_path: Path) -> list[str]:
     document = new_canvas(path)
     document.drawImage(ImageReader(str(image_path)), 45, 70, width=500, height=700)
     document.showPage()
     document.save()
-    return [None]
+    return [OCR_SCAN_TEXT]
 
 
-def create_mixed(path: Path, image_path: Path) -> list[str | None]:
+def create_mixed(path: Path, image_path: Path) -> list[str]:
     native = "Mixed fixture native page: this must remain native provenance."
     document = new_canvas(path)
     document.setFont("Helvetica", 12)
@@ -147,7 +155,7 @@ def create_mixed(path: Path, image_path: Path) -> list[str | None]:
     document.drawImage(ImageReader(str(image_path)), 45, 70, width=500, height=700)
     document.showPage()
     document.save()
-    return [native, None]
+    return [native, OCR_SCAN_TEXT]
 
 
 def create_rotated(path: Path) -> list[str]:
