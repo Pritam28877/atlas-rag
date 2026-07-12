@@ -1,0 +1,102 @@
+name: atlas-rag-bench
+
+services:
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    profiles: [controls]
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - ${BENCHMARK_BIND_ADDRESS}:${MINIO_API_PORT}:9000
+      - ${BENCHMARK_BIND_ADDRESS}:${MINIO_CONSOLE_PORT}:9001
+    volumes:
+      - minio-data:/data
+    networks: [benchmark]
+    mem_limit: 512m
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres:
+    image: pgvector/pgvector:0.8.2-pg16-bookworm@sha256:00ba258a66dac104fd5171074a0084462a64a1369d8513f3d0a634e2f24d15bc
+    profiles: [controls]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - ${BENCHMARK_BIND_ADDRESS}:${POSTGRES_PORT}:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [benchmark]
+    mem_limit: 1g
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U '$${POSTGRES_USER}' -d '$${POSTGRES_DB}'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:4.1.8-management@sha256:d5011b2fee8048d33b7fa4e2d1696020a00ff8d71cecbd164cac9a629ab4edde
+    profiles: [controls]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - ${BENCHMARK_BIND_ADDRESS}:${RABBITMQ_PORT}:5672
+      - ${BENCHMARK_BIND_ADDRESS}:${RABBITMQ_MANAGEMENT_PORT}:15672
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks: [benchmark]
+    mem_limit: 768m
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.5@sha256:4ee82ecb35d837a6186c81aaa64c8a5bce71aa956edbd87f1f684ab56af52c44
+    profiles: [search]
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms${OPENSEARCH_JAVA_HEAP_MIB}m -Xmx${OPENSEARCH_JAVA_HEAP_MIB}m
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+    ports:
+      - ${BENCHMARK_BIND_ADDRESS}:${OPENSEARCH_PORT}:9200
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks: [benchmark]
+    mem_limit: 1g
+    pids_limit: 512
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -fsSk -u admin:$${OPENSEARCH_INITIAL_ADMIN_PASSWORD} https://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+networks:
+  benchmark:
+    driver: bridge
+
+volumes:
+  minio-data:
+  postgres-data:
+  rabbitmq-data:
+  opensearch-data:
