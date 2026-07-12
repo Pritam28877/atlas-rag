@@ -1,2 +1,1 @@
 """RAG API application package."""
-

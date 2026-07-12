@@ -1,0 +1,10 @@
+{
+  "fixture_id": "native-simple-en-001",
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Native fixture: a searchable PDF with a stable first-page citation.",
+      "scorable_by_native_parser": true
+    }
+  ]
+}

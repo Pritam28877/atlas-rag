@@ -21,4 +21,3 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return one immutable settings instance per process."""
     return Settings()
-

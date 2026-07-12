@@ -1,0 +1,145 @@
+{
+  "schema_version": "1.0",
+  "corpus": {
+    "id": "pdf-ingestion-evaluation-v1",
+    "immutable_version": "2026-07-12.1",
+    "owner": "engineering-benchmark-owner (synthetic local corpus)",
+    "access_policy": "benchmark-role-only; binaries and goldens remain outside Git unless synthetic or public-redistributable",
+    "prohibited_content": ["secrets", "credentials", "unapproved customer data", "production PII"]
+  },
+  "fixtures": [
+    {
+      "id": "native-simple-en-001",
+      "class": "born_digital",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/native-simple-en-001.pdf", "sha256": "sha256:9fafe6c9fdde7acc9ef19a18436f07431db30a4d40d80dd44d12cf46f4f413db", "bytes": 1451, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["paragraph", "header", "footer"]},
+      "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/native-simple-en-001.json"},
+      "benchmark_eligibility": ["parser", "chunking", "embedding", "search"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "native-multicolumn-en-001",
+      "class": "multi_column",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/native-multicolumn-en-001.pdf", "sha256": "sha256:ddfe7ab51a0a42c30ad9e19df857c79319e89bb806e1dcb4cbf568f34f313da2", "bytes": 1488, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["multi-column", "footnote"]},
+      "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/native-multicolumn-en-001.json"},
+      "benchmark_eligibility": ["parser", "chunking"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "table-form-en-001",
+      "class": "table_heavy",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/table-form-en-001.pdf", "sha256": "sha256:81711f8bab84d6832d3d7809043737e250ea6952d3806f151ebe381f3d2215ef", "bytes": 1531, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["table", "form"]},
+      "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/table-form-en-001.json"},
+      "benchmark_eligibility": ["parser", "chunking"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "scan-en-001",
+      "class": "scanned",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/scan-en-001.pdf", "sha256": "sha256:ed72dae4d4876f52c5f6b3cec9650ff726bf710b7fb58ef0c89fb02c6a06f919", "bytes": 14794, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en"], "has_native_text": false, "has_images": true, "expected_layout": ["scan"]},
+      "expected_outcome": {"route": "ocr", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/scan-en-001.json"},
+      "benchmark_eligibility": ["ocr", "chunking", "search"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "mixed-en-001",
+      "class": "mixed",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/mixed-en-001.pdf", "sha256": "sha256:0d7aedd756558b7065754b1705c55bd8baaa76a87aacea9a5bf61bddc4084ba0", "bytes": 15293, "page_count": 2, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": true, "expected_layout": ["paragraph", "scan"]},
+      "expected_outcome": {"route": "mixed", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/mixed-en-001.json"},
+      "benchmark_eligibility": ["parser", "ocr", "chunking"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "rotated-en-001",
+      "class": "rotated",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/rotated-en-001.pdf", "sha256": "sha256:dc59c870643856a57009fbbbff19ee1fbd0362a0b428d9578949716bb6419b0c", "bytes": 1432, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["rotated"]},
+      "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/rotated-en-001.json"},
+      "benchmark_eligibility": ["parser", "chunking"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "native-multilingual-001",
+      "class": "multilingual",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/native-multilingual-001.pdf", "sha256": "sha256:6b28f254a685c6db1c7eac57fd122303c7d5043e707f9789ad46b2a2d4561174", "bytes": 12966, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en", "hi"], "has_native_text": true, "has_images": false, "expected_layout": ["paragraph"]},
+      "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/native-multilingual-001.json"},
+      "benchmark_eligibility": ["parser", "chunking"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "encrypted-001",
+      "class": "encrypted",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/encrypted-001.pdf", "sha256": "sha256:dd2d93fd243cd7738020ed6147826be264d07f26c4f717918d0cbf46834c990a", "bytes": 1905, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": [], "has_native_text": false, "has_images": false, "expected_layout": ["encrypted"]},
+      "expected_outcome": {"route": "reject", "terminal_state": "REJECTED", "reason_code": "PDF_ENCRYPTED_UNSUPPORTED", "minimum_page_citation_coverage": 0, "golden_ref": null},
+      "benchmark_eligibility": ["parser", "failure"],
+      "resource_profile": "standard"
+    },
+    {
+      "id": "corrupt-001",
+      "class": "corrupt",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/corrupt-001.pdf", "sha256": "sha256:407db76edaf4b994793e646c2d23f078f9cce63165616f0f92347431a65d6123", "bytes": 80, "page_count": 0, "mime": "application/pdf"},
+      "characteristics": {"languages": [], "has_native_text": false, "has_images": false, "expected_layout": ["invalid"]},
+      "expected_outcome": {"route": "reject", "terminal_state": "FAILED", "reason_code": "PDF_MALFORMED", "minimum_page_citation_coverage": 0, "golden_ref": null},
+      "benchmark_eligibility": ["parser", "failure"],
+      "resource_profile": "adversarial"
+    },
+    {
+      "id": "limit-breach-001",
+      "class": "limit_breach",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/limit-breach-001.pdf", "sha256": "sha256:770a6f0da0d0125d9e2ce02501ac9a3088e7b5e8b3d6d5a0e8b5e55fe750ee60", "bytes": 10729, "page_count": 20, "mime": "application/pdf"},
+      "characteristics": {"languages": [], "has_native_text": true, "has_images": false, "expected_layout": ["oversized"]},
+      "expected_outcome": {"route": "reject", "terminal_state": "REJECTED", "reason_code": "UPLOAD_SIZE_EXCEEDED", "minimum_page_citation_coverage": 0, "golden_ref": null},
+      "benchmark_eligibility": ["parser", "failure"],
+      "resource_profile": "limit"
+    },
+    {
+      "id": "suspicious-active-content-001",
+      "class": "suspicious",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/suspicious-active-content-001.pdf", "sha256": "sha256:0e2e79d2acc2ea1946e441d1448d2c435f32839c6bee309b600b6f7ba12fdccb", "bytes": 1121, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": [], "has_native_text": false, "has_images": false, "expected_layout": ["embedded-action"]},
+      "expected_outcome": {"route": "quarantine", "terminal_state": "QUARANTINED", "reason_code": "ACTIVE_CONTENT_DETECTED", "minimum_page_citation_coverage": 0, "golden_ref": null},
+      "benchmark_eligibility": ["failure"],
+      "resource_profile": "adversarial"
+    },
+    {
+      "id": "duplicate-native-simple-en-001",
+      "duplicate_of": "native-simple-en-001",
+      "class": "duplicate",
+      "data_classification": "synthetic",
+      "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/duplicate-native-simple-en-001.pdf", "sha256": "sha256:9fafe6c9fdde7acc9ef19a18436f07431db30a4d40d80dd44d12cf46f4f413db", "bytes": 1451, "page_count": 1, "mime": "application/pdf"},
+      "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["paragraph"]},
+      "expected_outcome": {"route": "deduplicate", "terminal_state": "DEDUPLICATED", "reason_code": "DUPLICATE_CONTENT", "minimum_page_citation_coverage": 0, "golden_ref": null},
+      "benchmark_eligibility": ["failure"],
+      "resource_profile": "standard"
+    }
+  ]
+}

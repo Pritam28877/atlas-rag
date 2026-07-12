@@ -1,0 +1,10 @@
+{
+  "fixture_id": "table-form-en-001",
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Item Quantity Price Books 3 $30 Maps 2 $18",
+      "scorable_by_native_parser": true
+    }
+  ]
+}

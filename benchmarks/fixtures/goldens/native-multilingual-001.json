@@ -1,0 +1,10 @@
+{
+  "fixture_id": "native-multilingual-001",
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "English heading. हिंदी अनुच्छेद: दस्तावेज़ खोज के लिए परीक्षण।",
+      "scorable_by_native_parser": true
+    }
+  ]
+}

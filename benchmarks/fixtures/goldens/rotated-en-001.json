@@ -1,0 +1,10 @@
+{
+  "fixture_id": "rotated-en-001",
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Rotated fixture: page association must remain page one.",
+      "scorable_by_native_parser": true
+    }
+  ]
+}

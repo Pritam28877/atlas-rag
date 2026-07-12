@@ -1,0 +1,10 @@
+{
+  "fixture_id": "native-multicolumn-en-001",
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Left column begins. It contains the first ordered statement. Right column begins. It contains the second ordered statement.",
+      "scorable_by_native_parser": true
+    }
+  ]
+}
