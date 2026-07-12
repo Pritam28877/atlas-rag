@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "id": "fixture-derived-retrieval-corpus-v1",
+  "fixture_manifest": "docs/benchmarks/fixture-manifest.json",
+  "chunk_profile": "golden-page-v1",
+  "embedding_profile": "unicode-token-hash-v1-d64",
+  "instances": [
+    {"chunk_id": "chunk-native-simple-a", "fixture_id": "native-simple-en-001", "page_number": 1, "tenant_id": "tenant-a", "collection_id": "collection-main"},
+    {"chunk_id": "chunk-multicolumn-a", "fixture_id": "native-multicolumn-en-001", "page_number": 1, "tenant_id": "tenant-a", "collection_id": "collection-main"},
+    {"chunk_id": "chunk-table-a", "fixture_id": "table-form-en-001", "page_number": 1, "tenant_id": "tenant-a", "collection_id": "collection-main"},
+    {"chunk_id": "chunk-rotated-a", "fixture_id": "rotated-en-001", "page_number": 1, "tenant_id": "tenant-a", "collection_id": "collection-main"},
+    {"chunk_id": "chunk-multilingual-a", "fixture_id": "native-multilingual-001", "page_number": 1, "tenant_id": "tenant-a", "collection_id": "collection-main"},
+    {"chunk_id": "chunk-native-simple-a-secondary", "fixture_id": "native-simple-en-001", "page_number": 1, "tenant_id": "tenant-a", "collection_id": "collection-secondary"},
+    {"chunk_id": "chunk-rotated-a-secondary", "fixture_id": "rotated-en-001", "page_number": 1, "tenant_id": "tenant-a", "collection_id": "collection-secondary"},
+    {"chunk_id": "chunk-native-simple-b", "fixture_id": "native-simple-en-001", "page_number": 1, "tenant_id": "tenant-b", "collection_id": "collection-main"},
+    {"chunk_id": "chunk-rotated-b", "fixture_id": "rotated-en-001", "page_number": 1, "tenant_id": "tenant-b", "collection_id": "collection-main"}
+  ]
+}

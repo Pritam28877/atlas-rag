@@ -27,7 +27,7 @@
       "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/native-multicolumn-en-001.pdf", "sha256": "sha256:ddfe7ab51a0a42c30ad9e19df857c79319e89bb806e1dcb4cbf568f34f313da2", "bytes": 1488, "page_count": 1, "mime": "application/pdf"},
       "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["multi-column", "footnote"]},
       "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/native-multicolumn-en-001.json"},
-      "benchmark_eligibility": ["parser", "chunking"],
+      "benchmark_eligibility": ["parser", "chunking", "search"],
       "resource_profile": "standard"
     },
     {
@@ -38,7 +38,7 @@
       "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/table-form-en-001.pdf", "sha256": "sha256:81711f8bab84d6832d3d7809043737e250ea6952d3806f151ebe381f3d2215ef", "bytes": 1531, "page_count": 1, "mime": "application/pdf"},
       "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["table", "form"]},
       "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/table-form-en-001.json"},
-      "benchmark_eligibility": ["parser", "chunking"],
+      "benchmark_eligibility": ["parser", "chunking", "search"],
       "resource_profile": "standard"
     },
     {
@@ -71,7 +71,7 @@
       "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/rotated-en-001.pdf", "sha256": "sha256:dc59c870643856a57009fbbbff19ee1fbd0362a0b428d9578949716bb6419b0c", "bytes": 1432, "page_count": 1, "mime": "application/pdf"},
       "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": false, "expected_layout": ["rotated"]},
       "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/rotated-en-001.json"},
-      "benchmark_eligibility": ["parser", "chunking"],
+      "benchmark_eligibility": ["parser", "chunking", "search"],
       "resource_profile": "standard"
     },
     {
@@ -82,7 +82,7 @@
       "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/native-multilingual-001.pdf", "sha256": "sha256:6b28f254a685c6db1c7eac57fd122303c7d5043e707f9789ad46b2a2d4561174", "bytes": 12966, "page_count": 1, "mime": "application/pdf"},
       "characteristics": {"languages": ["en", "hi"], "has_native_text": true, "has_images": false, "expected_layout": ["paragraph"]},
       "expected_outcome": {"route": "native_parse", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/native-multilingual-001.json"},
-      "benchmark_eligibility": ["parser", "chunking"],
+      "benchmark_eligibility": ["parser", "chunking", "search"],
       "resource_profile": "standard"
     },
     {

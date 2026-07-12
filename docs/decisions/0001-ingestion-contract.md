@@ -1,6 +1,7 @@
 # ADR 0001: PDF ingestion contract and provisional platform baseline
 
-Status: proposed — requires product-owner approval and benchmark evidence before P2.
+Status: approved for P1 benchmark execution on 2026-07-13. Production component
+selection remains gated on benchmark evidence.
 
 ## Context
 
@@ -11,32 +12,41 @@ scanned, mixed, malformed, encrypted, or resource-intensive. A successful
 ingestion result must preserve source-page citations; an unsupported result
 must be explicit and never silently searchable.
 
-## Provisional decisions
+## Approved benchmark decisions
 
-These defaults make the P1 benchmark concrete. They are not production
-approval and must be replaced only through a reviewed decision update.
+The product owner approved these defaults for P1 benchmark execution. They do
+not select a production provider; a later reviewed decision replaces them only
+when benchmark evidence justifies the change.
 
-| Topic | Provisional decision | Confirmation required from |
+| Topic | Approved benchmark baseline |
 |---|---|---|
-| Tenancy | Logical multi-tenancy from day one. Every catalog, job, artifact, chunk, embedding, and search record has `tenant_id` and `collection_id`. | Product and security owner |
-| Authorization | API uses an existing OIDC/JWT identity provider; the catalog remains the authorization source of truth. | Identity owner |
-| Upload source | Authenticated direct upload to approved object storage only. Arbitrary URLs are out of scope for v1. | Security owner |
-| Object storage | S3-compatible storage, immutable generated keys, checksum validation, encryption, lifecycle rules, and short-lived signed uploads. | Platform owner |
-| Catalog | PostgreSQL 16+ for metadata, state, ownership, jobs, audit records, and index manifests. No PDFs or large extracted blobs live in relational columns. | Platform owner |
-| Queue | RabbitMQ quorum queues with persistent ID-only messages, publisher confirms, manual acknowledgement, DLQ, bounded prefetch, and queue-length/age limits. | Platform owner |
-| Workers | Celery is an execution adapter only; PostgreSQL owns idempotency and business state. Parser and OCR workers are isolated from the API and each other. | Platform owner |
-| Native parsing | Benchmark `pypdf>=6.14,<7.0` first. It is not an OCR or layout-fidelity guarantee. | Engineering owner |
-| OCR/layout | Benchmark `Docling==2.111.0` only in a dedicated worker image. Do not use PyMuPDF without explicit AGPL/commercial-license approval. | Engineering and legal owner |
-| Search | Benchmark PostgreSQL plus pgvector/GIN as a control and OpenSearch hybrid retrieval as the scale candidate. Do not select either before filtered-retrieval tests. | Engineering and product owner |
-| OCR languages | Launch benchmark with `eng` only. Native Unicode extraction accepts any language but reports quality signals. | Product owner |
-| Retention | Content remains until explicit deletion or legal hold. Deletion revokes retrieval within five minutes, removes primary artifacts/indexes within 24 hours, and expires backups within 35 days. | Legal and product owner |
+| Tenancy | Logical multi-tenancy from day one. Every catalog, job, artifact, chunk, embedding, and search record has `tenant_id` and `collection_id`. |
+| Authorization | OIDC/JWT identity integration; the catalog remains the authorization source of truth. |
+| Upload source | Authenticated direct upload to approved object storage only. Arbitrary URLs are out of scope for v1. |
+| Object storage | MinIO for the local S3-compatible benchmark; immutable generated keys, checksum validation, encryption settings, and lifecycle metadata are measured. |
+| Catalog | PostgreSQL 16+ with pgvector/GIN for local catalog and control-search benchmarks. No PDFs or large extracted blobs live in relational columns. |
+| Queue | RabbitMQ with ID-only messages, publisher confirms, manual acknowledgement, DLQ, bounded prefetch, and queue-length/age limits. |
+| Workers | Celery remains an execution candidate only; PostgreSQL owns idempotency and business state. Parser and OCR workers are isolated from the API and each other. |
+| Native parsing | Benchmark `pypdf>=6.14,<7.0` first. It is not an OCR or layout-fidelity guarantee. |
+| OCR/layout | Benchmark `Docling==2.111.0` only in a dedicated worker image. Do not use PyMuPDF without explicit AGPL/commercial-license approval. |
+| Search | Benchmark PostgreSQL plus pgvector/GIN as a control and OpenSearch hybrid retrieval as the scale candidate. Do not select either before filtered-retrieval tests. |
+| OCR languages | Launch benchmark with `eng` only. Native Unicode extraction accepts any language but reports quality signals. |
+| Retention | Content remains until explicit deletion or legal hold. Deletion revokes retrieval within five minutes, removes primary artifacts/indexes within 24 hours, and expires backups within 35 days. |
 
-## Capacity planning assumption
+## Approved workload and locality baseline
 
-The benchmark assumes a future corpus of one million documents. It must not
-assume one million in-memory items or one million simultaneous jobs. Before P2,
-the product owner must supply the actual page/byte distribution and peak
-ingestion rate. Until then the benchmark reports capacity parametrically:
+The benchmark targets a future corpus of one million documents. Local runs use
+only the synthetic fixture corpus and must not claim production scale. The
+approved planning distribution is 70% small native PDFs, 20% complex/mixed or
+scanned PDFs, 8% long/large PDFs, and 2% adversarial terminal cases.
+
+The local comparative benchmark target is 100 documents/minute and 1,000
+pages/minute. Default intake limits are 100 MiB and 500 pages per version. The
+benchmark uses loopback-only Docker services and synthetic data; no customer
+content, cloud account, or external data residency claim is permitted.
+
+The benchmark must not assume one million in-memory items or one million
+simultaneous jobs. It reports capacity parametrically:
 
 ```text
 projected_chunks = documents × median_pages_per_document × median_chunks_per_page
@@ -62,17 +72,6 @@ those values is not a throughput target.
   retention/ACL policy. Cross-tenant physical deduplication is prohibited.
 - A document is searchable only when its complete, versioned chunk/index
   manifest is durable. Terminal outcomes publish zero chunks and zero vectors.
-
-## Required stakeholder confirmations
-
-P1 cannot be completed until these are confirmed or deliberately changed:
-
-1. Cloud/on-prem deployment, region, data residency, and object-store owner.
-2. Tenant/collection ACL model and OIDC/JWT authorization integration.
-3. Expected document, page, byte, and peak-ingest distributions.
-4. Maximum legitimate PDF size/page count, OCR languages, and table-fidelity need.
-5. Retention, legal-hold, deletion, retrieval latency, relevance, and cost SLOs.
-6. Git initialization or a documented waiver for the required parent branch flow.
 
 ## Decision gates
 
