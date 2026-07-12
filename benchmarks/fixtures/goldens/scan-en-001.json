@@ -1,6 +1,10 @@
 {
   "fixture_id": "scan-en-001",
   "pages": [
-    "SCANNED ARCHIVE RECORD This page intentionally contains pixels only."
+    {
+      "page_number": 1,
+      "text": null,
+      "scorable_by_native_parser": false
+    }
   ]
 }

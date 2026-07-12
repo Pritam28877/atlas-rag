@@ -1,2 +1,1 @@
 """Cross-cutting application infrastructure."""
-

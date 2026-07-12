@@ -1,134 +1,191 @@
-"""Benchmark the pypdf native extraction candidate against synthetic fixtures."""
+"""Validate native PDF routing against the hash-verified fixture manifest."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
-import resource
+import sys
 import time
 from pathlib import Path
+from typing import Any
 
 from pypdf import PdfReader
-
-logging.getLogger("pypdf").setLevel(logging.ERROR)
+from validate_fixture_manifest import load_valid_manifest
 
 ROOT = Path(__file__).resolve().parent
-FIXTURES_DIR = ROOT / "fixtures"
-GOLDENS_DIR = FIXTURES_DIR / "goldens"
-RESULTS_DIR = ROOT / "results"
-OCR_ROUTE = {"scan-en-001", "mixed-en-001"}
-TERMINAL_FIXTURES = {"encrypted-001", "corrupt-001", "suspicious-active-content-001"}
-DEDUPLICATE_FIXTURES = {"duplicate-native-simple-en-001"}
-LIMIT_FIXTURE = "limit-breach-001"
+RESULTS_PATH = ROOT / "results" / "native-parser-pypdf.json"
+logging.getLogger("pypdf").setLevel(logging.ERROR)
 
 
 def normalize(value: str) -> str:
     return " ".join(value.split()).casefold()
 
 
-def current_rss_bytes() -> int:
-    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+def sha256(path: Path) -> str:
+    return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}"
 
 
-def expected_pages(name: str) -> list[str]:
-    golden = GOLDENS_DIR / f"{name}.json"
-    if not golden.exists():
+def resolve(value: Any) -> Any:
+    return value.get_object() if hasattr(value, "get_object") else value
+
+
+def has_active_content(reader: PdfReader) -> bool:
+    root = resolve(reader.trailer["/Root"])
+    actions = [root.get("/OpenAction")]
+    names = resolve(root.get("/Names"))
+    if names and names.get("/EmbeddedFiles"):
+        return True
+    for page in reader.pages:
+        page_object = resolve(page)
+        actions.extend([page_object.get("/AA"), page_object.get("/OpenAction")])
+    for action in actions:
+        action = resolve(action)
+        if not action:
+            continue
+        subtype = action.get("/S")
+        if str(subtype) in {"/JavaScript", "/URI", "/Launch", "/SubmitForm"}:
+            return True
+    return False
+
+
+def expected_golden(fixture: dict[str, Any]) -> list[dict[str, Any]]:
+    reference = fixture["expected_outcome"]["golden_ref"]
+    if reference is None:
         return []
-    return json.loads(golden.read_text(encoding="utf-8"))["pages"]
+    return json.loads((ROOT.parent / reference).read_text(encoding="utf-8"))["pages"]
 
 
-def benchmark_file(path: Path, max_bytes: int) -> dict[str, object]:
-    name = path.stem
-    result: dict[str, object] = {"fixture_id": name, "bytes": path.stat().st_size}
-    if name == LIMIT_FIXTURE and path.stat().st_size > max_bytes:
-        result.update(
-            status="passed", route="reject", reason_code="UPLOAD_SIZE_EXCEEDED"
+def terminal_state(route: str) -> str:
+    return {
+        "reject": "REJECTED",
+        "quarantine": "QUARANTINED",
+        "deduplicate": "DEDUPLICATED",
+    }.get(route, "READY")
+
+
+def inspect_fixture(
+    fixture: dict[str, Any], limit_profile_max_bytes: int
+) -> dict[str, Any]:
+    artifact = fixture["artifact"]
+    path = ROOT.parent / artifact["object_ref"]
+    expected = fixture["expected_outcome"]
+    result: dict[str, Any] = {
+        "fixture_id": fixture["id"],
+        "bytes": path.stat().st_size,
+        "expected": {
+            "route": expected["route"],
+            "terminal_state": expected["terminal_state"],
+            "reason_code": expected["reason_code"],
+        },
+    }
+    if (
+        fixture["resource_profile"] == "limit"
+        and result["bytes"] > limit_profile_max_bytes
+    ):
+        observed = {
+            "route": "reject",
+            "terminal_state": "REJECTED",
+            "reason_code": "UPLOAD_SIZE_EXCEEDED",
+        }
+    elif fixture.get("duplicate_of"):
+        source = fixture["duplicate_of"]
+        manifest = load_valid_manifest()
+        source_fixture = next(
+            item for item in manifest["fixtures"] if item["id"] == source
         )
-        return result
-    if name in DEDUPLICATE_FIXTURES:
-        result.update(
-            status="passed",
-            route="deduplicate",
-            reason_code="DUPLICATE_CONTENT",
+        source_path = ROOT.parent / source_fixture["artifact"]["object_ref"]
+        observed = (
+            {
+                "route": "deduplicate",
+                "terminal_state": "DEDUPLICATED",
+                "reason_code": "DUPLICATE_CONTENT",
+            }
+            if sha256(path) == sha256(source_path)
+            else {
+                "route": "native_parse",
+                "terminal_state": "READY",
+                "reason_code": None,
+            }
         )
-        return result
-
-    before_rss = current_rss_bytes()
-    started = time.perf_counter()
-    try:
-        reader = PdfReader(path)
-        if reader.is_encrypted:
-            result.update(
-                status="passed", route="reject", reason_code="PDF_ENCRYPTED_UNSUPPORTED"
-            )
-            return result
-        if name == "suspicious-active-content-001":
-            decoded_contents = b"".join(
-                page.get_contents().get_data() for page in reader.pages
-            )
-            if b"/JavaScript" in decoded_contents:
-                result.update(
-                    status="passed",
-                    route="quarantine",
-                    reason_code="ACTIVE_CONTENT_DETECTED",
+    else:
+        started = time.perf_counter()
+        try:
+            reader = PdfReader(path)
+            if reader.is_encrypted:
+                observed = {
+                    "route": "reject",
+                    "terminal_state": "REJECTED",
+                    "reason_code": "PDF_ENCRYPTED_UNSUPPORTED",
+                }
+            elif has_active_content(reader):
+                observed = {
+                    "route": "quarantine",
+                    "terminal_state": "QUARANTINED",
+                    "reason_code": "ACTIVE_CONTENT_DETECTED",
+                }
+            else:
+                pages = [(page.extract_text() or "").strip() for page in reader.pages]
+                text_pages = sum(bool(page) for page in pages)
+                route = (
+                    "ocr"
+                    if text_pages == 0
+                    else "mixed"
+                    if text_pages < len(pages)
+                    else "native_parse"
                 )
-                return result
-        pages = [(page.extract_text() or "").strip() for page in reader.pages]
-    except Exception as error:  # pypdf raises different errors for malformed PDFs.
-        result.update(
-            status="passed" if name in TERMINAL_FIXTURES else "failed",
-            route="reject",
-            reason_code="PDF_MALFORMED",
-            error_type=type(error).__name__,
-        )
-        return result
-    finally:
+                observed = {
+                    "route": route,
+                    "terminal_state": terminal_state(route),
+                    "reason_code": None,
+                    "page_count": len(pages),
+                    "citation_coverage": text_pages / len(pages),
+                    "pages": pages,
+                }
+        except Exception as error:
+            observed = {
+                "route": "reject",
+                "terminal_state": "FAILED",
+                "reason_code": "PDF_MALFORMED",
+                "error_type": type(error).__name__,
+            }
         result["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
-        result["peak_rss_bytes"] = max(before_rss, current_rss_bytes())
 
-    extracted = " ".join(pages)
-    golden = expected_pages(name)
-    expected = " ".join(golden)
-    citation_coverage = (
-        0 if not pages else sum(bool(page) for page in pages) / len(pages)
-    )
-    if name in OCR_ROUTE:
-        expected_route = "mixed" if name == "mixed-en-001" else "ocr"
-        result.update(
-            status="passed",
-            route=expected_route,
-            page_count=len(pages),
-            extracted_characters=len(extracted),
-            citation_coverage=citation_coverage,
+    result["observed"] = observed
+    route_matches = observed["route"] == expected["route"]
+    state_matches = observed["terminal_state"] == expected["terminal_state"]
+    reason_matches = observed["reason_code"] == expected["reason_code"]
+    golden_matches = True
+    if observed.get("pages"):
+        golden = expected_golden(fixture)
+        golden_matches = all(
+            not page["scorable_by_native_parser"]
+            or normalize(page["text"]) in normalize(observed["pages"][index])
+            for index, page in enumerate(golden)
         )
-        return result
-    contains_expected = not expected or all(
-        normalize(page) in normalize(extracted) for page in golden
+    result["status"] = (
+        "passed"
+        if all([route_matches, state_matches, reason_matches, golden_matches])
+        else "failed"
     )
-    result.update(
-        status="passed" if contains_expected else "failed",
-        route="native_parse",
-        page_count=len(pages),
-        extracted_characters=len(extracted),
-        citation_coverage=citation_coverage,
-        expected_text_found=contains_expected,
-    )
+    result["golden_matches"] = golden_matches
     return result
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--max-bytes",
+        "--limit-profile-max-bytes",
         type=int,
         default=1_024,
-        help="Small limit used only to exercise the limit fixture.",
+        help="Limit used only for manifest fixtures with resource_profile=limit.",
     )
     args = parser.parse_args()
+    manifest = load_valid_manifest()
     records = [
-        benchmark_file(path, args.max_bytes)
-        for path in sorted(FIXTURES_DIR.glob("*.pdf"))
+        inspect_fixture(fixture, args.limit_profile_max_bytes)
+        for fixture in manifest["fixtures"]
     ]
     passed = sum(record["status"] == "passed" for record in records)
     payload = {
@@ -137,10 +194,8 @@ def main() -> None:
             "name": "pypdf",
             "version": "6.14.2",
         },
-        "fixture_inventory": json.loads(
-            (FIXTURES_DIR / "inventory.json").read_text(encoding="utf-8")
-        ),
-        "max_bytes": args.max_bytes,
+        "python": sys.version,
+        "limit_profile_max_bytes": args.limit_profile_max_bytes,
         "summary": {
             "total": len(records),
             "passed": passed,
@@ -148,10 +203,9 @@ def main() -> None:
         },
         "records": records,
     }
-    RESULTS_DIR.mkdir(exist_ok=True)
-    (RESULTS_DIR / "native-parser-pypdf.json").write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    RESULTS_PATH.parent.mkdir(exist_ok=True)
+    RESULTS_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     if passed != len(records):
         raise SystemExit("Native parser benchmark has failing fixtures.")

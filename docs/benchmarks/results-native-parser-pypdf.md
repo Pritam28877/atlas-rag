@@ -4,10 +4,11 @@ Run date: 2026-07-12
 
 ## Scope
 
-This is a reproducible local, synthetic-corpus benchmark. The executable record
-is [native-parser-pypdf.json](../../benchmarks/results/native-parser-pypdf.json).
-It evaluates only the native parser candidate; it does not select an OCR engine,
-object store, broker, database, embedding provider, or search engine.
+This is a reproducible local, synthetic-corpus benchmark. Its generated record
+is intentionally ignored at `benchmarks/results/native-parser-pypdf.json` and
+must be reproduced with the command below. It evaluates only the native parser
+candidate; it does not select an OCR engine, object store, broker, database,
+embedding provider, or search engine.
 
 ## Environment and input
 
@@ -20,9 +21,12 @@ object store, broker, database, embedding provider, or search engine.
   cases. Hashes, page counts, routes, and expected outcomes are in the fixture
   manifest.
 
-## Result
+## Expected local result
 
-All 12 fixture outcomes passed.
+The manifest-driven runner validates all 12 fixture outcomes on a supported
+development host. It fails on an unmanifested fixture, hash mismatch, missing
+golden, mismatched page count, unexpected route/state/reason code, or a failed
+page-aware golden assertion.
 
 | Category | Outcome |
 |---|---|
@@ -32,7 +36,7 @@ All 12 fixture outcomes passed.
 | Encrypted | Rejected as `PDF_ENCRYPTED_UNSUPPORTED`. |
 | Corrupt | Rejected as `PDF_MALFORMED`. |
 | Limit profile | Rejected as `UPLOAD_SIZE_EXCEEDED`. |
-| Suspicious marker | Quarantined as `ACTIVE_CONTENT_DETECTED` by the benchmark-only structural-marker check. |
+| Suspicious PDF action | Quarantined as `ACTIVE_CONTENT_DETECTED` after detecting a real catalog `/OpenAction` JavaScript dictionary. |
 | Duplicate | Identified as `DUPLICATE_CONTENT`; this validates the intended routing only, not a database uniqueness constraint. |
 
 ## Decision
@@ -45,8 +49,8 @@ content-stream limits.
 
 ## Limitations and next evidence
 
-- The suspicious fixture contains a safe content-stream marker; it is not a
-  malware scanner or a complete active-content detector.
+- The suspicious fixture contains an inert JavaScript `/OpenAction`; it verifies
+  PDF object-graph detection only, not malware scanning or complete policy coverage.
 - The corpus is intentionally small and synthetic; it cannot demonstrate
   customer-layout quality, real workload throughput, or million-document scale.
 - This host has no OCR engine installed; Docling/OCR quality, model size, cost,

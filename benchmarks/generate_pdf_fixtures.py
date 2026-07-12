@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import DictionaryObject, NameObject, TextStringObject
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.pdfencrypt import StandardEncryption
@@ -22,10 +24,20 @@ GOLDENS_DIR = FIXTURES_DIR / "goldens"
 FONT_NAME = "BenchmarkDevanagari"
 
 
-def write_golden(name: str, pages: list[str] | None) -> None:
+def write_golden(name: str, pages: list[str | None] | None) -> None:
     if pages is None:
         return
-    payload = {"fixture_id": name, "pages": pages}
+    payload = {
+        "fixture_id": name,
+        "pages": [
+            {
+                "page_number": index,
+                "text": text,
+                "scorable_by_native_parser": text is not None,
+            }
+            for index, text in enumerate(pages, start=1)
+        ],
+    }
     (GOLDENS_DIR / f"{name}.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
@@ -97,7 +109,7 @@ def create_multicolumn(path: Path) -> list[str]:
     draw_wrapped(document, right, 320, 760, 210)
     document.showPage()
     document.save()
-    return [left, right]
+    return [f"{left} {right}"]
 
 
 def create_table(path: Path) -> list[str]:
@@ -118,15 +130,15 @@ def create_table(path: Path) -> list[str]:
     return [" ".join(cell for row in rows for cell in row)]
 
 
-def create_scan(path: Path, image_path: Path) -> list[str]:
+def create_scan(path: Path, image_path: Path) -> list[str | None]:
     document = new_canvas(path)
     document.drawImage(ImageReader(str(image_path)), 45, 70, width=500, height=700)
     document.showPage()
     document.save()
-    return ["SCANNED ARCHIVE RECORD This page intentionally contains pixels only."]
+    return [None]
 
 
-def create_mixed(path: Path, image_path: Path) -> list[str]:
+def create_mixed(path: Path, image_path: Path) -> list[str | None]:
     native = "Mixed fixture native page: this must remain native provenance."
     document = new_canvas(path)
     document.setFont("Helvetica", 12)
@@ -135,10 +147,7 @@ def create_mixed(path: Path, image_path: Path) -> list[str]:
     document.drawImage(ImageReader(str(image_path)), 45, 70, width=500, height=700)
     document.showPage()
     document.save()
-    return [
-        native,
-        "SCANNED ARCHIVE RECORD This page intentionally contains pixels only.",
-    ]
+    return [native, None]
 
 
 def create_rotated(path: Path) -> list[str]:
@@ -190,13 +199,25 @@ def create_limit_breach(path: Path) -> list[str]:
     return pages
 
 
-def create_suspicious_marker(path: Path) -> None:
+def create_suspicious_action(path: Path) -> None:
     document = new_canvas(path)
     document.setFont("Helvetica", 12)
     document.drawString(72, 760, "Fixture for active-content inspection policy.")
-    document.addLiteral("% BENCHMARK_MARKER: /JavaScript /OpenAction")
     document.showPage()
     document.save()
+    reader = PdfReader(path)
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+    writer.add_metadata({"/Title": path.stem, "/Creator": "RAG API"})
+    writer._root_object[NameObject("/OpenAction")] = DictionaryObject(
+        {
+            NameObject("/S"): NameObject("/JavaScript"),
+            NameObject("/JS"): TextStringObject("app.alert('fixture-only');"),
+        }
+    )
+    with path.open("wb") as output:
+        writer.write(output)
 
 
 def file_metadata(path: Path) -> dict[str, int | str]:
@@ -219,7 +240,7 @@ def main() -> None:
     scan_image = FIXTURES_DIR / "scan-source.png"
     create_scan_image(scan_image, args.font_path)
 
-    generated: dict[str, list[str] | None] = {
+    generated: dict[str, list[str | None] | None] = {
         "native-simple-en-001": create_native_simple(
             FIXTURES_DIR / "native-simple-en-001.pdf"
         ),
@@ -236,7 +257,7 @@ def main() -> None:
         "limit-breach-001": create_limit_breach(FIXTURES_DIR / "limit-breach-001.pdf"),
     }
     create_encrypted(FIXTURES_DIR / "encrypted-001.pdf")
-    create_suspicious_marker(FIXTURES_DIR / "suspicious-active-content-001.pdf")
+    create_suspicious_action(FIXTURES_DIR / "suspicious-active-content-001.pdf")
     native_source = FIXTURES_DIR / "native-simple-en-001.pdf"
     corrupt = FIXTURES_DIR / "corrupt-001.pdf"
     corrupt.write_bytes(native_source.read_bytes()[:80])

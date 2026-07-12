@@ -1,7 +1,15 @@
 {
   "fixture_id": "mixed-en-001",
   "pages": [
-    "Mixed fixture native page: this must remain native provenance.",
-    "SCANNED ARCHIVE RECORD This page intentionally contains pixels only."
+    {
+      "page_number": 1,
+      "text": "Mixed fixture native page: this must remain native provenance.",
+      "scorable_by_native_parser": true
+    },
+    {
+      "page_number": 2,
+      "text": null,
+      "scorable_by_native_parser": false
+    }
   ]
 }

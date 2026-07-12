@@ -29,6 +29,7 @@
       "required": ["id", "class", "data_classification", "permission", "artifact", "characteristics", "expected_outcome", "benchmark_eligibility", "resource_profile"],
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "duplicate_of": {"type": "string", "pattern": "^[a-z0-9-]+$"},
         "class": {"enum": ["born_digital", "scanned", "mixed", "rotated", "multi_column", "table_heavy", "multilingual", "encrypted", "corrupt", "limit_breach", "suspicious", "duplicate"]},
         "data_classification": {"enum": ["synthetic", "public_redistributable", "public_restricted", "approved_redacted"]},
         "permission": {
