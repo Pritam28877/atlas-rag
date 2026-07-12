@@ -45,4 +45,3 @@ model or OCR engine it can use.
 P1.5 is done only after native and OCR candidates run against the approved
 corpus under these controls, with cold/warm repetitions, page-citation quality,
 resource/cost measurements, model provenance, and failure-injection results.
-
