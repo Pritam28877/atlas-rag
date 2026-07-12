@@ -5,7 +5,7 @@ Minimal FastAPI foundation managed with [uv](https://docs.astral.sh/uv/).
 ## Setup
 
 ```bash
-uv sync --all-groups
+uv sync --group dev
 cp .env.example .env
 uv run uvicorn app.main:app --reload
 ```
@@ -47,5 +47,8 @@ The local benchmark corpus is entirely synthetic and covers the PDF classes in
 ```bash
 uv run python benchmarks/generate_pdf_fixtures.py --font-path /path/to/NotoSansDevanagari-Regular.ttf
 uv run python benchmarks/validate_fixture_manifest.py
-uv run python benchmarks/run_native_parser_benchmark.py --max-bytes 1024
+uv run python benchmarks/run_native_parser_benchmark.py --limit-profile-max-bytes 1024
 ```
+
+Docling OCR/layout benchmarking is opt-in; see
+[`docs/benchmarks/ocr-benchmark.md`](docs/benchmarks/ocr-benchmark.md).

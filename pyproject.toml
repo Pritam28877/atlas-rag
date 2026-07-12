@@ -26,6 +26,9 @@ dev = [
     "reportlab>=4.2,<5.0",
     "ruff>=0.8,<1.0",
 ]
+ocr-benchmark = [
+    "docling==2.111.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
