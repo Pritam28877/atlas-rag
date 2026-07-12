@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import stat
 
+import pytest
+
 from benchmarks.infrastructure import create_local_env
+from benchmarks.infrastructure.benchmark_common import require_loopback
 
 
 def test_private_env_writer_uses_owner_only_permissions(tmp_path, monkeypatch) -> None:
@@ -15,3 +18,8 @@ def test_private_env_writer_uses_owner_only_permissions(tmp_path, monkeypatch) -
         "BENCHMARK_BIND_ADDRESS=127.0.0.1\n"
     )
     assert stat.S_IMODE(environment_path.stat().st_mode) == 0o600
+
+
+def test_non_loopback_benchmark_bind_address_is_rejected() -> None:
+    with pytest.raises(ValueError, match="loopback"):
+        require_loopback({"BENCHMARK_BIND_ADDRESS": "0.0.0.0"})

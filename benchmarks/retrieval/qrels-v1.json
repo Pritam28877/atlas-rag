@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "id": "fixture-derived-retrieval-qrels-v1",
+  "corpus_id": "fixture-derived-retrieval-corpus-v1",
+  "label_status": "draft-benchmark-control-not-independently-adjudicated",
+  "queries": [
+    {"query_id": "q-stable-citation", "text": "stable first page citation", "tenant_id": "tenant-a", "collection_id": "collection-main", "relevance": {"chunk-native-simple-a": 3}},
+    {"query_id": "q-ordered-statement", "text": "second ordered statement", "tenant_id": "tenant-a", "collection_id": "collection-main", "relevance": {"chunk-multicolumn-a": 3}},
+    {"query_id": "q-books-price", "text": "Books quantity price", "tenant_id": "tenant-a", "collection_id": "collection-main", "relevance": {"chunk-table-a": 3}},
+    {"query_id": "q-page-association", "text": "page association remain page one", "tenant_id": "tenant-a", "collection_id": "collection-main", "relevance": {"chunk-rotated-a": 3}},
+    {"query_id": "q-hindi-search", "text": "दस्तावेज़ खोज के लिए परीक्षण", "tenant_id": "tenant-a", "collection_id": "collection-main", "relevance": {"chunk-multilingual-a": 3}},
+    {"query_id": "q-secondary-citation", "text": "stable first page citation", "tenant_id": "tenant-a", "collection_id": "collection-secondary", "relevance": {"chunk-native-simple-a-secondary": 3}}
+  ]
+}

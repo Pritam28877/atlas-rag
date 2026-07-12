@@ -7,6 +7,11 @@ import shutil
 import subprocess
 from pathlib import Path
 
+try:
+    from .benchmark_common import load_env
+except ImportError:  # Direct script execution keeps this benchmark self-contained.
+    from benchmark_common import load_env
+
 ROOT = Path(__file__).resolve().parent
 COMPOSE_PATH = ROOT / "compose.yaml"
 ENV_PATH = ROOT / ".env.benchmark"
@@ -24,6 +29,7 @@ def command(*args: str) -> str:
 def main() -> None:
     if not ENV_PATH.is_file():
         raise SystemExit("Create .env.benchmark with create_local_env.py first")
+    load_env()
     info = json.loads(command("docker", "info", "--format", "{{json .}}"))
     if info["MemTotal"] < MIN_MEMORY_BYTES:
         raise SystemExit("Docker memory is below the 8 GiB benchmark minimum")
