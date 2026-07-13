@@ -1,7 +1,6 @@
 # ADR 0001: PDF ingestion contract and provisional platform baseline
 
-Status: approved for P1 benchmark execution on 2026-07-13. Production component
-selection remains gated on benchmark evidence.
+Status: approved for the P1 selected parser/OCR profile on 2026-07-13.
 
 ## Context
 
@@ -27,8 +26,8 @@ when benchmark evidence justifies the change.
 | Catalog | PostgreSQL 16+ with pgvector/GIN for local catalog and control-search benchmarks. No PDFs or large extracted blobs live in relational columns. |
 | Queue | RabbitMQ with ID-only messages, publisher confirms, manual acknowledgement, DLQ, bounded prefetch, and queue-length/age limits. |
 | Workers | Celery remains an execution candidate only; PostgreSQL owns idempotency and business state. Parser and OCR workers are isolated from the API and each other. |
-| Native parsing | Benchmark `pypdf>=6.14,<7.0` first. It is not an OCR or layout-fidelity guarantee. |
-| OCR/layout | Benchmark `Docling==2.111.0` only in a dedicated worker image. Do not use PyMuPDF without explicit AGPL/commercial-license approval. |
+| Native parsing | Select `pypdf==6.14.2` for born-digital text extraction with page provenance. It is not an OCR or layout-fidelity guarantee. |
+| OCR/layout | Select Tesseract `5.3.4` with Apache-2.0 `eng` tessdata in a dedicated worker image. It is limited to printed English scans. Docling is not selected because it exceeds this host's repeatable memory capacity. Do not use PyMuPDF without explicit AGPL/commercial-license approval. |
 | Search | Benchmark PostgreSQL plus pgvector/GIN as a control and OpenSearch hybrid retrieval as the scale candidate. Do not select either before filtered-retrieval tests. |
 | OCR languages | Launch benchmark with `eng` only. Native Unicode extraction accepts any language but reports quality signals. |
 | Retention | Content remains until explicit deletion or legal hold. Deletion revokes retrieval within five minutes, removes primary artifacts/indexes within 24 hours, and expires backups within 35 days. |
@@ -75,8 +74,7 @@ those values is not a throughput target.
 
 ## Decision gates
 
-P2 is not authorized until the fixture corpus is approved, candidate benchmarks
-are reproducible, all hard gates in the selection rubric pass, and this ADR is
-approved. A candidate may be rejected for licensing, egress, resource use,
-quality, tenancy-filtering, or operational reasons even if its median speed is
-best.
+P2 may implement only the selected native and OCR scopes after the fixture
+corpus, reproducible benchmark evidence, and this ADR are approved. A candidate
+may be rejected for licensing, egress, resource use, quality, tenancy-filtering,
+or operational reasons even if its median speed is best.

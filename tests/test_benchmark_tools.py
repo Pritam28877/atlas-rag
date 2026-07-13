@@ -46,3 +46,10 @@ def test_native_parser_benchmark_matches_manifest() -> None:
             "terminal_state": observed["terminal_state"],
             "reason_code": observed["reason_code"],
         } == record["expected"]
+
+
+def test_tesseract_benchmark_exposes_its_cli() -> None:
+    result = run_script("run_tesseract_ocr_benchmark.py", "--help")
+
+    assert result.returncode == 0, result.stderr
+    assert "Benchmark local Tesseract OCR" in result.stdout

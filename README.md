@@ -45,7 +45,9 @@ The local benchmark corpus is entirely synthetic and covers the PDF classes in
 `docs/benchmarks/fixture-manifest.json`. It is not a production scale test.
 
 ```bash
-uv run python benchmarks/generate_pdf_fixtures.py --font-path /path/to/NotoSansDevanagari-Regular.ttf
+uv run python benchmarks/generate_pdf_fixtures.py \
+  --font-path /path/to/NotoSansDevanagari-Regular.ttf \
+  --latin-font-path /path/to/DejaVuSans.ttf
 uv run python benchmarks/validate_fixture_manifest.py
 uv run python benchmarks/run_native_parser_benchmark.py --limit-profile-max-bytes 1024
 ```

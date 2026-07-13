@@ -53,7 +53,7 @@ claims.
 | `DOCUMENT_NATIVE_PARSE_TIMEOUT_SECONDS` | 300 | 900 | Worker supervisor |
 | `DOCUMENT_OCR_TIMEOUT_SECONDS` | 900 | 1,800 | OCR supervisor |
 | `DOCUMENT_NATIVE_PARSE_MEMORY_MIB` | 2,048 | 4,096 | Container/cgroup |
-| `DOCUMENT_OCR_MEMORY_MIB` | 6,144 | 12,288 | Container/cgroup |
+| `DOCUMENT_OCR_MEMORY_MIB` | 512 | 1,024 | Container/cgroup |
 | `DOCUMENT_NATIVE_WORKER_CONCURRENCY` | 2 | 4 | Deployment |
 | `DOCUMENT_OCR_WORKER_CONCURRENCY` | 1 | 2 | Deployment |
 | `DOCUMENT_JOB_MAX_ATTEMPTS` | 3 | 5 | Orchestrator |
@@ -69,6 +69,9 @@ claims.
 | `DOCUMENT_BACKUP_RETENTION_DAYS` | 35 | 90 | Storage lifecycle |
 | `DOCUMENT_RETENTION_DAYS` | 0 (explicit deletion) | Legal controlled | Lifecycle worker |
 
-Legal hold revokes normal retrieval access but pauses physical deletion. OCR
-confidence is engine- and language-specific; the 0.70 benchmark value requires
-calibration on approved fixtures before use as a production quality gate.
+Legal hold revokes normal retrieval access but pauses physical deletion. The
+512 MiB OCR default is more than four times the selected Tesseract profile's
+126,300 KiB measured child RSS; its separate worker queue remains concurrency
+one by default. OCR confidence is engine- and language-specific; the 0.70
+benchmark value requires calibration on approved fixtures before use as a
+production quality gate.
