@@ -18,6 +18,7 @@ class DatabaseSettings(ImmutableSettingsModel):
     pool_min_size: int = Field(default=2, ge=1, le=20)
     pool_max_size: int = Field(default=10, ge=1, le=100)
     pool_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    connect_timeout_seconds: float = Field(default=5.0, gt=0, le=30)
 
     @model_validator(mode="after")
     def validate_pool_bounds(self) -> Self:
@@ -30,19 +31,45 @@ class StorageSettings(ImmutableSettingsModel):
     endpoint_url: str | None = None
     region: str = "us-east-1"
     bucket_name: str | None = None
+    key_prefix: str = Field(default="rag", pattern=r"^[a-z0-9][a-z0-9-]{0,31}$")
     access_key_id: SecretStr | None = None
     secret_access_key: SecretStr | None = None
     use_tls: bool = True
     server_side_encryption: Literal["AES256", "aws:kms"] = "AES256"
+    kms_key_id: str | None = None
     signed_url_ttl_seconds: int = Field(default=900, ge=60, le=3600)
+
+    @model_validator(mode="after")
+    def validate_encryption_settings(self) -> Self:
+        if self.server_side_encryption == "aws:kms" and not self.kms_key_id:
+            raise ValueError("kms_key_id is required for aws:kms encryption")
+        return self
 
 
 class BrokerSettings(ImmutableSettingsModel):
     url: SecretStr | None = None
     use_tls: bool = True
+    tls_ca_cert_path: str | None = None
+    tls_cert_path: str | None = None
+    tls_key_path: str | None = None
     visibility_timeout_seconds: int = Field(default=3600, ge=60, le=21600)
     prefetch_multiplier: int = Field(default=1, ge=1, le=16)
     message_max_bytes: int = Field(default=65_536, ge=1024, le=262_144)
+    heartbeat_seconds: int = Field(default=30, ge=10, le=120)
+    connection_max_retries: int = Field(default=5, ge=1, le=20)
+    connection_timeout_seconds: float = Field(default=5.0, gt=0, le=30)
+    native_queue_name: str = Field(default="ingestion.native", min_length=1)
+    ocr_queue_name: str = Field(default="ingestion.ocr", min_length=1)
+
+    @model_validator(mode="after")
+    def validate_transport_security(self) -> Self:
+        if self.url is not None:
+            broker_url = self.url.get_secret_value()
+            if self.use_tls != broker_url.startswith("amqps://"):
+                raise ValueError("broker URL scheme must match use_tls")
+        if bool(self.tls_cert_path) != bool(self.tls_key_path):
+            raise ValueError("broker TLS client certificate and key must be paired")
+        return self
 
 
 class WorkerSettings(ImmutableSettingsModel):
@@ -52,6 +79,10 @@ class WorkerSettings(ImmutableSettingsModel):
     ocr_timeout_seconds: int = Field(default=900, ge=1, le=1800)
     native_parse_memory_mib: int = Field(default=2048, ge=128, le=4096)
     ocr_memory_mib: int = Field(default=512, ge=128, le=1024)
+    native_cpu_limit: float = Field(default=2.0, ge=0.25, le=8.0)
+    ocr_cpu_limit: float = Field(default=1.0, ge=0.25, le=8.0)
+    job_temp_directory: str = "/var/lib/rag-jobs"
+    shutdown_grace_seconds: int = Field(default=30, ge=1, le=300)
     job_max_attempts: int = Field(default=3, ge=1, le=5)
     retry_base_seconds: int = Field(default=30, ge=1, le=60)
     retry_max_seconds: int = Field(default=900, ge=1, le=3600)

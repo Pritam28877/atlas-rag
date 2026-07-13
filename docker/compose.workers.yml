@@ -1,0 +1,50 @@
+name: atlas-rag-workers
+
+services:
+  native-worker:
+    build:
+      context: ..
+      dockerfile: docker/worker/Dockerfile
+      target: native
+    environment:
+      BROKER__URL: ${BROKER__URL:?BROKER__URL is required}
+      DATABASE__URL: ${DATABASE__URL:?DATABASE__URL is required}
+      STORAGE__ENDPOINT_URL: ${STORAGE__ENDPOINT_URL:?STORAGE__ENDPOINT_URL is required}
+      STORAGE__BUCKET_NAME: ${STORAGE__BUCKET_NAME:?STORAGE__BUCKET_NAME is required}
+      STORAGE__ACCESS_KEY_ID: ${STORAGE__ACCESS_KEY_ID:?STORAGE__ACCESS_KEY_ID is required}
+      STORAGE__SECRET_ACCESS_KEY: ${STORAGE__SECRET_ACCESS_KEY:?STORAGE__SECRET_ACCESS_KEY is required}
+      WORKERS__JOB_TEMP_DIRECTORY: /var/lib/rag-jobs
+    read_only: true
+    tmpfs:
+      - /var/lib/rag-jobs:rw,noexec,nosuid,size=2048m,mode=0700,uid=10001,gid=10001
+    cpus: ${WORKERS__NATIVE_CPU_LIMIT:-2.0}
+    mem_limit: ${WORKERS__NATIVE_PARSE_MEMORY_MIB:-2048}m
+    pids_limit: 128
+    stop_grace_period: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}s
+    networks: [ingestion]
+
+  ocr-worker:
+    build:
+      context: ..
+      dockerfile: docker/worker/Dockerfile
+      target: ocr
+    environment:
+      BROKER__URL: ${BROKER__URL:?BROKER__URL is required}
+      DATABASE__URL: ${DATABASE__URL:?DATABASE__URL is required}
+      STORAGE__ENDPOINT_URL: ${STORAGE__ENDPOINT_URL:?STORAGE__ENDPOINT_URL is required}
+      STORAGE__BUCKET_NAME: ${STORAGE__BUCKET_NAME:?STORAGE__BUCKET_NAME is required}
+      STORAGE__ACCESS_KEY_ID: ${STORAGE__ACCESS_KEY_ID:?STORAGE__ACCESS_KEY_ID is required}
+      STORAGE__SECRET_ACCESS_KEY: ${STORAGE__SECRET_ACCESS_KEY:?STORAGE__SECRET_ACCESS_KEY is required}
+      WORKERS__JOB_TEMP_DIRECTORY: /var/lib/rag-jobs
+    read_only: true
+    tmpfs:
+      - /var/lib/rag-jobs:rw,noexec,nosuid,size=512m,mode=0700,uid=10001,gid=10001
+    cpus: ${WORKERS__OCR_CPU_LIMIT:-1.0}
+    mem_limit: ${WORKERS__OCR_MEMORY_MIB:-512}m
+    pids_limit: 128
+    stop_grace_period: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}s
+    networks: [ingestion]
+
+networks:
+  ingestion:
+    internal: true
