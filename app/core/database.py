@@ -36,6 +36,7 @@ class Database:
             max_overflow=max_overflow,
             pool_timeout=settings.pool_timeout_seconds,
             pool_pre_ping=True,
+            connect_args={"connect_timeout": settings.connect_timeout_seconds},
         )
         self._session_factory = async_sessionmaker(
             bind=self._engine,

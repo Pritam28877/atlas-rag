@@ -68,6 +68,52 @@ TEST_DATABASE_URL=postgresql://user:password@localhost:5432/rag_test \
   uv run pytest -m database_integration tests/test_migrations.py
 ```
 
+## Worker queues
+
+Celery workers require `BROKER__URL`; no worker is started by the API process.
+Run native and OCR pools independently so a saturated OCR queue cannot consume
+native extraction capacity. Task messages are JSON objects containing only
+tenant, document-version, and job UUIDs.
+
+```bash
+uv run celery -A app.workers.native_worker:celery worker --queues ingestion.native
+uv run celery -A app.workers.ocr_worker:celery worker --queues ingestion.ocr
+```
+
+## Isolated worker containers
+
+`docker/compose.workers.yml` defines separate native and OCR worker profiles.
+Both run as an unprivileged user with a read-only root filesystem, a bounded
+`tmpfs` job directory, PID/memory/CPU limits, and an internal-only network.
+Attach only trusted broker, storage, and database services to that internal
+network; do not add a public egress route. The API process never parses PDFs or
+starts Celery workers.
+
+After explicitly starting local MinIO and RabbitMQ, run the opt-in P2 transfer
+and broker checks with a pre-created empty bucket:
+
+```bash
+P2_STORAGE_ENDPOINT_URL=http://127.0.0.1:9000 \
+P2_STORAGE_BUCKET_NAME=rag-p2-test \
+P2_STORAGE_ACCESS_KEY_ID=replace-me \
+P2_STORAGE_SECRET_ACCESS_KEY=replace-me \
+P2_STORAGE_USE_TLS=false \
+P2_BROKER_URL=amqp://user:password@127.0.0.1:5672/rag \
+P2_BROKER_USE_TLS=false \
+uv run pytest -m platform_integration tests/test_platform_integration.py
+```
+
+Use the isolated P2 local harness rather than the P1 benchmark stack. Generate
+fresh local-only credentials, export the variables shown above plus
+`P2_RABBITMQ_USER` and `P2_RABBITMQ_PASSWORD`, then run:
+
+```bash
+docker compose -f docker/compose.local-platform.yml up -d --wait
+uv run python scripts/create_local_p2_bucket.py
+uv run pytest -m platform_integration tests/test_platform_integration.py
+docker compose -f docker/compose.local-platform.yml down -v --remove-orphans
+```
+
 ## PDF benchmark corpus
 
 The local benchmark corpus is entirely synthetic and covers the PDF classes in
