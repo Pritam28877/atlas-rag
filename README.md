@@ -12,7 +12,8 @@ uv run uvicorn app.main:app --reload
 
 The application uses an environment file only for local development. Do not
 commit `.env`; keep credentials such as `OPENAI_API_KEY` there or in the
-deployment environment.
+deployment environment. Put machine-only non-secret overrides such as a local
+database socket URL in `.env.local`; it loads after `.env`.
 
 ## Layout
 
@@ -37,6 +38,34 @@ keeps the API transport separate from RAG behavior and makes services testable.
 ```bash
 uv run ruff check .
 uv run pytest
+```
+
+## Database migrations
+
+The local P2 runtime baseline is PostgreSQL 18. The P1 benchmark compose file
+remains pinned to its recorded PostgreSQL 16 control image for reproducibility;
+it is not the application database. Machine-specific values can live in the
+ignored `.env.local` file, which overrides `.env` without replacing its secrets.
+
+Set `DATABASE__URL` to a dedicated local PostgreSQL database. Migration commands
+read that environment value through the same typed application settings; the
+Alembic configuration contains no credentials.
+
+```bash
+uv run alembic upgrade head
+uv run alembic downgrade base
+```
+
+Use `downgrade base` only against an empty disposable development/test database.
+Application database work should use `Database.transaction()` so successful
+units commit and exceptions roll back while the session is always closed.
+
+The real lifecycle test is opt-in and refuses any database whose name does not
+end in `_test`:
+
+```bash
+TEST_DATABASE_URL=postgresql://user:password@localhost:5432/rag_test \
+  uv run pytest -m database_integration tests/test_migrations.py
 ```
 
 ## PDF benchmark corpus
