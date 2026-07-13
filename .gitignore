@@ -38,6 +38,7 @@ pip-wheel-metadata/
 
 # Generated benchmark artifacts; keep fixtures, goldens, and manifests tracked.
 benchmarks/results/
+benchmarks/ocr-artifacts/
 benchmarks/fixtures/inventory.json
 benchmarks/fixtures/scan-source.png
 benchmarks/infrastructure/.env.benchmark
