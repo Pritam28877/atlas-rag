@@ -68,6 +68,11 @@ for the synthetic English scan. These are candidate rejections, not a selected
 OCR profile. Run the complete five-cold/five-warm matrix on an isolated host
 with sufficient memory before selecting an OCR engine.
 
+PaddleOCR 3.7 with PaddlePaddle 3.3.1 was also evaluated as a local CPU
+candidate on 2026-07-13. After its model prefetch, inference failed with
+`ConvertPirAttribute2RuntimeAttribute` unsupported in PaddlePaddle's oneDNN
+executor. It is rejected and deliberately not retained in the benchmark group.
+
 ## Completion evidence for P1.5
 
 P1.5 is done only after native and OCR candidates run against the approved
