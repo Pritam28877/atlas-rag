@@ -23,7 +23,7 @@ when benchmark evidence justifies the change.
 | Authorization | OIDC/JWT identity integration; the catalog remains the authorization source of truth. |
 | Upload source | Authenticated direct upload to approved object storage only. Arbitrary URLs are out of scope for v1. |
 | Object storage | MinIO for the local S3-compatible benchmark; immutable generated keys, checksum validation, encryption settings, and lifecycle metadata are measured. |
-| Catalog | PostgreSQL 16+ with pgvector/GIN for local catalog and control-search benchmarks. No PDFs or large extracted blobs live in relational columns. |
+| Catalog | PostgreSQL 18 for the P2 application runtime. The recorded P1 control benchmark remains PostgreSQL 16 with pgvector/GIN for reproducibility. No PDFs or large extracted blobs live in relational columns. |
 | Queue | RabbitMQ with ID-only messages, publisher confirms, manual acknowledgement, DLQ, bounded prefetch, and queue-length/age limits. |
 | Workers | Celery remains an execution candidate only; PostgreSQL owns idempotency and business state. Parser and OCR workers are isolated from the API and each other. |
 | Native parsing | Select `pypdf==6.14.2` for born-digital text extraction with page provenance. It is not an OCR or layout-fidelity guarantee. |
