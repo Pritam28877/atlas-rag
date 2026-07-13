@@ -81,9 +81,13 @@ def draw_wrapped(document: canvas.Canvas, text: str, x: int, y: int, width: int)
 
 
 def create_scan_image(path: Path, font_path: Path) -> None:
+    font = ImageFont.truetype(str(font_path), 54)
+    replacement = bytes(font.getmask("\ufffd"))
+    if bytes(font.getmask("A")) == replacement:
+        raise ValueError(f"Latin font is missing ASCII glyphs: {font_path}")
+
     image = Image.new("RGB", (1500, 2100), "#f7f2e8")
     drawer = ImageDraw.Draw(image)
-    font = ImageFont.truetype(str(font_path), 54)
     body = ImageFont.truetype(str(font_path), 36)
     drawer.text((100, 120), "SCANNED ARCHIVE RECORD", fill="black", font=font)
     drawer.multiline_text(
@@ -239,14 +243,17 @@ def file_metadata(path: Path) -> dict[str, int | str]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--font-path", type=Path, required=True)
+    parser.add_argument("--latin-font-path", type=Path, required=True)
     args = parser.parse_args()
     if not args.font_path.is_file():
         raise SystemExit(f"Font file not found: {args.font_path}")
+    if not args.latin_font_path.is_file():
+        raise SystemExit(f"Font file not found: {args.latin_font_path}")
 
     FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
     GOLDENS_DIR.mkdir(parents=True, exist_ok=True)
     scan_image = FIXTURES_DIR / "scan-source.png"
-    create_scan_image(scan_image, args.font_path)
+    create_scan_image(scan_image, args.latin_font_path)
 
     generated: dict[str, list[str | None] | None] = {
         "native-simple-en-001": create_native_simple(

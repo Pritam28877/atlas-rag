@@ -1,6 +1,6 @@
 # Native parser benchmark: pypdf 6.14.2
 
-Run date: 2026-07-12
+Run date: 2026-07-13
 
 ## Scope
 
@@ -41,11 +41,10 @@ page-aware golden assertion.
 
 ## Decision
 
-`pypdf==6.14.2` remains the provisional native-text parser candidate for P2
-implementation. It is not selected for OCR or layout/table semantics. The
-candidate has not passed the production gate until it is measured against the
-approved representative corpus under the configured memory, wall-time, and
-content-stream limits.
+`pypdf==6.14.2` is the selected native-text parser for P2 implementation. It
+is not selected for OCR or layout/table semantics. The selection covers the
+hash-verified synthetic corpus only and remains subject to configured memory,
+wall-time, and content-stream limits.
 
 ## Limitations and next evidence
 
@@ -53,8 +52,10 @@ content-stream limits.
   PDF object-graph detection only, not malware scanning or complete policy coverage.
 - The corpus is intentionally small and synthetic; it cannot demonstrate
   customer-layout quality, real workload throughput, or million-document scale.
-- This host has no OCR engine installed; Docling/OCR quality, model size, cost,
-  languages, and isolation remain unbenchmarked.
+- OCR selection is separately recorded in
+  [`ocr-selection-tesseract.md`](ocr-selection-tesseract.md); it does not
+  extend this native-parser decision to handwriting, non-English scans, or
+  layout/table reconstruction.
 - Storage, RabbitMQ, PostgreSQL, embedding, hybrid retrieval, tenancy filters,
   deletion, retry, and failure recovery remain unbenchmarked because no approved
   deployment or service configuration exists.

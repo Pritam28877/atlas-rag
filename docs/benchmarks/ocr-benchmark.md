@@ -1,16 +1,17 @@
 # Opt-in OCR benchmark protocol
 
-`docling==2.111.0` is isolated in the `ocr-benchmark` dependency group. It is
-not part of the API runtime or normal development environment because its OCR
-and layout stack is large and requires separately approved model artifacts.
+The selected P1 profile is Tesseract `5.3.4` with `eng` tessdata
+`1:4.1.0-2`, rendered through Poppler `24.02.0` at 300 DPI. It runs only in a
+dedicated OCR worker image, never in the API or native-parser worker.
 
-The current local candidates are Docling with RapidOCR Torch, RapidOCR ONNX,
-and EasyOCR. `onnxruntime` and `easyocr` are benchmark-only dependencies; they
-are not available to the API runtime.
+`docling==2.111.0`, RapidOCR, ONNX Runtime, and EasyOCR remain opt-in
+comparison dependencies only. They are not selected for P2.
 
 ## Dependency boundary
 
-Resolve the OCR benchmark environment only when benchmarking:
+Install Tesseract, its English language pack, and Poppler in the dedicated
+worker image during image build. Never download packages or models per job.
+The local benchmark environment is resolved only when benchmarking:
 
 ```bash
 uv sync --no-default-groups --group ocr-benchmark
@@ -24,16 +25,17 @@ uv sync --group dev
 
 ## Required approval record
 
-Before Docling converts a PDF, record the selected OCR engine, language packs,
-model repository revision, SHA-256, byte size, model license, legal approval,
-and hardware profile. The Docling package license is not approval for every
-model or OCR engine it can use.
+Before OCR converts a PDF, record the selected engine, language pack, package
+versions, SHA-256, byte size, license, image digest, and hardware profile. The
+selected `eng.traineddata` file is Apache-2.0 and has SHA-256
+`7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2` on the
+benchmark host.
 
 ## Required execution controls
 
 - Benchmark only local, hash-verified synthetic or approved fixture paths.
-- Pre-fetch approved model artifacts in a controlled build stage; benchmark with
-  `HF_HUB_OFFLINE=1` and an explicit read-only local artifact path.
+- Install approved language data in a controlled build stage and use a
+  read-only tessdata directory at runtime.
 - Disable remote services, external plugins, picture description, VLM, formula,
   chart, and code enrichment unless individually approved and benchmarked.
 - Run non-root, without outbound network, on a read-only filesystem except a
@@ -44,37 +46,37 @@ model or OCR engine it can use.
   unsupported language, timeout, and resource exhaustion as non-searchable
   terminal outcomes.
 
-## Local execution
+## Selected-profile benchmark
 
-Prefetch the pinned model artifacts once, outside the timed run. The artifact
-directory is ignored and must never contain customer documents:
+Run the selected profile against the hash-verified scan and mixed fixtures:
 
 ```bash
-uv run --group ocr-benchmark docling-tools models download \
-  --output-dir benchmarks/ocr-artifacts layout tableformer rapidocr easyocr
-uv run --group ocr-benchmark python benchmarks/run_docling_ocr_benchmark.py
+uv run --group ocr-benchmark python benchmarks/run_tesseract_ocr_benchmark.py
 ```
 
-The runner uses `HF_HUB_OFFLINE=1`, CPU-only inference, two inference threads,
-an output-file ceiling, a 120-second worker timeout, and a fresh subprocess for
-each process-cold sample. It records recursive artifact hashes/bytes, OCR text
-recall, source-page provenance, duration, and peak RSS in the ignored results
-file.
+The runner renders each PDF page with Poppler and invokes a fresh Tesseract
+process for every page. It records language-pack provenance, text recall,
+source-page provenance, duration, and child-process RSS in an ignored result
+file. Its cold and warm phases each run five repetitions.
 
-The benchmark host used on 2026-07-13 could run one Docling OCR worker (about
-1.5–1.9 GiB peak RSS) but was killed when a second fresh Torch worker started.
-RapidOCR Torch/ONNX and EasyOCR all produced non-English or near-empty output
-for the synthetic English scan. These are candidate rejections, not a selected
-OCR profile. Run the complete five-cold/five-warm matrix on an isolated host
-with sufficient memory before selecting an OCR engine.
+On 2026-07-13, five cold and five warm repetitions produced ten scored fixture
+runs each. Both phases had minimum token recall and page-citation coverage of
+1.0; p95 duration was 1,491.762 ms cold and 1,496.726 ms warm; peak child RSS
+was 126,300 KiB. The capacity calculation and limitations are in
+[`ocr-selection-tesseract.md`](ocr-selection-tesseract.md).
 
-PaddleOCR 3.7 with PaddlePaddle 3.3.1 was also evaluated as a local CPU
-candidate on 2026-07-13. After its model prefetch, inference failed with
-`ConvertPirAttribute2RuntimeAttribute` unsupported in PaddlePaddle's oneDNN
-executor. It is rejected and deliberately not retained in the benchmark group.
+The prior Docling rejection evidence was invalid because the synthetic English
+scan was rendered with a Devanagari-only font and therefore contained missing
+glyph boxes. The corpus is now revision `2026-07-13.1` and verifies a separate
+Latin font for the scan. RapidOCR Torch reads the repaired fixture but needs
+about 1.5 GiB RSS and this host cannot sustain repeated conversions. PaddleOCR
+also fails local CPU inference in PaddlePaddle's oneDNN executor. Neither is
+selected.
 
 ## Completion evidence for P1.5
 
-P1.5 is done only after native and OCR candidates run against the approved
-corpus under these controls, with cold/warm repetitions, page-citation quality,
-resource/cost measurements, model provenance, and failure-injection results.
+P1.5 selection evidence consists of the native `pypdf` result, this five-cold/
+five-warm OCR result, source-page provenance, bounded worker controls, and the
+separate OCR capacity plan. This profile is intentionally limited to printed
+English scans; other languages, handwriting, and complex layout require a new
+benchmark and decision.

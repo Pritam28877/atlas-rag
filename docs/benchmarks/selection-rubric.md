@@ -35,8 +35,9 @@ rejected.
 
 | Component | Candidate | Status | Required evidence |
 |---|---|---|---|
-| Native parser | pypdf `>=6.14,<7.0` | Evaluate | Citation fidelity, RSS limits, malformed handling |
-| OCR/layout | Docling `==2.111.0` | Evaluate | Quality, model size, CPU/GPU cost, license/deployment fit |
+| Native parser | pypdf `==6.14.2` | Selected, scoped | Native-text citation fidelity and explicit malformed/limit outcomes |
+| OCR/layout | Tesseract `5.3.4` + `eng` tessdata | Selected, printed English only | Five cold/five warm quality, page provenance, RSS, package/model provenance |
+| OCR/layout | Docling `==2.111.0` | Not selected | Corrected-corpus quality passed once, but repeated local execution exceeded host capacity |
 | Object storage | S3-compatible | Provisional | Direct upload, checksum, lifecycle, residency, cost |
 | Catalog | PostgreSQL 16+ | Provisional | State transactions, indexes, delete/status query plans |
 | Broker | RabbitMQ quorum queues | Provisional | Confirms, redelivery, DLQ, backlog bounds, restart behavior |

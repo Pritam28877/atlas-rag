@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "corpus": {
     "id": "pdf-ingestion-evaluation-v1",
-    "immutable_version": "2026-07-12.1",
+    "immutable_version": "2026-07-13.1",
     "owner": "engineering-benchmark-owner (synthetic local corpus)",
     "access_policy": "benchmark-role-only; binaries and goldens remain outside Git unless synthetic or public-redistributable",
     "prohibited_content": ["secrets", "credentials", "unapproved customer data", "production PII"]
@@ -46,7 +46,7 @@
       "class": "scanned",
       "data_classification": "synthetic",
       "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
-      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/scan-en-001.pdf", "sha256": "sha256:ed72dae4d4876f52c5f6b3cec9650ff726bf710b7fb58ef0c89fb02c6a06f919", "bytes": 14794, "page_count": 1, "mime": "application/pdf"},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/scan-en-001.pdf", "sha256": "sha256:6e379081497a245bf52977a342ee8cca55ee462b7652dbf6122f26fdcf13c384", "bytes": 41674, "page_count": 1, "mime": "application/pdf"},
       "characteristics": {"languages": ["en"], "has_native_text": false, "has_images": true, "expected_layout": ["scan"]},
       "expected_outcome": {"route": "ocr", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/scan-en-001.json"},
       "benchmark_eligibility": ["ocr", "chunking", "search"],
@@ -57,7 +57,7 @@
       "class": "mixed",
       "data_classification": "synthetic",
       "permission": {"source_type": "generated", "license": "internal-test-data", "approval_ref": "LOCAL-SYNTHETIC-ONLY", "redistribution_allowed": true},
-      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/mixed-en-001.pdf", "sha256": "sha256:0d7aedd756558b7065754b1705c55bd8baaa76a87aacea9a5bf61bddc4084ba0", "bytes": 15293, "page_count": 2, "mime": "application/pdf"},
+      "artifact": {"status": "verified", "object_ref": "benchmarks/fixtures/mixed-en-001.pdf", "sha256": "sha256:4065951f594dadd0f23561f45aef27bfb6891d3acb2e6d4a989f47a3d174702f", "bytes": 42173, "page_count": 2, "mime": "application/pdf"},
       "characteristics": {"languages": ["en"], "has_native_text": true, "has_images": true, "expected_layout": ["paragraph", "scan"]},
       "expected_outcome": {"route": "mixed", "terminal_state": "READY", "reason_code": null, "minimum_page_citation_coverage": 1, "golden_ref": "benchmarks/fixtures/goldens/mixed-en-001.json"},
       "benchmark_eligibility": ["parser", "ocr", "chunking"],
