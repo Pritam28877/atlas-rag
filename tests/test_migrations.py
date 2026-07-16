@@ -14,11 +14,17 @@ from app.core.database import normalize_database_url
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_migration_graph_has_one_reversible_baseline() -> None:
+def test_migration_graph_has_one_catalog_head_and_reversible_chain() -> None:
     config = Config(PROJECT_ROOT / "alembic.ini")
     migrations = ScriptDirectory.from_config(config)
 
-    assert migrations.get_heads() == ["20260713_01"]
+    assert migrations.get_heads() == ["20260716_03"]
+    processing = migrations.get_revision("20260716_03")
+    assert processing is not None
+    assert processing.down_revision == "20260716_02"
+    catalog = migrations.get_revision("20260716_02")
+    assert catalog is not None
+    assert catalog.down_revision == "20260713_01"
     baseline = migrations.get_revision("20260713_01")
     assert baseline is not None
     assert baseline.down_revision is None
@@ -56,7 +62,7 @@ def test_clean_postgres_migrates_forward_and_rolls_back(monkeypatch) -> None:
             revision = connection.execute(
                 text("SELECT version_num FROM alembic_version")
             ).scalar_one()
-        assert revision == "20260713_01"
+        assert revision == "20260716_03"
 
         command.downgrade(config, "base")
         with engine.connect() as connection:
