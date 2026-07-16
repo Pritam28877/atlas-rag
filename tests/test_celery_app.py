@@ -1,3 +1,5 @@
+import importlib
+import sys
 from uuid import UUID
 
 import pytest
@@ -98,6 +100,35 @@ def test_dispatcher_publishes_only_id_payload_to_fixed_queue() -> None:
             "ingestion.native",
         )
     ]
+
+
+def test_dispatcher_routes_deletion_to_native_queue() -> None:
+    sender = RecordingSender()
+    dispatcher = IngestionTaskDispatcher(sender, broker_settings())
+    payload = IngestionJobPayload(
+        tenant_id=TENANT_ID,
+        document_version_id=VERSION_ID,
+        job_id=JOB_ID,
+    )
+
+    dispatcher.dispatch(PipelineTask.DELETE_DOCUMENT, payload)
+
+    assert sender.calls[0][0] == PipelineTask.DELETE_DOCUMENT
+    assert sender.calls[0][2] == "ingestion.native"
+
+
+def test_native_worker_registers_dispatched_task_names(monkeypatch) -> None:
+    monkeypatch.setenv("BROKER__URL", "amqp://user:password@broker.test/rag")
+    monkeypatch.setenv("BROKER__USE_TLS", "false")
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+    sys.modules.pop("app.workers.native_worker", None)
+    native_worker = importlib.import_module("app.workers.native_worker")
+
+    assert PipelineTask.NATIVE_PROCESS in native_worker.celery.tasks
+    assert PipelineTask.DELETE_DOCUMENT in native_worker.celery.tasks
+    get_settings.cache_clear()
 
 
 def test_payload_rejects_document_bytes_urls_and_extra_metadata() -> None:

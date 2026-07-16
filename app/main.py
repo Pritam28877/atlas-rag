@@ -3,9 +3,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.router import api_router
+from app.core.auth import OidcVerifier
 from app.core.config import get_settings
+from app.core.database import Database
 from app.core.readiness import InfrastructureReadiness
+from app.core.request_limits import RequestBodyLimitMiddleware
+from app.core.storage import ObjectStorage
 from app.core.telemetry import Telemetry, configure_structured_logging
+from app.services.catalog.service import CatalogService, CeleryJobDispatcher
+from app.workers.celery_app import (
+    IngestionTaskDispatcher,
+    WorkerKind,
+    create_celery_app,
+)
 
 
 def create_app() -> FastAPI:
@@ -19,12 +29,53 @@ def create_app() -> FastAPI:
             provider_timeouts=settings.provider_timeouts,
         )
         app.state.telemetry = telemetry
+        auth = None
+        database = None
+        storage = None
+        celery = None
+        if settings.auth.issuer:
+            auth = OidcVerifier(settings.auth, settings.provider_timeouts)
+            app.state.auth = auth
+        catalog_dependencies = (
+            settings.database.url,
+            settings.storage.endpoint_url,
+            settings.storage.bucket_name,
+            settings.storage.access_key_id,
+            settings.storage.secret_access_key,
+            settings.broker.url,
+        )
+        if all(catalog_dependencies):
+            database = Database(settings.database)
+            storage = ObjectStorage(
+                settings.storage,
+                provider_timeouts=settings.provider_timeouts,
+            )
+            celery = create_celery_app(settings, WorkerKind.NATIVE)
+            task_dispatcher = IngestionTaskDispatcher(celery, settings.broker)
+            app.state.catalog_service = CatalogService(
+                database,
+                storage,
+                CeleryJobDispatcher(task_dispatcher),
+                settings,
+            )
         try:
             yield
         finally:
+            if auth is not None:
+                await auth.close()
+            if database is not None:
+                await database.close()
+            if storage is not None:
+                storage.close()
+            if celery is not None:
+                celery.close()
             telemetry.close()
 
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
+    app.add_middleware(
+        RequestBodyLimitMiddleware,
+        maximum_bytes=settings.api_request_max_bytes,
+    )
     app.state.logger = configure_structured_logging(settings.telemetry)
     app.state.readiness = InfrastructureReadiness(settings)
     app.include_router(api_router, prefix=settings.api_v1_prefix)

@@ -24,6 +24,7 @@ class PipelineTask(StrEnum):
 
     NATIVE_PROCESS = "app.workers.native.process_document"
     OCR_PROCESS = "app.workers.ocr.process_document"
+    DELETE_DOCUMENT = "app.workers.native.delete_document"
 
 
 class IngestionJobPayload(BaseModel):
@@ -61,7 +62,7 @@ class IngestionTaskDispatcher:
         self._sender.send_task(task, args=[message], queue=queue)
 
     def _queue_for_task(self, task: PipelineTask) -> str:
-        if task is PipelineTask.NATIVE_PROCESS:
+        if task in {PipelineTask.NATIVE_PROCESS, PipelineTask.DELETE_DOCUMENT}:
             return self._broker_settings.native_queue_name
         return self._broker_settings.ocr_queue_name
 
@@ -128,6 +129,10 @@ def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
             PipelineTask.OCR_PROCESS: {
                 "queue": settings.broker.ocr_queue_name,
                 "routing_key": WorkerKind.OCR,
+            },
+            PipelineTask.DELETE_DOCUMENT: {
+                "queue": settings.broker.native_queue_name,
+                "routing_key": WorkerKind.NATIVE,
             },
         },
         task_serializer="json",

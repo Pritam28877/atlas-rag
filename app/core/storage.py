@@ -6,7 +6,7 @@ import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Protocol
+from typing import Protocol, cast
 from uuid import UUID
 
 import boto3
@@ -44,6 +44,14 @@ class S3Client(Protocol):
 
     def head_bucket(self, **kwargs: object) -> Mapping[str, object]: ...
 
+    def get_object(self, **kwargs: object) -> Mapping[str, object]: ...
+
+    def close(self) -> None: ...
+
+
+class ReadableBody(Protocol):
+    def read(self, amount: int) -> bytes: ...
+
     def close(self) -> None: ...
 
 
@@ -72,6 +80,7 @@ class StoredObjectMetadata:
     key: str
     content_length: int
     checksum_sha256: str
+    content_type: str | None
     version_id: str | None
     metadata: Mapping[str, str]
 
@@ -117,13 +126,17 @@ class ObjectStorage:
 
         self._settings = settings
         self._bucket_name = settings.bucket_name
+        access_key_id = settings.access_key_id
+        secret_access_key = settings.secret_access_key
+        assert access_key_id is not None
+        assert secret_access_key is not None
         effective_timeouts = provider_timeouts or ProviderTimeoutSettings()
         self._client = client or boto3.client(
             "s3",
             endpoint_url=settings.endpoint_url,
             region_name=settings.region,
-            aws_access_key_id=settings.access_key_id.get_secret_value(),
-            aws_secret_access_key=settings.secret_access_key.get_secret_value(),
+            aws_access_key_id=access_key_id.get_secret_value(),
+            aws_secret_access_key=secret_access_key.get_secret_value(),
             use_ssl=settings.use_tls,
             config=Config(
                 signature_version="s3v4",
@@ -207,6 +220,8 @@ class ObjectStorage:
             "x-amz-checksum-sha256": checksum,
             "x-amz-server-side-encryption": self._settings.server_side_encryption,
         }
+        for metadata_key, metadata_value in reference.metadata.items():
+            headers[f"x-amz-meta-{metadata_key}"] = metadata_value
         if self._settings.kms_key_id:
             parameters["SSEKMSKeyId"] = self._settings.kms_key_id
             headers["x-amz-server-side-encryption-aws-kms-key-id"] = (
@@ -243,6 +258,7 @@ class ObjectStorage:
             self._client.head_object,
             Bucket=self._bucket_name,
             Key=reference.key,
+            ChecksumMode="ENABLED",
         )
         content_length = response.get("ContentLength")
         checksum = response.get("ChecksumSHA256")
@@ -262,13 +278,36 @@ class ObjectStorage:
                 "stored object provenance metadata does not match"
             )
         version_id = response.get("VersionId")
+        content_type = response.get("ContentType")
         return StoredObjectMetadata(
             key=reference.key,
             content_length=expected_content_length,
             checksum_sha256=reference.checksum_sha256,
+            content_type=str(content_type) if content_type is not None else None,
             version_id=str(version_id) if version_id is not None else None,
             metadata=normalized_metadata,
         )
+
+    async def read_prefix(self, reference: ObjectReference, byte_count: int) -> bytes:
+        """Read a fixed object prefix for inexpensive format classification."""
+        if byte_count < 1 or byte_count > 1024:
+            raise ValueError("prefix byte count must be between 1 and 1024")
+        response = await asyncio.to_thread(
+            self._client.get_object,
+            Bucket=self._bucket_name,
+            Key=reference.key,
+            Range=f"bytes=0-{byte_count - 1}",
+        )
+        body = cast(ReadableBody | None, response.get("Body"))
+        if body is None or not hasattr(body, "read") or not hasattr(body, "close"):
+            raise StorageIntegrityError("stored object prefix is unavailable")
+        try:
+            payload = await asyncio.to_thread(body.read, byte_count)
+        finally:
+            body.close()
+        if not isinstance(payload, bytes) or len(payload) > byte_count:
+            raise StorageIntegrityError("stored object prefix is invalid")
+        return payload
 
     async def check_connection(self) -> None:
         """Verify bucket access without listing or transferring object content."""

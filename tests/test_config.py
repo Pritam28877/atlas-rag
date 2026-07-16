@@ -76,6 +76,9 @@ def test_complete_production_settings_are_accepted(
 ) -> None:
     production_values = {
         "APP_ENVIRONMENT": "production",
+        "AUTH__ISSUER": "https://identity.example.test/",
+        "AUTH__AUDIENCE": "rag-api",
+        "AUTH__JWKS_URL": "https://identity.example.test/jwks",
         "DATABASE__URL": "postgresql://user:private@db/rag",
         "STORAGE__ENDPOINT_URL": "https://storage.internal",
         "STORAGE__BUCKET_NAME": "rag-documents",
