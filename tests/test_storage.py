@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Mapping
+from io import BytesIO
 from uuid import UUID
 
 import pytest
@@ -23,6 +24,8 @@ class RecordingS3Client:
         self.presign_calls: list[tuple[str, Mapping[str, object], int, str]] = []
         self.head_response: Mapping[str, object] = {}
         self.head_calls: list[Mapping[str, object]] = []
+        self.get_response: Mapping[str, object] = {}
+        self.get_calls: list[Mapping[str, object]] = []
         self.closed = False
 
     def generate_presigned_url(
@@ -38,6 +41,10 @@ class RecordingS3Client:
     def head_object(self, **kwargs: object) -> Mapping[str, object]:
         self.head_calls.append(kwargs)
         return self.head_response
+
+    def get_object(self, **kwargs: object) -> Mapping[str, object]:
+        self.get_calls.append(kwargs)
+        return self.get_response
 
     def close(self) -> None:
         self.closed = True
@@ -96,6 +103,7 @@ def test_presigned_upload_signs_checksum_encryption_and_metadata() -> None:
     assert expires_in == 900
     assert parameters["Key"] == reference.key
     assert parameters["Metadata"] == dict(reference.metadata)
+    assert upload.headers["x-amz-meta-tenant-id"] == str(TENANT_ID)
     assert upload.headers["x-amz-checksum-sha256"] == checksum_header_value(
         reference.checksum_sha256
     )
@@ -139,13 +147,40 @@ def test_verify_object_checks_length_checksum_and_provenance() -> None:
         "ContentLength": 3,
         "ChecksumSHA256": checksum_header_value(reference.checksum_sha256),
         "Metadata": dict(reference.metadata),
+        "ContentType": "application/pdf",
         "VersionId": "version-1",
     }
 
     metadata = asyncio.run(storage.verify_object(reference, expected_content_length=3))
 
     assert metadata.version_id == "version-1"
-    assert client.head_calls == [{"Bucket": "rag-documents", "Key": reference.key}]
+    assert metadata.content_type == "application/pdf"
+    assert client.head_calls == [
+        {
+            "Bucket": "rag-documents",
+            "Key": reference.key,
+            "ChecksumMode": "ENABLED",
+        }
+    ]
+
+
+def test_read_prefix_uses_bounded_range_and_closes_body() -> None:
+    storage, client = create_storage()
+    reference = storage.original_reference(TENANT_ID, VERSION_ID, sha256_hex(b"PDF"))
+    body = BytesIO(b"%PDF-extra")
+    client.get_response = {"Body": body}
+
+    prefix = asyncio.run(storage.read_prefix(reference, 5))
+
+    assert prefix == b"%PDF-"
+    assert body.closed
+    assert client.get_calls == [
+        {
+            "Bucket": "rag-documents",
+            "Key": reference.key,
+            "Range": "bytes=0-4",
+        }
+    ]
 
 
 def test_verify_object_rejects_checksum_mismatch() -> None:

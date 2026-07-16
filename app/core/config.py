@@ -27,6 +27,27 @@ class DatabaseSettings(ImmutableSettingsModel):
         return self
 
 
+class AuthSettings(ImmutableSettingsModel):
+    issuer: str | None = None
+    audience: str | None = None
+    jwks_url: str | None = None
+    tenant_claim: str = Field(default="tenant_id", min_length=1, max_length=100)
+    jwks_cache_ttl_seconds: int = Field(default=300, ge=60, le=3600)
+
+    @model_validator(mode="after")
+    def validate_oidc_pair(self) -> Self:
+        configured = (self.issuer, self.audience, self.jwks_url)
+        if any(configured) and not all(configured):
+            raise ValueError(
+                "auth issuer, audience, and jwks_url must be configured together"
+            )
+        if self.jwks_url is not None and not self.jwks_url.startswith("https://"):
+            raise ValueError("auth jwks_url must use HTTPS")
+        if self.issuer is not None and not self.issuer.startswith("https://"):
+            raise ValueError("auth issuer must use HTTPS")
+        return self
+
+
 class StorageSettings(ImmutableSettingsModel):
     endpoint_url: str | None = None
     region: str = "us-east-1"
@@ -145,7 +166,9 @@ class Settings(BaseSettings):
     app_name: str = Field(default="RAG API", min_length=1, max_length=100)
     app_environment: Literal["development", "test", "production"] = "development"
     api_v1_prefix: str = Field(default="/v1", pattern=r"^/[a-zA-Z0-9/_-]*$")
+    api_request_max_bytes: int = Field(default=65_536, ge=1024, le=MEBIBYTE)
     openai_api_key: SecretStr | None = None
+    auth: AuthSettings = Field(default_factory=AuthSettings)
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
     broker: BrokerSettings = Field(default_factory=BrokerSettings)
@@ -172,6 +195,9 @@ class Settings(BaseSettings):
 
         required_values = {
             "database.url": self.database.url,
+            "auth.issuer": self.auth.issuer,
+            "auth.audience": self.auth.audience,
+            "auth.jwks_url": self.auth.jwks_url,
             "storage.endpoint_url": self.storage.endpoint_url,
             "storage.bucket_name": self.storage.bucket_name,
             "storage.access_key_id": self.storage.access_key_id,

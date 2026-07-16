@@ -80,6 +80,47 @@ uv run celery -A app.workers.native_worker:celery worker --queues ingestion.nati
 uv run celery -A app.workers.ocr_worker:celery worker --queues ingestion.ocr
 ```
 
+## Authenticated document intake
+
+Production document APIs require an OIDC access token signed with RS256. Set
+`AUTH__ISSUER`, `AUTH__AUDIENCE`, and the HTTPS `AUTH__JWKS_URL`; the token must
+contain `sub` and the UUID tenant claim configured by `AUTH__TENANT_CLAIM`.
+Collection membership in PostgreSQL remains the authorization source of truth,
+so a valid token cannot access another collection or tenant.
+
+The intake flow never sends PDF bytes through FastAPI:
+
+1. `POST /v1/collections` creates a bounded, tenant-owned collection.
+2. `POST /v1/collections/{collection_id}/documents` requires an
+   `Idempotency-Key` and returns a signed object-storage `PUT` target.
+3. The client uploads directly with every returned signed header.
+4. `POST /v1/document-versions/{version_id}/complete-upload` verifies stored
+   ownership metadata, length, SHA-256, MIME, and the bounded `%PDF-` prefix,
+   then records and dispatches a preflight job.
+5. `GET /v1/document-versions/{version_id}` returns safe progress. Retry,
+   reprocess, cancel, and asynchronous deletion use the idempotent
+   `/lifecycle` endpoint.
+
+Collection lists use `limit` (maximum 100) and opaque `cursor` pagination.
+Status and lifecycle responses exclude object keys, document text, provider
+errors, stack traces, and credentials.
+
+The opt-in P4 integration test uses a disposable PostgreSQL database whose name
+ends in `_test`, the existing P2 S3-compatible bucket variables, and the P2
+RabbitMQ variables. It performs a real signed upload and real API requests:
+
+```bash
+TEST_DATABASE_URL=postgresql://user:password@localhost:5432/rag_test \
+P2_STORAGE_ENDPOINT_URL=http://127.0.0.1:9000 \
+P2_STORAGE_BUCKET_NAME=rag-p2-test \
+P2_STORAGE_ACCESS_KEY_ID=replace-me \
+P2_STORAGE_SECRET_ACCESS_KEY=replace-me \
+P2_STORAGE_USE_TLS=false \
+P2_BROKER_URL=amqp://user:password@127.0.0.1:5672/rag \
+P2_BROKER_USE_TLS=false \
+uv run pytest -m catalog_integration tests/test_catalog_integration.py
+```
+
 ## Isolated worker containers
 
 `docker/compose.workers.yml` defines separate native and OCR worker profiles.
