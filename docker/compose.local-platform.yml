@@ -1,6 +1,29 @@
 name: atlas-rag-p2-local
 
 services:
+  postgres:
+    image: postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+    environment:
+      POSTGRES_USER: ${P2_POSTGRES_USER:?P2_POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${P2_POSTGRES_PASSWORD:?P2_POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${P2_POSTGRES_DB:-rag_test}
+    ports:
+      - 127.0.0.1:${P2_POSTGRES_PORT:-15432}:5432
+    volumes:
+      - p2-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+    pids_limit: 128
+    networks: [ingestion, host-access]
+
   minio:
     image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     command: server /data --console-address :9001
@@ -19,9 +42,10 @@ services:
       retries: 20
     mem_limit: 512m
     pids_limit: 128
+    networks: [ingestion, host-access]
 
   rabbitmq:
-    image: rabbitmq:4.1.8-management@sha256:d5011b2ee8048d33b7fa4e2d1696020a00ff8d71cecbd164cac9a629ab4edde
+    image: rabbitmq:4.1.8-management@sha256:d5011b2fee8048d33b7fa4e2d1696020a00ff8d71cecbd164cac9a629ab4edde
     environment:
       RABBITMQ_DEFAULT_USER: ${P2_RABBITMQ_USER:?P2_RABBITMQ_USER is required}
       RABBITMQ_DEFAULT_PASS: ${P2_RABBITMQ_PASSWORD:?P2_RABBITMQ_PASSWORD is required}
@@ -38,7 +62,41 @@ services:
       retries: 20
     mem_limit: 768m
     pids_limit: 128
+    networks: [ingestion, host-access]
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.5@sha256:4ee82ecb35d837a6186c81aaa64c8a5bce71aa956edbd87f1f684ab56af52c44
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m -XX:ActiveProcessorCount=2
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${P2_OPENSEARCH_PASSWORD:?P2_OPENSEARCH_PASSWORD is required}
+    ports:
+      - 127.0.0.1:${P2_OPENSEARCH_PORT:-19200}:9200
+    volumes:
+      - p2-opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSk -u admin:$${OPENSEARCH_INITIAL_ADMIN_PASSWORD} https://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    mem_limit: 1536m
+    pids_limit: 1024
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks: [ingestion, host-access]
+
+networks:
+  ingestion:
+    name: ${INGESTION_NETWORK_NAME:-atlas-rag-ingestion}
+    internal: true
+  host-access:
+    driver: bridge
 
 volumes:
+  p2-postgres-data:
   p2-minio-data:
   p2-rabbitmq-data:
+  p2-opensearch-data:
