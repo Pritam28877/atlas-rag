@@ -17,6 +17,7 @@ from app.services.catalog.errors import (
     CatalogNotFoundError,
     CatalogQuotaError,
 )
+from app.services.catalog.status_query import VERSION_STATUS_SQL
 
 EDITOR_ROLES = ("owner", "editor")
 
@@ -339,45 +340,7 @@ class CatalogRepository:
         await self.get_version(session, principal, version_id)
         row = (
             await session.execute(
-                text(
-                    """
-                    SELECT version.*,
-                           job.stage,
-                           EXISTS(SELECT 1 FROM artifacts artifact
-                             WHERE artifact.tenant_id = version.tenant_id
-                               AND artifact.collection_id = version.collection_id
-                               AND artifact.document_version_id = version.id)
-                             AS artifacts_available,
-                           EXISTS(SELECT 1 FROM chunks chunk
-                             WHERE chunk.tenant_id = version.tenant_id
-                               AND chunk.collection_id = version.collection_id
-                               AND chunk.document_version_id = version.id)
-                             AS citations_ready,
-                           EXISTS(SELECT 1 FROM index_publications publication
-                             WHERE publication.tenant_id = version.tenant_id
-                               AND publication.collection_id = version.collection_id
-                               AND publication.document_version_id = version.id
-                               AND publication.publication_kind = 'lexical'
-                               AND publication.deleted_at IS NULL)
-                             AS lexical_index_ready,
-                           EXISTS(SELECT 1 FROM index_publications publication
-                             WHERE publication.tenant_id = version.tenant_id
-                               AND publication.collection_id = version.collection_id
-                               AND publication.document_version_id = version.id
-                               AND publication.publication_kind = 'vector'
-                               AND publication.deleted_at IS NULL)
-                             AS vector_index_ready
-                    FROM document_versions version
-                    LEFT JOIN LATERAL (
-                        SELECT stage FROM ingestion_jobs
-                        WHERE tenant_id = version.tenant_id
-                          AND collection_id = version.collection_id
-                          AND document_version_id = version.id
-                        ORDER BY created_at DESC LIMIT 1
-                    ) job ON true
-                    WHERE version.tenant_id = :tenant_id AND version.id = :version_id
-                    """
-                ),
+                text(VERSION_STATUS_SQL),
                 {"tenant_id": principal.tenant_id, "version_id": version_id},
             )
         ).mappings().one()

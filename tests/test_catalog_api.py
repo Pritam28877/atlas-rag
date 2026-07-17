@@ -98,10 +98,16 @@ class FakeCatalogService:
         }
 
     async def lifecycle(
-        self, principal, version_id, operation, idempotency_key
+        self, principal, version_id, operation, idempotency_key, pipeline_profile
     ):
         self.lifecycle_calls.append(
-            (principal, version_id, operation, idempotency_key)
+            (
+                principal,
+                version_id,
+                operation,
+                idempotency_key,
+                pipeline_profile,
+            )
         )
         return {
             "operation_id": OPERATION_ID,
@@ -276,6 +282,24 @@ def test_lifecycle_request_is_idempotent_contract() -> None:
     assert response.json()["operation_id"] == str(OPERATION_ID)
     assert response.json()["status"] == "pending"
     assert len(service.lifecycle_calls) == 1
+
+
+def test_reprocess_requires_explicit_new_pipeline_profile() -> None:
+    client = create_client(FakeCatalogService())
+
+    missing = client.post(
+        f"/v1/document-versions/{VERSION_ID}/lifecycle",
+        headers={"Idempotency-Key": "reprocess-missing-profile"},
+        json={"operation": "reprocess"},
+    )
+    valid = client.post(
+        f"/v1/document-versions/{VERSION_ID}/lifecycle",
+        headers={"Idempotency-Key": "reprocess-profile-v2"},
+        json={"operation": "reprocess", "pipeline_profile": "pdf-v2"},
+    )
+
+    assert missing.status_code == 422
+    assert valid.status_code == 202
 
 
 def test_cross_scope_resource_is_reported_as_not_found() -> None:

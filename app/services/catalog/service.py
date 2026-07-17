@@ -273,6 +273,7 @@ class CatalogService:
         version_id: UUID,
         operation: str,
         idempotency_key: str,
+        pipeline_profile: str | None = None,
     ) -> Mapping[str, object]:
         async with self._database.transaction() as session:
             request, version, job_id = await self._operations.lifecycle_request(
@@ -282,17 +283,23 @@ class CatalogService:
                 operation,
                 idempotency_key,
                 self._settings.workers.job_max_attempts,
+                pipeline_profile,
             )
+        target_version_id = UUID(str(request["document_version_id"]))
         if job_id is not None:
-            task = (
-                PipelineTask.DELETE_DOCUMENT
-                if operation == "delete"
-                else PipelineTask.NATIVE_PROCESS
+            task = {
+                "delete": PipelineTask.DELETE_DOCUMENT,
+                "reprocess": PipelineTask.CHUNK_PROCESS,
+            }.get(operation, PipelineTask.NATIVE_PROCESS)
+            await self._dispatch(
+                task,
+                principal.tenant_id,
+                target_version_id,
+                job_id,
             )
-            await self._dispatch(task, principal.tenant_id, version_id, job_id)
         return {
             "operation_id": request["id"],
-            "document_version_id": version_id,
+            "document_version_id": target_version_id,
             "operation": operation,
             "status": request["state"],
             "version_state": version["state"],

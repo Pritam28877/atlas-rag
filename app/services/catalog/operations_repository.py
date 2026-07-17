@@ -7,12 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import Principal
 from app.services.catalog.enums import VersionState
 from app.services.catalog.errors import CatalogConflictError
-from app.services.catalog.repository import CatalogRepository
-from app.services.catalog.state_machine import (
-    CatalogTransitionError,
-    VersionSnapshot,
-    transition_version,
+from app.services.catalog.operation_transitions import (
+    create_ingestion_job,
+    transition_catalog_version,
 )
+from app.services.catalog.repository import CatalogRepository
+from app.services.catalog.reprocessing_repository import create_reprocessed_version
 
 
 class CatalogOperationsRepository:
@@ -46,7 +46,7 @@ class CatalogOperationsRepository:
                 {"tenant_id": principal.tenant_id, "version_id": version_id},
             )
             return version, job_id
-        version = await self._transition(
+        version = await transition_catalog_version(
             session,
             principal,
             version,
@@ -56,7 +56,7 @@ class CatalogOperationsRepository:
             event_key="complete-upload:validating",
         )
         if not valid:
-            version = await self._transition(
+            version = await transition_catalog_version(
                 session,
                 principal,
                 version,
@@ -103,7 +103,7 @@ class CatalogOperationsRepository:
                 "version_id": version_id,
             },
         )
-        version = await self._transition(
+        version = await transition_catalog_version(
             session,
             principal,
             version,
@@ -112,7 +112,7 @@ class CatalogOperationsRepository:
             reason_code=None,
             event_key="complete-upload:queued",
         )
-        job_id = await self._create_job(
+        job_id = await create_ingestion_job(
             session,
             principal,
             version,
@@ -129,7 +129,30 @@ class CatalogOperationsRepository:
         operation: str,
         idempotency_key: str,
         job_max_attempts: int,
+        pipeline_profile: str | None = None,
     ) -> tuple[Mapping[str, object], Mapping[str, object], UUID | None]:
+        source_version = await self._catalog.get_version(
+            session, principal, version_id, require_editor=True
+        )
+        await session.execute(
+            text(
+                """
+                SELECT id FROM source_documents
+                WHERE tenant_id = :tenant_id
+                  AND collection_id = :collection_id
+                  AND id = :document_id
+                FOR UPDATE
+                """
+            ),
+            {
+                "tenant_id": principal.tenant_id,
+                "collection_id": source_version["collection_id"],
+                "document_id": source_version["document_id"],
+            },
+        )
+        source_version = await self._catalog.get_version(
+            session, principal, version_id, require_editor=True, lock=True
+        )
         existing = (
             await session.execute(
                 text(
@@ -141,17 +164,19 @@ class CatalogOperationsRepository:
                      AND version.collection_id = request.collection_id
                      AND version.id = request.document_version_id
                     WHERE request.tenant_id = :tenant_id
+                      AND request.collection_id = :collection_id
                       AND request.idempotency_key = :idempotency_key
                     """
                 ),
                 {
                     "tenant_id": principal.tenant_id,
+                    "collection_id": source_version["collection_id"],
                     "idempotency_key": idempotency_key,
                 },
             )
         ).mappings().one_or_none()
         if existing is not None:
-            identity_mismatch = existing["document_version_id"] != version_id
+            identity_mismatch = existing["source_document_version_id"] != version_id
             operation_mismatch = existing["request_type"] != operation
             if identity_mismatch or operation_mismatch:
                 raise CatalogConflictError(
@@ -159,7 +184,10 @@ class CatalogOperationsRepository:
                 )
             job_id = None
             if existing["state"] == "pending" and operation != "cancel":
-                stage = "delete" if operation == "delete" else "preflight"
+                stage = {
+                    "delete": "delete",
+                    "reprocess": "chunk",
+                }.get(operation, "preflight")
                 job_id = await session.scalar(
                     text(
                         """
@@ -172,15 +200,31 @@ class CatalogOperationsRepository:
                     ),
                     {
                         "tenant_id": principal.tenant_id,
-                        "version_id": version_id,
+                        "version_id": existing["document_version_id"],
                         "stage": stage,
                     },
                 )
             return dict(existing), {"state": existing["version_state"]}, job_id
-        version = await self._catalog.get_version(
-            session, principal, version_id, require_editor=True, lock=True
-        )
+        if operation == "delete" and await self._has_active_deletion_job(
+            session,
+            principal.tenant_id,
+            version_id,
+        ):
+            raise CatalogConflictError("deletion is already in progress")
+        version = source_version
         request_id = uuid4()
+        if operation == "reprocess":
+            if pipeline_profile is None:
+                raise CatalogConflictError(
+                    "pipeline profile is required for reprocess"
+                )
+            version = await create_reprocessed_version(
+                session,
+                principal,
+                source_version,
+                pipeline_profile,
+                request_id,
+            )
         already_deleted = operation == "delete" and version["state"] == "deleted"
         request_state = (
             "succeeded" if operation == "cancel" or already_deleted else "pending"
@@ -191,12 +235,15 @@ class CatalogOperationsRepository:
                     """
                     INSERT INTO lifecycle_requests (
                         id, tenant_id, collection_id, document_version_id,
-                        request_type, idempotency_key, requested_by, state,
+                        source_document_version_id, request_type,
+                        idempotency_key, requested_by, state,
                         completed_at
                     ) VALUES (
                         :id, :tenant_id, :collection_id, :version_id,
-                        :operation, :idempotency_key, :subject, :state,
-                        CASE WHEN :state = 'succeeded' THEN now() ELSE NULL END
+                        :source_version_id, :operation, :idempotency_key,
+                        :subject, :state,
+                        CASE WHEN CAST(:state AS varchar) = 'succeeded'
+                             THEN now() ELSE NULL END
                     ) RETURNING *
                     """
                 ),
@@ -204,7 +251,8 @@ class CatalogOperationsRepository:
                     "id": request_id,
                     "tenant_id": principal.tenant_id,
                     "collection_id": version["collection_id"],
-                    "version_id": version_id,
+                    "version_id": version["id"],
+                    "source_version_id": source_version["id"],
                     "operation": operation,
                     "idempotency_key": idempotency_key,
                     "subject": principal.subject,
@@ -215,7 +263,7 @@ class CatalogOperationsRepository:
         request = dict(request_row)
         job_id: UUID | None = None
         if operation == "cancel":
-            version = await self._transition(
+            version = await transition_catalog_version(
                 session,
                 principal,
                 version,
@@ -224,8 +272,11 @@ class CatalogOperationsRepository:
                 reason_code=None,
                 event_key=f"lifecycle:{request_id}",
             )
-        elif operation in {"retry", "reprocess"}:
-            version = await self._transition(
+            await self._cancel_active_jobs(
+                session, principal.tenant_id, UUID(str(version["id"]))
+            )
+        elif operation == "retry":
+            version = await transition_catalog_version(
                 session,
                 principal,
                 version,
@@ -234,153 +285,83 @@ class CatalogOperationsRepository:
                 reason_code=None,
                 event_key=f"lifecycle:{request_id}",
             )
-            job_id = await self._create_job(
+            job_id = await create_ingestion_job(
                 session,
                 principal,
                 version,
                 stage="preflight",
                 max_attempts=job_max_attempts,
+                lifecycle_request_id=request_id,
+            )
+        elif operation == "reprocess":
+            job_id = await create_ingestion_job(
+                session,
+                principal,
+                version,
+                stage="chunk",
+                max_attempts=job_max_attempts,
+                lifecycle_request_id=request_id,
             )
         elif operation == "delete" and request_state == "pending":
-            job_id = await self._create_job(
+            job_id = await create_ingestion_job(
                 session,
                 principal,
                 version,
                 stage="delete",
                 max_attempts=job_max_attempts,
+                lifecycle_request_id=request_id,
             )
         return request, version, job_id
 
-    async def _transition(
+    async def _has_active_deletion_job(
         self,
         session: AsyncSession,
-        principal: Principal,
-        version: Mapping[str, object],
-        target: VersionState,
-        *,
-        operation: str,
-        reason_code: str | None,
-        event_key: str,
-    ) -> Mapping[str, object]:
-        snapshot = VersionSnapshot(
-            state=VersionState(str(version["state"])),
-            revision=int(str(version["state_revision"])),
-            progress_completed=int(str(version["progress_completed"])),
-            progress_total=int(str(version["progress_total"])),
-            terminal_reason_code=(
-                str(version["terminal_reason_code"])
-                if version["terminal_reason_code"] is not None
-                else None
-            ),
-        )
-        try:
-            transitioned = transition_version(
-                snapshot,
-                target,
-                expected_revision=snapshot.revision,
-                terminal_reason_code=reason_code,
-                operation=operation,
-            )
-        except CatalogTransitionError as error:
-            raise CatalogConflictError(str(error)) from error
-        updated = (
-            await session.execute(
-                text(
-                    """
-                    UPDATE document_versions
-                    SET state = :state, state_revision = :next_revision,
-                        terminal_reason_code = :reason_code, updated_at = now()
-                    WHERE tenant_id = :tenant_id AND id = :version_id
-                      AND state_revision = :expected_revision
-                    RETURNING *
-                    """
-                ),
-                {
-                    "state": transitioned.state.value,
-                    "next_revision": transitioned.revision,
-                    "reason_code": transitioned.terminal_reason_code,
-                    "tenant_id": principal.tenant_id,
-                    "version_id": version["id"],
-                    "expected_revision": snapshot.revision,
-                },
-            )
-        ).mappings().one_or_none()
-        if updated is None:
-            raise CatalogConflictError("document version changed concurrently")
-        await session.execute(
+        tenant_id: UUID,
+        version_id: UUID,
+    ) -> bool:
+        active_deletion = await session.scalar(
             text(
                 """
-                INSERT INTO version_transition_events (
-                    id, tenant_id, collection_id, document_version_id,
-                    idempotency_key, from_state, to_state, from_revision,
-                    to_revision, operation, actor_type, actor_id
-                ) VALUES (
-                    :id, :tenant_id, :collection_id, :version_id,
-                    :event_key, :from_state, :to_state, :from_revision,
-                    :to_revision, :operation, 'api', :actor_id
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM ingestion_jobs
+                    WHERE tenant_id = :tenant_id
+                      AND document_version_id = :version_id
+                      AND stage = 'delete'
+                      AND state IN (
+                          'pending', 'leased', 'running', 'retry_scheduled'
+                      )
                 )
                 """
             ),
-            {
-                "id": uuid4(),
-                "tenant_id": principal.tenant_id,
-                "collection_id": version["collection_id"],
-                "version_id": version["id"],
-                "event_key": event_key,
-                "from_state": snapshot.state.value,
-                "to_state": transitioned.state.value,
-                "from_revision": snapshot.revision,
-                "to_revision": transitioned.revision,
-                "operation": operation,
-                "actor_id": principal.subject,
-            },
+            {"tenant_id": tenant_id, "version_id": version_id},
         )
-        return dict(updated)
+        return bool(active_deletion)
 
-    async def _create_job(
-        self,
-        session: AsyncSession,
-        principal: Principal,
-        version: Mapping[str, object],
-        *,
-        stage: str,
-        max_attempts: int,
-    ) -> UUID:
-        generation = await session.scalar(
-            text(
-                """
-                SELECT COALESCE(max(generation), -1) + 1 FROM ingestion_jobs
-                WHERE tenant_id = :tenant_id AND document_version_id = :version_id
-                  AND stage = :stage
-                """
-            ),
-            {
-                "tenant_id": principal.tenant_id,
-                "version_id": version["id"],
-                "stage": stage,
-            },
-        )
-        job_id = uuid4()
+    async def _cancel_active_jobs(
+        self, session: AsyncSession, tenant_id: UUID, version_id: UUID
+    ) -> None:
         await session.execute(
             text(
                 """
-                INSERT INTO ingestion_jobs (
-                    id, tenant_id, collection_id, document_version_id,
-                    stage, generation, max_attempts
-                ) VALUES (
-                    :id, :tenant_id, :collection_id, :version_id,
-                    :stage, :generation, :max_attempts
+                WITH cancelled AS (
+                    UPDATE ingestion_jobs
+                    SET state = 'cancelled', lease_owner = NULL,
+                        lease_expires_at = NULL, updated_at = now()
+                    WHERE tenant_id = :tenant_id
+                      AND document_version_id = :version_id
+                      AND state IN ('pending', 'leased', 'running', 'retry_scheduled')
+                    RETURNING id, attempt_count
                 )
+                UPDATE job_attempts attempt
+                SET finished_at = now(), heartbeat_at = now(),
+                    outcome = 'cancelled', reason_code = 'LIFECYCLE_CANCELLED'
+                FROM cancelled
+                WHERE attempt.tenant_id = :tenant_id
+                  AND attempt.job_id = cancelled.id
+                  AND attempt.attempt_number = cancelled.attempt_count
+                  AND attempt.finished_at IS NULL
                 """
             ),
-            {
-                "id": job_id,
-                "tenant_id": principal.tenant_id,
-                "collection_id": version["collection_id"],
-                "version_id": version["id"],
-                "stage": stage,
-                "generation": generation,
-                "max_attempts": max_attempts,
-            },
+            {"tenant_id": tenant_id, "version_id": version_id},
         )
-        return job_id
