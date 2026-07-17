@@ -71,13 +71,17 @@ TEST_DATABASE_URL=postgresql://user:password@localhost:5432/rag_test \
 ## Worker queues
 
 Celery workers require `BROKER__URL`; no worker is started by the API process.
-Run native and OCR pools independently so a saturated OCR queue cannot consume
-native extraction capacity. Task messages are JSON objects containing only
-tenant, document-version, and job UUIDs.
+Run native, OCR, publication, and lifecycle pools independently so model/index
+work cannot consume extraction capacity. A durable topic exchange supports
+non-blocking delayed retries on quorum queues. Task messages are JSON objects
+containing only tenant, document-version, and job UUIDs.
 
 ```bash
-uv run celery -A app.workers.native_worker:celery worker --queues ingestion.native
-uv run celery -A app.workers.ocr_worker:celery worker --queues ingestion.ocr
+uv run python -m app.workers.native_worker
+uv run python -m app.workers.ocr_worker
+uv run python -m app.workers.publication_worker
+uv run python -m app.workers.lifecycle_worker
+uv run celery -A app.workers.publication_worker:celery beat --schedule=/tmp/celerybeat-schedule
 ```
 
 ## Authenticated document intake
@@ -110,49 +114,145 @@ ends in `_test`, the existing P2 S3-compatible bucket variables, and the P2
 RabbitMQ variables. It performs a real signed upload and real API requests:
 
 ```bash
-TEST_DATABASE_URL=postgresql://user:password@localhost:5432/rag_test \
-P2_STORAGE_ENDPOINT_URL=http://127.0.0.1:9000 \
+TEST_DATABASE_URL=postgresql://user:password@localhost:15432/rag_test \
+P2_STORAGE_ENDPOINT_URL=http://127.0.0.1:19000 \
 P2_STORAGE_BUCKET_NAME=rag-p2-test \
 P2_STORAGE_ACCESS_KEY_ID=replace-me \
 P2_STORAGE_SECRET_ACCESS_KEY=replace-me \
 P2_STORAGE_USE_TLS=false \
-P2_BROKER_URL=amqp://user:password@127.0.0.1:5672/rag \
+P2_STORAGE_SERVER_SIDE_ENCRYPTION=provider-default \
+P2_BROKER_URL=amqp://user:password@127.0.0.1:15672/rag \
 P2_BROKER_USE_TLS=false \
 uv run pytest -m catalog_integration tests/test_catalog_integration.py
 ```
 
 ## Isolated worker containers
 
-`docker/compose.workers.yml` defines separate native and OCR worker profiles.
-Both run as an unprivileged user with a read-only root filesystem, a bounded
-`tmpfs` job directory, PID/memory/CPU limits, and an internal-only network.
-Attach only trusted broker, storage, and database services to that internal
-network; do not add a public egress route. The API process never parses PDFs or
-starts Celery workers.
+`docker/compose.workers.yml` defines separate native, OCR, publication, and
+lifecycle workers plus a reconciliation scheduler. Workers run as an unprivileged
+user with a read-only root filesystem, a bounded `tmpfs` job directory,
+PID/memory/CPU limits, and one configured queue each. Start the local platform
+first so it creates the named internal `atlas-rag-ingestion` network, then start
+the worker compose project, which attaches to that external network. Do not add
+a public egress route. The API process never parses PDFs or starts Celery workers.
+
+The native worker uses `pypdf` behind a parser interface. It downloads one
+checksum-addressed original into a private job directory with a hard byte
+limit, performs page-count, encryption, active-content, content-stream, and
+output-limit checks, and writes page records incrementally as JSONL. Native
+pages retain page numbers, text blocks/bounds where available, language and
+quality signals, parser version, and warnings. Mixed or scanned pages create a
+durable OCR job on the isolated OCR queue; native-only documents publish an
+immutable normalized artifact and advance to chunking. Expired leases are
+reclaimable and duplicate deliveries reuse the same durable artifacts/jobs.
+
+`STORAGE__SERVER_SIDE_ENCRYPTION=provider-default` is permitted only for an
+explicitly secured development/test provider such as the local MinIO harness.
+Production configuration rejects that mode and requires `AES256` or `aws:kms`.
+
+OCR uses the benchmark-approved Tesseract 5.3.4 English profile and Poppler
+24.02.0 renderer in the separate OCR image/queue. It renders only page numbers
+persisted as OCR-eligible, one page at a time at the configured DPI. Per-page
+image bytes, subprocess time, OCR blocks, text output, worker concurrency,
+prefetch, memory, CPU, and tasks-per-child are bounded. OCR word confidence and
+pixel bounds are stored with page provenance; native pages are retained during
+mixed-document merge. Unsupported languages, no text, low confidence, tool
+timeouts, incomplete page coverage, and retry exhaustion have explicit safe
+reason codes. Process-local OCR diagnostic counters use fixed labels, but the
+current API metrics endpoint does not aggregate worker-process registries.
+
+The selected v1 OCR profile does not claim handwriting, table reconstruction,
+non-English OCR, or reliable reading order for complex layouts. Those inputs
+remain native-with-warning or explicit OCR failure/review outcomes until a
+separate benchmark approves another profile.
+
+The publication worker runs three durable stages: deterministic page-aware
+chunking, bounded local embedding, and hybrid index publication. Chunk identity
+is derived from tenant, document version, chunker profile, ordinal, and text
+SHA-256. Each immutable JSONL record retains page range, character and block
+offsets where available, token count, section path, chunker version, and safe
+text. Pages never merge across citation boundaries; per-page characters,
+document chunks, overlap, batch size, worker concurrency, task lifetime, and
+process recycling are configuration-bounded.
+
+The selected embedding profile is FastEmbed 0.8.0 mean pooling with the baked,
+checksum-verified multilingual MiniLM ONNX snapshot documented in
+`docs/benchmarks/results-embedding-opensearch.md`. Workers never download the
+model while processing a task. OpenSearch 2.19.5 receives staged records with
+tenant, collection, document-version, page, hash, lexical text, and vector
+fields. Records become searchable only after every expected chunk is verified;
+PostgreSQL independently reconciles exact chunk, embedding, lexical, vector,
+and manifest evidence before allowing `ready`. Replayed jobs use deterministic
+IDs and upserts rather than duplicate chunks or search records.
+
+Reprocessing requires an explicit new `pipeline_profile` and creates a linked,
+immutable document version from the prior normalized artifact. The prior version
+remains searchable until complete replacement publication, then promotion
+supersedes and de-indexes it. Deletion first revokes tenant/version-scoped search
+records, cancels active jobs, and then removes managed artifacts when retention
+and legal hold permit. The publication worker also exposes a bounded
+`app.workers.publication.reconcile` task for stale leases, stale dispatches,
+incomplete publication evidence, and retention-delayed cleanup. Alert rules,
+operator procedures, and measured limits are under `docs/operations/` and
+`docs/benchmarks/results-lifecycle-hardening.md`.
+
+The opt-in P7 integration requires the disposable PostgreSQL/S3/OpenSearch
+settings and an already downloaded or image-baked model directory:
+
+```bash
+TEST_DATABASE_URL=postgresql://user:password@localhost:15432/rag_test \
+P2_STORAGE_ENDPOINT_URL=http://127.0.0.1:19000 \
+P2_STORAGE_BUCKET_NAME=rag-p2-test \
+P2_STORAGE_ACCESS_KEY_ID=replace-me \
+P2_STORAGE_SECRET_ACCESS_KEY=replace-me \
+P2_STORAGE_USE_TLS=false \
+P2_STORAGE_SERVER_SIDE_ENCRYPTION=provider-default \
+P2_SEARCH_ENDPOINT_URL=https://127.0.0.1:19200 \
+P2_SEARCH_USERNAME=admin \
+P2_SEARCH_PASSWORD=replace-me \
+P2_SEARCH_VERIFY_TLS=false \
+P2_EMBEDDING_MODEL_DIRECTORY=/opt/rag/models/multilingual-minilm \
+uv run pytest -m publication_integration tests/test_publication_integration.py
+```
 
 After explicitly starting local MinIO and RabbitMQ, run the opt-in P2 transfer
 and broker checks with a pre-created empty bucket:
 
 ```bash
-P2_STORAGE_ENDPOINT_URL=http://127.0.0.1:9000 \
+P2_STORAGE_ENDPOINT_URL=http://127.0.0.1:19000 \
 P2_STORAGE_BUCKET_NAME=rag-p2-test \
 P2_STORAGE_ACCESS_KEY_ID=replace-me \
 P2_STORAGE_SECRET_ACCESS_KEY=replace-me \
 P2_STORAGE_USE_TLS=false \
-P2_BROKER_URL=amqp://user:password@127.0.0.1:5672/rag \
+P2_STORAGE_SERVER_SIDE_ENCRYPTION=provider-default \
+P2_BROKER_URL=amqp://user:password@127.0.0.1:15672/rag \
 P2_BROKER_USE_TLS=false \
 uv run pytest -m platform_integration tests/test_platform_integration.py
 ```
 
 Use the isolated P2 local harness rather than the P1 benchmark stack. Generate
 fresh local-only credentials, export the variables shown above plus
-`P2_RABBITMQ_USER` and `P2_RABBITMQ_PASSWORD`, then run:
+`P2_POSTGRES_USER`, `P2_POSTGRES_PASSWORD`, `P2_RABBITMQ_USER`,
+`P2_RABBITMQ_PASSWORD`, and
+`P2_OPENSEARCH_PASSWORD`, then run:
 
 ```bash
 docker compose -f docker/compose.local-platform.yml up -d --wait
 uv run python scripts/create_local_p2_bucket.py
 uv run pytest -m platform_integration tests/test_platform_integration.py
 docker compose -f docker/compose.local-platform.yml down -v --remove-orphans
+```
+
+For the real worker acceptance path, keep the platform running, export the same
+service settings for `docker/compose.workers.yml`, set
+`SEARCH__INDEX_NAME=rag-worker-e2e`, and start all five worker services. Then set
+the host-side test variables above plus
+`P2_WORKER_SEARCH_INDEX_NAME=rag-worker-e2e` and run:
+
+```bash
+docker compose -f docker/compose.workers.yml up -d --build
+uv run pytest -m worker_integration tests/test_worker_runtime_integration.py
+docker compose -f docker/compose.workers.yml down --remove-orphans
 ```
 
 ## PDF benchmark corpus

@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import platform
+import resource
 import subprocess
 import uuid
 from pathlib import Path
@@ -21,6 +22,10 @@ try:
         wait_for_opensearch,
     )
     from .broker_contract import run_broker_contract
+    from .embedding_profiles import (
+        MultilingualMiniLmEmbeddingProfile,
+        TokenHashEmbeddingProfile,
+    )
     from .retrieval_control import run_retrieval_control
     from .storage_catalog import run_catalog, run_storage
 except ImportError:  # Direct script execution keeps this benchmark self-contained.
@@ -33,11 +38,23 @@ except ImportError:  # Direct script execution keeps this benchmark self-contain
         wait_for_opensearch,
     )
     from broker_contract import run_broker_contract
+    from embedding_profiles import (
+        MultilingualMiniLmEmbeddingProfile,
+        TokenHashEmbeddingProfile,
+    )
     from retrieval_control import run_retrieval_control
     from storage_catalog import run_catalog, run_storage
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT.parent / "results" / "infrastructure-control.json"
+RESULTS_DIRECTORY = ROOT.parent / "results"
+
+
+def _embedding_profile(
+    name: str,
+) -> TokenHashEmbeddingProfile | MultilingualMiniLmEmbeddingProfile:
+    if name == "token-hash":
+        return TokenHashEmbeddingProfile()
+    return MultilingualMiniLmEmbeddingProfile(threads=2, batch_size=16)
 
 
 def image_metadata() -> Any:
@@ -95,34 +112,54 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--trials", type=bounded_trials, default=5)
     parser.add_argument("--broker-restart", action="store_true")
+    parser.add_argument(
+        "--embedding-profile",
+        choices=("token-hash", "multilingual-minilm"),
+        default="token-hash",
+    )
     args = parser.parse_args()
+    embedding_profile = _embedding_profile(args.embedding_profile)
     values = load_env()
     wait_for_opensearch(values)
-    timings: dict[str, list[float]] = {"storage": [], "catalog": [], "index_build": []}
+    timings: dict[str, list[float]] = {
+        "storage": [],
+        "catalog": [],
+        "embedding": [],
+        "index_build": [],
+    }
     retrieval_records: list[dict[str, Any]] = []
     storage_bytes: list[int] = []
+    retrieval: dict[str, Any] | None = None
     for _ in range(args.trials):
         run_id = uuid.uuid4().hex
         timings["storage"].append(run_storage(values, run_id))
         timings["catalog"].append(run_catalog(values, run_id))
-        retrieval, records = run_retrieval_control(values, run_id)
+        retrieval, records = run_retrieval_control(
+            values, run_id, embedding_profile
+        )
+        timings["embedding"].append(float(retrieval["embedding_ms"]))
         timings["index_build"].append(float(retrieval["build_ms"]))
         storage_bytes.append(int(retrieval["index_storage_bytes"]))
         retrieval_records.extend(records)
+    if retrieval is None:
+        raise ValueError("at least one benchmark trial is required")
     broker = run_broker_contract(values, uuid.uuid4().hex, args.broker_restart)
     result = {
-        "scope": (
-            "local synthetic control only; not a production SLO or provider selection"
-        ),
+        "scope": "local synthetic selection evidence; not a production SLO",
         "trials": args.trials,
         "host": {"platform": platform.platform(), "cpu_count": os.cpu_count()},
+        "peak_process_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         "images": image_metadata(),
         "storage_catalog": {
             "storage": latency_summary(timings["storage"]),
             "catalog": latency_summary(timings["catalog"]),
         },
         "retrieval": {
-            "embedding_profile": "unicode-token-hash-v1-d64 (plumbing control only)",
+            "embedding_profile": retrieval["embedding_profile"],
+            "embedding_model_version": retrieval["embedding_model_version"],
+            "embedding_dimension": retrieval["embedding_dimension"],
+            "embedding_license": retrieval["embedding_license"],
+            "embedding_latency": latency_summary(timings["embedding"]),
             "hybrid_profile": "application-side reciprocal-rank fusion, k=60",
             "index_build": latency_summary(timings["index_build"]),
             "max_index_storage_bytes": max(storage_bytes),
@@ -133,8 +170,9 @@ def main() -> None:
         },
         "broker": broker,
     }
-    RESULTS_PATH.parent.mkdir(exist_ok=True)
-    RESULTS_PATH.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    results_path = RESULTS_DIRECTORY / f"infrastructure-{args.embedding_profile}.json"
+    results_path.parent.mkdir(exist_ok=True)
+    results_path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(
         json.dumps(
             {"retrieval": result["retrieval"]["results"], "broker": broker},

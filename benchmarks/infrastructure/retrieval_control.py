@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
-import re
 import time
 from pathlib import Path
 from typing import Any
@@ -13,26 +11,22 @@ from urllib.error import HTTPError, URLError
 
 try:
     from .benchmark_common import elapsed, request_json, require
+    from .embedding_profiles import EmbeddingProfile, TokenHashEmbeddingProfile
     from .retrieval_metrics import evaluate_ranking
 except ImportError:  # Direct script execution keeps this benchmark self-contained.
     from benchmark_common import elapsed, request_json, require
+    from embedding_profiles import EmbeddingProfile, TokenHashEmbeddingProfile
     from retrieval_metrics import evaluate_ranking
 
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS_PATH = ROOT / "benchmarks/retrieval/corpus-v1.json"
 QRELS_PATH = ROOT / "benchmarks/retrieval/qrels-v1.json"
-EMBEDDING_DIMENSION = 64
 RRF_K = 60
 
 
 def token_hash_embedding(text: str) -> list[float]:
-    values = [0.0] * EMBEDDING_DIMENSION
-    for token in re.findall(r"\w+", text.casefold(), flags=re.UNICODE):
-        digest = hashlib.blake2b(token.encode(), digest_size=8).digest()
-        index = int.from_bytes(digest[:4], "big") % EMBEDDING_DIMENSION
-        values[index] += 1.0 if digest[4] % 2 else -1.0
-    magnitude = math.sqrt(sum(value * value for value in values))
-    return [value / magnitude for value in values] if magnitude else values
+    """Compatibility helper retained for the original plumbing-control tests."""
+    return TokenHashEmbeddingProfile().embed([text])[0]
 
 
 def _sha256(path: Path) -> str:
@@ -46,9 +40,12 @@ def _repo_path(reference: str) -> Path:
     return path
 
 
-def load_snapshot() -> tuple[
+def load_snapshot(
+    embedding_profile: EmbeddingProfile | None = None,
+) -> tuple[
     list[dict[str, Any]], list[dict[str, Any]], dict[str, str]
 ]:
+    profile = embedding_profile or TokenHashEmbeddingProfile()
     manifest = json.loads(
         (ROOT / "docs/benchmarks/fixture-manifest.json").read_text(encoding="utf-8")
     )
@@ -93,11 +90,17 @@ def load_snapshot() -> tuple[
             {
                 **instance,
                 "body": page["text"],
-                "embedding": token_hash_embedding(page["text"]),
                 "source_sha256": fixture["artifact"]["sha256"],
                 "golden_sha256": _sha256(golden_path),
             }
         )
+    vectors = profile.embed([document["body"] for document in documents])
+    if len(vectors) != len(documents):
+        raise ValueError("embedding profile returned an incomplete document batch")
+    for document, vector in zip(documents, vectors, strict=True):
+        if len(vector) != profile.dimension:
+            raise ValueError("embedding dimension does not match profile")
+        document["embedding"] = vector
     _validate_queries(documents, qrels["queries"])
     return (
         documents,
@@ -157,7 +160,11 @@ def _rrf(*rankings: list[dict[str, Any]]) -> list[dict[str, Any]]:
             chunk_id = document["_id"]
             scores[chunk_id] = scores.get(chunk_id, 0.0) + 1 / (RRF_K + rank)
             documents[chunk_id] = document
-    ordered_ids = sorted(scores, key=scores.get, reverse=True)
+    ordered_ids = sorted(
+        scores,
+        key=lambda chunk_id: scores[chunk_id],
+        reverse=True,
+    )
     return [documents[chunk_id] for chunk_id in ordered_ids]
 
 
@@ -192,9 +199,17 @@ def _evaluate_hits(
 
 
 def run_retrieval_control(
-    values: dict[str, str], run_id: str
+    values: dict[str, str],
+    run_id: str,
+    embedding_profile: EmbeddingProfile | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    documents, queries, snapshot = load_snapshot()
+    profile = embedding_profile or TokenHashEmbeddingProfile()
+    embedding_started = time.perf_counter()
+    documents, queries, snapshot = load_snapshot(profile)
+    query_vectors = profile.embed([query["text"] for query in queries])
+    embedding_ms = round((time.perf_counter() - embedding_started) * 1000, 3)
+    if len(query_vectors) != len(queries):
+        raise ValueError("embedding profile returned an incomplete query batch")
     document_by_id = {document["chunk_id"]: document for document in documents}
     index = f"atlas-rag-retrieval-{run_id}"
 
@@ -214,7 +229,7 @@ def run_retrieval_control(
                         "source_sha256": {"type": "keyword"},
                         "embedding": {
                             "type": "knn_vector",
-                            "dimension": EMBEDDING_DIMENSION,
+                            "dimension": profile.dimension,
                         },
                     }
                 },
@@ -231,7 +246,7 @@ def run_retrieval_control(
     try:
         build_ms = elapsed(build_index)
         records: list[dict[str, Any]] = []
-        for query in queries:
+        for query, query_vector in zip(queries, query_vectors, strict=True):
             filters = _scope_filter(query)
             lexical, lexical_ms = _search(
                 values,
@@ -249,7 +264,7 @@ def run_retrieval_control(
                 {
                     "knn": {
                         "embedding": {
-                            "vector": token_hash_embedding(query["text"]),
+                            "vector": query_vector,
                             "k": 10,
                             "filter": {"bool": {"filter": filters}},
                         }
@@ -273,7 +288,7 @@ def run_retrieval_control(
                 {
                     "knn": {
                         "embedding": {
-                            "vector": token_hash_embedding(query["text"]),
+                            "vector": query_vector,
                             "k": 10,
                             "filter": {"bool": {"filter": filters}},
                         }
@@ -304,6 +319,11 @@ def run_retrieval_control(
                 ],
                 "corpus_documents": len(documents),
                 "query_count": len(queries),
+                "embedding_ms": embedding_ms,
+                "embedding_profile": profile.name,
+                "embedding_model_version": profile.model_version,
+                "embedding_dimension": profile.dimension,
+                "embedding_license": profile.license_name,
                 "snapshot": snapshot,
             },
             records,
