@@ -5,7 +5,11 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from app.core.config import Settings
-from app.core.readiness import DependencyStatus, InfrastructureReadiness
+from app.core.readiness import (
+    DependencyStatus,
+    InfrastructureReadiness,
+    ReadinessReport,
+)
 from app.main import app
 
 
@@ -33,8 +37,24 @@ def test_readiness_reports_safe_unavailable_status() -> None:
     assert "dependency failure" not in str(report.as_dict())
 
 
-def test_readiness_endpoint_reports_local_dependency_state() -> None:
+class StaticReadiness:
+    async def check(self) -> ReadinessReport:
+        return ReadinessReport(
+            ready=True,
+            dependencies={
+                "database": DependencyStatus.READY,
+                "storage": DependencyStatus.NOT_CONFIGURED,
+                "broker": DependencyStatus.NOT_CONFIGURED,
+                "workers": DependencyStatus.NOT_CONFIGURED,
+                "scheduler": DependencyStatus.NOT_CONFIGURED,
+                "search": DependencyStatus.NOT_CONFIGURED,
+            },
+        )
+
+
+def test_readiness_endpoint_reports_safe_dependency_state() -> None:
     with TestClient(app) as client:
+        app.state.readiness = StaticReadiness()
         response = client.get("/v1/ready")
 
     assert response.status_code == 200
