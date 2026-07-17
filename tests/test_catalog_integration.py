@@ -9,11 +9,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
+from app.api.v1.catalog import get_catalog_service
 from app.core.auth import Principal, require_principal
 from app.core.config import get_settings
 from app.core.database import normalize_database_url
 from app.core.storage import sha256_hex
 from app.main import create_app
+from app.services.catalog.service import CatalogService
+from tests.native_ingestion_integration_support import RecordingDispatcher
 
 
 def required_integration_environment() -> dict[str, str]:
@@ -24,6 +27,7 @@ def required_integration_environment() -> dict[str, str]:
         "P2_STORAGE_ACCESS_KEY_ID",
         "P2_STORAGE_SECRET_ACCESS_KEY",
         "P2_STORAGE_USE_TLS",
+        "P2_STORAGE_SERVER_SIDE_ENCRYPTION",
         "P2_BROKER_URL",
         "P2_BROKER_USE_TLS",
     )
@@ -56,6 +60,10 @@ def test_real_direct_upload_and_catalog_intake(monkeypatch) -> None:
         "STORAGE__SECRET_ACCESS_KEY", environment["P2_STORAGE_SECRET_ACCESS_KEY"]
     )
     monkeypatch.setenv("STORAGE__USE_TLS", environment["P2_STORAGE_USE_TLS"])
+    monkeypatch.setenv(
+        "STORAGE__SERVER_SIDE_ENCRYPTION",
+        environment["P2_STORAGE_SERVER_SIDE_ENCRYPTION"],
+    )
     monkeypatch.setenv("BROKER__URL", environment["P2_BROKER_URL"])
     monkeypatch.setenv("BROKER__USE_TLS", environment["P2_BROKER_USE_TLS"])
     get_settings.cache_clear()
@@ -71,6 +79,13 @@ def test_real_direct_upload_and_catalog_intake(monkeypatch) -> None:
     application.dependency_overrides[require_principal] = lambda: active_principal[
         "value"
     ]
+    dispatcher = RecordingDispatcher()
+    application.dependency_overrides[get_catalog_service] = lambda: CatalogService(
+        application.state.database,
+        application.state.storage,
+        dispatcher,
+        application.state.settings,
+    )
     pdf = b"%PDF-1.7\n%%EOF\n"
     try:
         with TestClient(application) as client:

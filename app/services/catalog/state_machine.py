@@ -83,6 +83,7 @@ _FORWARD_TRANSITIONS: dict[VersionState, frozenset[VersionState]] = {
         {
             VersionState.OCR,
             VersionState.NORMALIZING,
+            VersionState.REJECTED,
             VersionState.FAILED,
             VersionState.QUARANTINED,
             VersionState.CANCELLED,
@@ -126,6 +127,12 @@ _REPROCESSABLE_STATES = frozenset(
         VersionState.CANCELLED,
     }
 )
+
+
+def validate_reprocessing_source(state: VersionState) -> None:
+    """Reject lifecycle resurrection or branching from an inactive version."""
+    if state not in _REPROCESSABLE_STATES:
+        raise IllegalTransitionError(f"cannot reprocess from {state.value}")
 
 
 def transition_version(
@@ -216,6 +223,11 @@ def _validate_operation(
         allowed = (
             current_state is VersionState.FAILED
             and target_state is VersionState.QUEUED
+        )
+    elif operation == "reconcile":
+        allowed = (
+            current_state in {VersionState.READY, VersionState.READY_WITH_WARNINGS}
+            and target_state is VersionState.FAILED
         )
     elif operation == "advance":
         allowed = target_state in _FORWARD_TRANSITIONS.get(current_state, frozenset())

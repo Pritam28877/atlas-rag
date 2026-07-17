@@ -17,6 +17,8 @@ class WorkerKind(StrEnum):
 
     NATIVE = "native"
     OCR = "ocr"
+    PUBLICATION = "publication"
+    LIFECYCLE = "lifecycle"
 
 
 class PipelineTask(StrEnum):
@@ -24,7 +26,11 @@ class PipelineTask(StrEnum):
 
     NATIVE_PROCESS = "app.workers.native.process_document"
     OCR_PROCESS = "app.workers.ocr.process_document"
-    DELETE_DOCUMENT = "app.workers.native.delete_document"
+    CHUNK_PROCESS = "app.workers.publication.chunk_document"
+    EMBED_PROCESS = "app.workers.publication.embed_document"
+    INDEX_PROCESS = "app.workers.publication.index_document"
+    RECONCILE = "app.workers.publication.reconcile"
+    DELETE_DOCUMENT = "app.workers.lifecycle.delete_document"
 
 
 class IngestionJobPayload(BaseModel):
@@ -62,9 +68,13 @@ class IngestionTaskDispatcher:
         self._sender.send_task(task, args=[message], queue=queue)
 
     def _queue_for_task(self, task: PipelineTask) -> str:
-        if task in {PipelineTask.NATIVE_PROCESS, PipelineTask.DELETE_DOCUMENT}:
+        if task is PipelineTask.NATIVE_PROCESS:
             return self._broker_settings.native_queue_name
-        return self._broker_settings.ocr_queue_name
+        if task is PipelineTask.DELETE_DOCUMENT:
+            return self._broker_settings.lifecycle_queue_name
+        if task is PipelineTask.OCR_PROCESS:
+            return self._broker_settings.ocr_queue_name
+        return self._broker_settings.publication_queue_name
 
 
 def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
@@ -75,27 +85,31 @@ def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
     worker_timeout = _worker_timeout(settings.workers, worker_kind)
     worker_concurrency = _worker_concurrency(settings.workers, worker_kind)
     selected_queue = _queue_for_worker(settings.broker, worker_kind)
-    exchange = Exchange("ingestion", type="direct", durable=True)
+    exchange = Exchange("ingestion", type="topic", durable=True)
     queues = (
-        Queue(
+        _work_queue(
             settings.broker.native_queue_name,
-            exchange=exchange,
-            routing_key=WorkerKind.NATIVE,
-            durable=True,
-            queue_arguments={
-                "x-queue-type": "quorum",
-                "x-delivery-limit": settings.workers.job_max_attempts,
-            },
+            WorkerKind.NATIVE,
+            exchange,
+            settings,
         ),
-        Queue(
+        _work_queue(
+            settings.broker.publication_queue_name,
+            WorkerKind.PUBLICATION,
+            exchange,
+            settings,
+        ),
+        _work_queue(
             settings.broker.ocr_queue_name,
-            exchange=exchange,
-            routing_key=WorkerKind.OCR,
-            durable=True,
-            queue_arguments={
-                "x-queue-type": "quorum",
-                "x-delivery-limit": settings.workers.job_max_attempts,
-            },
+            WorkerKind.OCR,
+            exchange,
+            settings,
+        ),
+        _work_queue(
+            settings.broker.lifecycle_queue_name,
+            WorkerKind.LIFECYCLE,
+            exchange,
+            settings,
         ),
     )
     app = Celery(
@@ -105,11 +119,13 @@ def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
     app.conf.update(
         accept_content=["json"],
         broker_connection_max_retries=settings.broker.connection_max_retries,
+        broker_connection_timeout=settings.broker.connection_timeout_seconds,
         broker_connection_retry=True,
         broker_connection_retry_on_startup=True,
         broker_heartbeat=settings.broker.heartbeat_seconds,
         broker_transport_options={
-            "visibility_timeout": settings.broker.visibility_timeout_seconds,
+            "confirm_publish": True,
+            "max_retries": settings.broker.connection_max_retries,
         },
         result_backend=None,
         result_serializer="json",
@@ -117,9 +133,17 @@ def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
         task_acks_on_failure_or_timeout=True,
         task_create_missing_queues=False,
         task_default_exchange="ingestion",
-        task_default_exchange_type="direct",
+        task_default_exchange_type="topic",
+        task_default_delivery_mode="persistent",
         task_default_queue=selected_queue,
         task_ignore_result=True,
+        task_publish_retry=True,
+        task_publish_retry_policy={
+            "max_retries": settings.broker.connection_max_retries,
+            "interval_start": 0.2,
+            "interval_step": 0.5,
+            "interval_max": 2.0,
+        },
         task_reject_on_worker_lost=True,
         task_routes={
             PipelineTask.NATIVE_PROCESS: {
@@ -130,9 +154,25 @@ def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
                 "queue": settings.broker.ocr_queue_name,
                 "routing_key": WorkerKind.OCR,
             },
+            PipelineTask.CHUNK_PROCESS: {
+                "queue": settings.broker.publication_queue_name,
+                "routing_key": WorkerKind.PUBLICATION,
+            },
+            PipelineTask.EMBED_PROCESS: {
+                "queue": settings.broker.publication_queue_name,
+                "routing_key": WorkerKind.PUBLICATION,
+            },
+            PipelineTask.INDEX_PROCESS: {
+                "queue": settings.broker.publication_queue_name,
+                "routing_key": WorkerKind.PUBLICATION,
+            },
+            PipelineTask.RECONCILE: {
+                "queue": settings.broker.publication_queue_name,
+                "routing_key": WorkerKind.PUBLICATION,
+            },
             PipelineTask.DELETE_DOCUMENT: {
-                "queue": settings.broker.native_queue_name,
-                "routing_key": WorkerKind.NATIVE,
+                "queue": settings.broker.lifecycle_queue_name,
+                "routing_key": WorkerKind.LIFECYCLE,
             },
         },
         task_serializer="json",
@@ -141,8 +181,10 @@ def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
         task_queues=queues,
         worker_cancel_long_running_tasks_on_connection_loss=True,
         worker_concurrency=worker_concurrency,
+        worker_max_tasks_per_child=settings.workers.max_tasks_per_child,
         worker_prefetch_multiplier=settings.broker.prefetch_multiplier,
         worker_send_task_events=False,
+        worker_enable_soft_shutdown_on_idle=True,
         worker_soft_shutdown_timeout=settings.workers.shutdown_grace_seconds,
     )
     if settings.broker.use_tls:
@@ -150,25 +192,94 @@ def create_celery_app(settings: Settings, worker_kind: WorkerKind) -> Celery:
     return app
 
 
-def check_broker_connection(settings: Settings) -> None:
-    """Open and close one broker connection without starting a worker process."""
-    app = create_celery_app(settings, WorkerKind.NATIVE)
-    connection = app.connection_for_read()
+def declare_broker_topology(app: Celery, settings: Settings) -> None:
+    """Declare every fixed queue before Celery configures delayed delivery."""
+    connection = app.connection_for_write()
     try:
         connection.ensure_connection(
-            max_retries=1,
+            max_retries=settings.broker.connection_max_retries,
             timeout=settings.broker.connection_timeout_seconds,
         )
+        channel = connection.channel()
+        try:
+            dead_letter_exchange = _dead_letter_exchange(settings.broker)
+            dead_letter_exchange.bind(channel).declare()
+            _dead_letter_queue(
+                settings.broker,
+                dead_letter_exchange,
+            ).bind(channel).declare()
+            for queue in app.conf.task_queues:
+                queue.bind(channel).declare()
+        finally:
+            channel.close()
     finally:
         connection.close()
 
 
-def check_worker_connection(settings: Settings) -> None:
-    """Require at least one responsive Celery worker without exposing node names."""
+def check_broker_connection(settings: Settings) -> None:
+    """Open and close one broker connection without starting a worker process."""
     app = create_celery_app(settings, WorkerKind.NATIVE)
-    responses = app.control.inspect(timeout=1).ping() or {}
-    if not responses:
-        raise RuntimeError("no Celery worker responded to broker control ping")
+    try:
+        connection = app.connection_for_read()
+        try:
+            connection.ensure_connection(
+                max_retries=1,
+                timeout=settings.broker.connection_timeout_seconds,
+            )
+        finally:
+            connection.close()
+    finally:
+        app.close()
+
+
+def check_worker_connection(settings: Settings) -> None:
+    """Require every isolated worker pool on exactly its configured queue."""
+    app = create_celery_app(settings, WorkerKind.NATIVE)
+    try:
+        inspector = app.control.inspect(timeout=2)
+        registered_by_worker = inspector.registered() or {}
+        queues_by_worker = inspector.active_queues() or {}
+        required_pools = {
+            WorkerKind.NATIVE: (
+                PipelineTask.NATIVE_PROCESS,
+                settings.broker.native_queue_name,
+            ),
+            WorkerKind.OCR: (
+                PipelineTask.OCR_PROCESS,
+                settings.broker.ocr_queue_name,
+            ),
+            WorkerKind.PUBLICATION: (
+                PipelineTask.CHUNK_PROCESS,
+                settings.broker.publication_queue_name,
+            ),
+            WorkerKind.LIFECYCLE: (
+                PipelineTask.DELETE_DOCUMENT,
+                settings.broker.lifecycle_queue_name,
+            ),
+        }
+        ready_pools: set[WorkerKind] = set()
+        for worker_name, registered_tasks in registered_by_worker.items():
+            task_names = {str(task_name) for task_name in registered_tasks}
+            worker_queues = queues_by_worker.get(worker_name, [])
+            queue_names = {
+                str(queue["name"])
+                for queue in worker_queues
+                if isinstance(queue, dict) and "name" in queue
+            }
+            matching_pools = [
+                worker_kind
+                for worker_kind, (task_name, queue_name) in required_pools.items()
+                if task_name in task_names and queue_names == {queue_name}
+            ]
+            if len(matching_pools) == 1:
+                ready_pools.add(matching_pools[0])
+        missing_pools = set(required_pools) - ready_pools
+        if missing_pools:
+            raise RuntimeError(
+                "one or more required Celery worker pools are unavailable"
+            )
+    finally:
+        app.close()
 
 
 def _broker_ssl_options(broker_settings: BrokerSettings) -> dict[str, object]:
@@ -181,10 +292,64 @@ def _broker_ssl_options(broker_settings: BrokerSettings) -> dict[str, object]:
     return options
 
 
+def _work_queue(
+    name: str,
+    routing_key: WorkerKind,
+    exchange: Exchange,
+    settings: Settings,
+) -> Queue:
+    return Queue(
+        name,
+        exchange=exchange,
+        routing_key=routing_key,
+        durable=True,
+        queue_arguments={
+            "x-queue-type": "quorum",
+            "x-delivery-limit": settings.workers.job_max_attempts,
+            "x-max-length": settings.broker.queue_max_messages,
+            "x-max-length-bytes": settings.broker.queue_max_bytes,
+            "x-overflow": "reject-publish",
+            "x-message-ttl": settings.broker.queue_message_ttl_seconds * 1000,
+            "x-dead-letter-exchange": settings.broker.dead_letter_exchange_name,
+            "x-dead-letter-routing-key": "dead",
+        },
+    )
+
+
+def _dead_letter_exchange(broker_settings: BrokerSettings) -> Exchange:
+    return Exchange(
+        broker_settings.dead_letter_exchange_name,
+        type="direct",
+        durable=True,
+    )
+
+
+def _dead_letter_queue(
+    broker_settings: BrokerSettings,
+    exchange: Exchange,
+) -> Queue:
+    return Queue(
+        broker_settings.dead_letter_queue_name,
+        exchange=exchange,
+        routing_key="dead",
+        durable=True,
+        queue_arguments={
+            "x-queue-type": "quorum",
+            "x-max-length": broker_settings.queue_max_messages,
+            "x-max-length-bytes": broker_settings.queue_max_bytes,
+            "x-overflow": "drop-head",
+        },
+    )
+
+
 def _queue_for_worker(broker_settings: BrokerSettings, worker_kind: WorkerKind) -> str:
     if worker_kind is WorkerKind.NATIVE:
         return broker_settings.native_queue_name
-    return broker_settings.ocr_queue_name
+    if worker_kind is WorkerKind.OCR:
+        return broker_settings.ocr_queue_name
+    if worker_kind is WorkerKind.LIFECYCLE:
+        return broker_settings.lifecycle_queue_name
+    return broker_settings.publication_queue_name
 
 
 def _worker_concurrency(
@@ -192,13 +357,21 @@ def _worker_concurrency(
 ) -> int:
     if worker_kind is WorkerKind.NATIVE:
         return worker_settings.native_concurrency
-    return worker_settings.ocr_concurrency
+    if worker_kind is WorkerKind.OCR:
+        return worker_settings.ocr_concurrency
+    if worker_kind is WorkerKind.LIFECYCLE:
+        return worker_settings.lifecycle_concurrency
+    return worker_settings.publication_concurrency
 
 
 def _worker_timeout(worker_settings: WorkerSettings, worker_kind: WorkerKind) -> int:
     if worker_kind is WorkerKind.NATIVE:
         return worker_settings.native_parse_timeout_seconds
-    return worker_settings.ocr_timeout_seconds
+    if worker_kind is WorkerKind.OCR:
+        return worker_settings.ocr_timeout_seconds
+    if worker_kind is WorkerKind.LIFECYCLE:
+        return worker_settings.lifecycle_timeout_seconds
+    return worker_settings.publication_timeout_seconds
 
 
 def _soft_time_limit(hard_time_limit: int) -> int | None:

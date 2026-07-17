@@ -6,6 +6,7 @@ import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from typing import Protocol, cast
 from uuid import UUID
 
@@ -13,6 +14,11 @@ import boto3
 from botocore.config import Config
 
 from app.core.config import ProviderTimeoutSettings, StorageSettings
+from app.core.storage_transfers import (
+    StorageTransferIntegrityError,
+    download_object_to_path,
+    upload_object_from_path,
+)
 
 
 class StorageIntegrityError(ValueError):
@@ -45,6 +51,10 @@ class S3Client(Protocol):
     def head_bucket(self, **kwargs: object) -> Mapping[str, object]: ...
 
     def get_object(self, **kwargs: object) -> Mapping[str, object]: ...
+
+    def put_object(self, **kwargs: object) -> Mapping[str, object]: ...
+
+    def delete_object(self, **kwargs: object) -> Mapping[str, object]: ...
 
     def close(self) -> None: ...
 
@@ -125,24 +135,29 @@ class ObjectStorage:
             )
 
         self._settings = settings
-        self._bucket_name = settings.bucket_name
+        bucket_name = settings.bucket_name
         access_key_id = settings.access_key_id
         secret_access_key = settings.secret_access_key
+        assert bucket_name is not None
         assert access_key_id is not None
         assert secret_access_key is not None
+        self._bucket_name = bucket_name
         effective_timeouts = provider_timeouts or ProviderTimeoutSettings()
-        self._client = client or boto3.client(
-            "s3",
-            endpoint_url=settings.endpoint_url,
-            region_name=settings.region,
-            aws_access_key_id=access_key_id.get_secret_value(),
-            aws_secret_access_key=secret_access_key.get_secret_value(),
-            use_ssl=settings.use_tls,
-            config=Config(
-                signature_version="s3v4",
-                connect_timeout=effective_timeouts.connect_seconds,
-                read_timeout=effective_timeouts.storage_seconds,
-                retries={"max_attempts": 3, "mode": "standard"},
+        self._client: S3Client = client or cast(
+            S3Client,
+            boto3.client(
+                "s3",
+                endpoint_url=settings.endpoint_url,
+                region_name=settings.region,
+                aws_access_key_id=access_key_id.get_secret_value(),
+                aws_secret_access_key=secret_access_key.get_secret_value(),
+                use_ssl=settings.use_tls,
+                config=Config(
+                    signature_version="s3v4",
+                    connect_timeout=effective_timeouts.connect_seconds,
+                    read_timeout=effective_timeouts.storage_seconds,
+                    retries={"max_attempts": 3, "mode": "standard"},
+                ),
             ),
         )
 
@@ -213,13 +228,18 @@ class ObjectStorage:
             "ContentType": content_type,
             "ChecksumSHA256": checksum,
             "Metadata": dict(reference.metadata),
-            "ServerSideEncryption": self._settings.server_side_encryption,
         }
         headers = {
             "content-type": content_type,
             "x-amz-checksum-sha256": checksum,
-            "x-amz-server-side-encryption": self._settings.server_side_encryption,
         }
+        if self._settings.server_side_encryption != "provider-default":
+            parameters["ServerSideEncryption"] = (
+                self._settings.server_side_encryption
+            )
+            headers["x-amz-server-side-encryption"] = (
+                self._settings.server_side_encryption
+            )
         for metadata_key, metadata_value in reference.metadata.items():
             headers[f"x-amz-meta-{metadata_key}"] = metadata_value
         if self._settings.kms_key_id:
@@ -309,9 +329,62 @@ class ObjectStorage:
             raise StorageIntegrityError("stored object prefix is invalid")
         return payload
 
+    async def download_to_path(
+        self,
+        reference: ObjectReference,
+        destination: Path,
+        maximum_bytes: int,
+    ) -> int:
+        """Stream one immutable object to a private worker path with a hard bound."""
+        try:
+            return await asyncio.to_thread(
+                download_object_to_path,
+                self._client,
+                self._bucket_name,
+                reference,
+                destination,
+                maximum_bytes,
+            )
+        except StorageTransferIntegrityError as error:
+            raise StorageIntegrityError(str(error)) from error
+
+    async def upload_from_path(
+        self,
+        reference: ObjectReference,
+        source: Path,
+        content_type: str,
+        maximum_bytes: int,
+    ) -> StoredObjectMetadata:
+        """Publish a bounded immutable worker artifact and verify its metadata."""
+        size_bytes = source.stat().st_size
+        if size_bytes > maximum_bytes:
+            raise StorageIntegrityError("artifact exceeds the configured output limit")
+        await asyncio.to_thread(
+            upload_object_from_path,
+            self._client,
+            self._bucket_name,
+            self._settings,
+            reference,
+            source,
+            content_type,
+            checksum_header_value(reference.checksum_sha256),
+        )
+        return await self.verify_object(reference, size_bytes)
+
     async def check_connection(self) -> None:
         """Verify bucket access without listing or transferring object content."""
         await asyncio.to_thread(self._client.head_bucket, Bucket=self._bucket_name)
+
+    async def delete_key(self, key: str) -> None:
+        """Delete one catalog-owned key without accepting caller-controlled paths."""
+        expected_prefix = f"{self._settings.key_prefix}/tenants/"
+        if not key.startswith(expected_prefix) or ".." in key:
+            raise StorageIntegrityError("object key is outside the managed prefix")
+        await asyncio.to_thread(
+            self._client.delete_object,
+            Bucket=self._bucket_name,
+            Key=key,
+        )
 
     def close(self) -> None:
         """Release the underlying HTTP client connection pool."""

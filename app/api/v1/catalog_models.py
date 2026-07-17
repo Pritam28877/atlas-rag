@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.services.catalog.enums import VersionState
 
@@ -80,6 +80,20 @@ class DocumentVersionStatus(BaseModel):
 
 class LifecycleRequest(BaseModel):
     operation: Literal["retry", "reprocess", "cancel", "delete"]
+    pipeline_profile: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+    )
+
+    @model_validator(mode="after")
+    def validate_reprocess_profile(self) -> "LifecycleRequest":
+        if self.operation == "reprocess" and self.pipeline_profile is None:
+            raise ValueError("pipeline_profile is required for reprocess")
+        if self.operation != "reprocess" and self.pipeline_profile is not None:
+            raise ValueError("pipeline_profile is supported only for reprocess")
+        return self
 
 
 class LifecycleResponse(BaseModel):

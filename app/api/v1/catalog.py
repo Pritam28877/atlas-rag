@@ -171,6 +171,7 @@ async def request_lifecycle_operation(
             version_id,
             body.operation,
             idempotency_key,
+            body.pipeline_profile,
         )
         return LifecycleResponse.model_validate(result)
     except CatalogError as error:

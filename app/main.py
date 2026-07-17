@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from typing import cast
 
 from fastapi import FastAPI
 
@@ -13,6 +14,7 @@ from app.core.telemetry import Telemetry, configure_structured_logging
 from app.services.catalog.service import CatalogService, CeleryJobDispatcher
 from app.workers.celery_app import (
     IngestionTaskDispatcher,
+    TaskSender,
     WorkerKind,
     create_celery_app,
 )
@@ -46,12 +48,17 @@ def create_app() -> FastAPI:
         )
         if all(catalog_dependencies):
             database = Database(settings.database)
+            app.state.database = database
             storage = ObjectStorage(
                 settings.storage,
                 provider_timeouts=settings.provider_timeouts,
             )
+            app.state.storage = storage
             celery = create_celery_app(settings, WorkerKind.NATIVE)
-            task_dispatcher = IngestionTaskDispatcher(celery, settings.broker)
+            task_dispatcher = IngestionTaskDispatcher(
+                cast(TaskSender, celery),
+                settings.broker,
+            )
             app.state.catalog_service = CatalogService(
                 database,
                 storage,
@@ -72,6 +79,7 @@ def create_app() -> FastAPI:
             telemetry.close()
 
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
+    app.state.settings = settings
     app.add_middleware(
         RequestBodyLimitMiddleware,
         maximum_bytes=settings.api_request_max_bytes,
