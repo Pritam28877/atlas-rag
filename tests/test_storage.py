@@ -26,6 +26,7 @@ class RecordingS3Client:
         self.head_calls: list[Mapping[str, object]] = []
         self.get_response: Mapping[str, object] = {}
         self.get_calls: list[Mapping[str, object]] = []
+        self.put_calls: list[Mapping[str, object]] = []
         self.closed = False
 
     def generate_presigned_url(
@@ -45,6 +46,10 @@ class RecordingS3Client:
     def get_object(self, **kwargs: object) -> Mapping[str, object]:
         self.get_calls.append(kwargs)
         return self.get_response
+
+    def put_object(self, **kwargs: object) -> Mapping[str, object]:
+        self.put_calls.append(kwargs)
+        return {}
 
     def close(self) -> None:
         self.closed = True
@@ -107,6 +112,26 @@ def test_presigned_upload_signs_checksum_encryption_and_metadata() -> None:
     assert upload.headers["x-amz-checksum-sha256"] == checksum_header_value(
         reference.checksum_sha256
     )
+    assert upload.headers["x-amz-server-side-encryption"] == "AES256"
+
+
+def test_provider_default_encryption_omits_per_object_encryption_headers() -> None:
+    settings = StorageSettings(
+        endpoint_url="https://storage.example.test",
+        bucket_name="rag-documents",
+        access_key_id=SecretStr("access-key"),
+        secret_access_key=SecretStr("secret-key"),
+        server_side_encryption="provider-default",
+    )
+    client = RecordingS3Client()
+    storage = ObjectStorage(settings, client)
+    reference = storage.original_reference(TENANT_ID, VERSION_ID, sha256_hex(b"PDF"))
+
+    upload = storage.presign_upload(reference, "application/pdf")
+
+    _, parameters, _, _ = client.presign_calls[0]
+    assert "ServerSideEncryption" not in parameters
+    assert "x-amz-server-side-encryption" not in upload.headers
 
 
 def test_presigned_download_uses_only_generated_key() -> None:
@@ -202,6 +227,58 @@ def test_storage_close_releases_client_resources() -> None:
     storage.close()
 
     assert client.closed
+
+
+def test_worker_download_is_streamed_bounded_and_checksum_verified(
+    tmp_path,
+) -> None:
+    storage, client = create_storage()
+    payload = b"%PDF-worker-payload"
+    reference = storage.original_reference(TENANT_ID, VERSION_ID, sha256_hex(payload))
+    body = BytesIO(payload)
+    client.get_response = {"Body": body}
+    destination = tmp_path / "document.pdf"
+
+    downloaded = asyncio.run(
+        storage.download_to_path(reference, destination, maximum_bytes=len(payload))
+    )
+
+    assert downloaded == len(payload)
+    assert destination.read_bytes() == payload
+    assert body.closed
+
+
+def test_worker_artifact_upload_is_bounded_and_verified(tmp_path) -> None:
+    storage, client = create_storage()
+    payload = b'{"record_type":"manifest"}\n'
+    source = tmp_path / "artifact.jsonl"
+    source.write_bytes(payload)
+    reference = storage.artifact_reference(
+        TENANT_ID,
+        VERSION_ID,
+        ArtifactKind.NORMALIZED_DOCUMENT,
+        "pypdf-6.14.2",
+        sha256_hex(payload),
+    )
+    client.head_response = {
+        "ContentLength": len(payload),
+        "ChecksumSHA256": checksum_header_value(reference.checksum_sha256),
+        "Metadata": dict(reference.metadata),
+        "ContentType": "application/json",
+    }
+
+    metadata = asyncio.run(
+        storage.upload_from_path(
+            reference,
+            source,
+            "application/json",
+            maximum_bytes=len(payload),
+        )
+    )
+
+    assert metadata.content_length == len(payload)
+    assert client.put_calls[0]["Key"] == reference.key
+    assert client.put_calls[0]["Body"].closed
 
 
 def test_kms_encryption_requires_key_id() -> None:
