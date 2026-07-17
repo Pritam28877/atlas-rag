@@ -1,13 +1,16 @@
 """Redacted structured logs, bounded metrics, and trace correlation."""
 
+import asyncio
 import json
 import logging
 import re
 import sys
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
@@ -25,6 +28,8 @@ from prometheus_client import (
 )
 
 from app.core.config import ProviderTimeoutSettings, TelemetrySettings
+from app.core.database import Database
+from app.core.telemetry_database import read_database_metrics
 
 SAFE_EVENT = re.compile(r"^[a-z][a-z0-9_.-]{0,79}$")
 
@@ -34,6 +39,7 @@ class PipelineStage(StrEnum):
     NATIVE = "native"
     OCR = "ocr"
     CHUNKING = "chunking"
+    EMBEDDING = "embedding"
     INDEXING = "indexing"
     DELETION = "deletion"
 
@@ -50,7 +56,26 @@ class PipelineOutcome(StrEnum):
 class QueueKind(StrEnum):
     NATIVE = "native"
     OCR = "ocr"
-    DEAD_LETTER = "dead-letter"
+    PUBLICATION = "publication"
+    LIFECYCLE = "lifecycle"
+    DEAD_LETTERED_JOB = "dead-lettered-job"
+    UNCLASSIFIED = "unclassified"
+
+
+class MetricsUnavailableError(RuntimeError):
+    """Raised when no safe queue-metrics snapshot has ever been collected."""
+
+
+def _integer_metric(value: object) -> int:
+    if not isinstance(value, (int, float, Decimal)):
+        raise ValueError("database metric is not numeric")
+    return int(value)
+
+
+def _float_metric(value: object) -> float:
+    if not isinstance(value, (int, float, Decimal)):
+        raise ValueError("database metric is not numeric")
+    return float(value)
 
 
 @dataclass(frozen=True)
@@ -144,6 +169,14 @@ class Telemetry:
         provider_timeouts: ProviderTimeoutSettings | None = None,
     ) -> None:
         self._metrics_enabled = settings.metrics_enabled
+        self._metrics_cache_ttl_seconds = settings.metrics_cache_ttl_seconds
+        self._metrics_query_timeout_milliseconds = int(
+            settings.metrics_query_timeout_seconds * 1000
+        )
+        self._metrics_query_timeout_seconds = settings.metrics_query_timeout_seconds
+        self._metrics_refresh_lock = asyncio.Lock()
+        self._metrics_refresh_after = 0.0
+        self._metrics_snapshot_available = False
         self._registry = registry or CollectorRegistry()
         self.queue_depth = Gauge(
             "rag_queue_depth",
@@ -173,6 +206,72 @@ class Telemetry:
             "rag_stage_duration_seconds",
             "Ingestion stage duration in seconds.",
             ["stage", "outcome"],
+            registry=self._registry,
+        )
+        self.resource_rss_bytes = Gauge(
+            "rag_worker_rss_bytes",
+            "Worker resident memory by bounded worker kind.",
+            ["worker"],
+            registry=self._registry,
+        )
+        self.resource_cpu_seconds = Counter(
+            "rag_worker_cpu_seconds_total",
+            "Worker CPU time by bounded worker kind.",
+            ["worker"],
+            registry=self._registry,
+        )
+        self.index_lag_seconds = Histogram(
+            "rag_index_lag_seconds",
+            "Time from upload completion to searchable publication.",
+            registry=self._registry,
+        )
+        self.delete_lag_seconds = Histogram(
+            "rag_delete_lag_seconds",
+            "Time from deletion request to search revocation.",
+            registry=self._registry,
+        )
+        self.extraction_quality = Histogram(
+            "rag_extraction_quality_ratio",
+            "Bounded extraction quality ratio from zero to one.",
+            buckets=(0.25, 0.5, 0.7, 0.85, 0.95, 1.0),
+            registry=self._registry,
+        )
+        self.provider_throttles = Counter(
+            "rag_provider_throttles_total",
+            "Provider quota or throttle events by bounded provider kind.",
+            ["provider"],
+            registry=self._registry,
+        )
+        self.quota_rejections = Counter(
+            "rag_quota_rejections_total",
+            "Tenant quota rejections without tenant labels.",
+            ["quota"],
+            registry=self._registry,
+        )
+        self.reconciliation_findings = Counter(
+            "rag_reconciliation_findings_total",
+            "Bounded reconciliation findings by controlled reason.",
+            ["reason"],
+            registry=self._registry,
+        )
+        self.metrics_refresh_success = Gauge(
+            "rag_queue_metrics_refresh_success",
+            "Whether the most recent bounded database refresh succeeded.",
+            registry=self._registry,
+        )
+        self.metrics_last_success_timestamp_seconds = Gauge(
+            "rag_queue_metrics_last_success_timestamp_seconds",
+            "Unix timestamp of the last successful database metric refresh.",
+            registry=self._registry,
+        )
+        self.scheduler_heartbeat_present = Gauge(
+            "rag_scheduler_heartbeat_present",
+            "Whether the reconciliation scheduler heartbeat exists.",
+            registry=self._registry,
+        )
+        self.scheduler_heartbeat_age_seconds = Gauge(
+            "rag_scheduler_heartbeat_age_seconds",
+            "Age of the reconciliation scheduler heartbeat.",
             registry=self._registry,
         )
         effective_timeouts = provider_timeouts or ProviderTimeoutSettings()
@@ -236,6 +335,62 @@ class Telemetry:
     def metrics(self) -> bytes:
         """Render Prometheus text without tenant/document labels."""
         return generate_latest(self._registry)
+
+    async def refresh_from_database(self, database: Database) -> None:
+        """Coalesce bounded database refreshes and retain the last safe snapshot."""
+        if not self._metrics_enabled:
+            return
+        current_time = time.monotonic()
+        if current_time < self._metrics_refresh_after:
+            if not self._metrics_snapshot_available:
+                raise MetricsUnavailableError("metrics snapshot is unavailable")
+            return
+        async with self._metrics_refresh_lock:
+            current_time = time.monotonic()
+            if current_time < self._metrics_refresh_after:
+                if not self._metrics_snapshot_available:
+                    raise MetricsUnavailableError("metrics snapshot is unavailable")
+                return
+            try:
+                async with asyncio.timeout(self._metrics_query_timeout_seconds):
+                    rows, heartbeat_age = await self._read_database_metrics(database)
+            except Exception:
+                self.metrics_refresh_success.set(0)
+                self._metrics_refresh_after = (
+                    current_time + self._metrics_cache_ttl_seconds
+                )
+                if not self._metrics_snapshot_available:
+                    raise MetricsUnavailableError(
+                        "metrics snapshot is unavailable"
+                    ) from None
+                return
+            observed = {str(row["queue"]): row for row in rows}
+            for queue in QueueKind:
+                row = observed.get(queue.value)
+                depth = _integer_metric(row["depth"]) if row else 0
+                oldest_age = _float_metric(row["oldest_age"]) if row else 0.0
+                self.record_queue(queue, depth, max(0.0, oldest_age))
+            heartbeat_present = heartbeat_age is not None
+            self.scheduler_heartbeat_present.set(1 if heartbeat_present else 0)
+            heartbeat_age_seconds = (
+                _float_metric(heartbeat_age) if heartbeat_age is not None else 0.0
+            )
+            self.scheduler_heartbeat_age_seconds.set(
+                max(0.0, heartbeat_age_seconds)
+            )
+            self.metrics_refresh_success.set(1)
+            self.metrics_last_success_timestamp_seconds.set(time.time())
+            self._metrics_snapshot_available = True
+            self._metrics_refresh_after = (
+                current_time + self._metrics_cache_ttl_seconds
+            )
+
+    async def _read_database_metrics(self, database: Database):
+        """Read the snapshot through a replaceable seam used by focused tests."""
+        return await read_database_metrics(
+            database,
+            self._metrics_query_timeout_milliseconds,
+        )
 
     def close(self) -> None:
         """Flush and stop trace exporter resources during application shutdown."""

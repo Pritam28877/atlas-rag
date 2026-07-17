@@ -43,7 +43,8 @@ rejected.
 | Broker | RabbitMQ quorum queues | Provisional | Confirms, redelivery, DLQ, backlog bounds, restart behavior |
 | Execution | Celery `>=5.6,<5.7` | Evaluate | ID-only tasks, cancellation, retries, process containment |
 | Search control | PostgreSQL + pgvector/GIN | Evaluate | Filtered recall, write/delete load, operational headroom |
-| Search scale candidate | OpenSearch hybrid | Evaluate | Hybrid relevance, filter behavior, index scale/cost |
+| Embedding | FastEmbed `0.8.0` + multilingual MiniLM ONNX | Selected, local v1 | Baked model checksum, bounded batches, multilingual fixture relevance |
+| Search | OpenSearch `2.19.5` hybrid | Selected, local v1 | Scoped hybrid relevance passed; P8 owns scale/cost validation |
 
 Record exact versions, image digests, model hashes, environment shape, test
 inputs, raw-result references, failures, and rejection rationale for every run.

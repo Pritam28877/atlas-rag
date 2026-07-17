@@ -1,0 +1,48 @@
+groups:
+  - name: document-loader
+    rules:
+      - alert: DocumentLoaderQueueAgeHigh
+        expr: >-
+          max(rag_queue_oldest_age_seconds{queue!="dead-lettered-job"}) > 900
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: Document ingestion queue age exceeds the 15-minute SLO
+      - alert: DocumentLoaderDeadLetteredJobsPresent
+        expr: rag_queue_depth{queue="dead-lettered-job"} > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: The ingestion job ledger contains dead-lettered jobs
+      - alert: DocumentLoaderBrokerDeadLetterQueueNotEmpty
+        expr: >-
+          rabbitmq_queue_messages{queue="ingestion.dead-letter"} > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: The RabbitMQ document-loader dead-letter queue is not empty
+      - alert: DocumentLoaderMetricsRefreshFailed
+        expr: rag_queue_metrics_refresh_success == 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Queue and scheduler metrics cannot refresh from PostgreSQL
+      - alert: DocumentLoaderMetricsScrapeMissing
+        expr: absent_over_time(rag_queue_metrics_refresh_success[5m])
+        labels: {severity: critical}
+        annotations:
+          summary: The document-loader metrics target is missing or returning errors
+      - alert: DocumentLoaderSchedulerHeartbeatMissing
+        expr: rag_scheduler_heartbeat_present == 0
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: The reconciliation scheduler has no recorded heartbeat
+      - alert: DocumentLoaderSchedulerHeartbeatStale
+        expr: >-
+          rag_scheduler_heartbeat_present == 1
+          and rag_scheduler_heartbeat_age_seconds > 180
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: The reconciliation scheduler heartbeat is stale

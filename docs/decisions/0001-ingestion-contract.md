@@ -28,7 +28,8 @@ when benchmark evidence justifies the change.
 | Workers | Celery remains an execution candidate only; PostgreSQL owns idempotency and business state. Parser and OCR workers are isolated from the API and each other. |
 | Native parsing | Select `pypdf==6.14.2` for born-digital text extraction with page provenance. It is not an OCR or layout-fidelity guarantee. |
 | OCR/layout | Select Tesseract `5.3.4` with Apache-2.0 `eng` tessdata in a dedicated worker image. It is limited to printed English scans. Docling is not selected because it exceeds this host's repeatable memory capacity. Do not use PyMuPDF without explicit AGPL/commercial-license approval. |
-| Search | Benchmark PostgreSQL plus pgvector/GIN as a control and OpenSearch hybrid retrieval as the scale candidate. Do not select either before filtered-retrieval tests. |
+| Embedding | FastEmbed `0.8.0` with the checksum-pinned multilingual MiniLM ONNX profile selected by the filtered fixture benchmark. Model assets are baked into the embedding worker and cannot download at task time. |
+| Search | OpenSearch `2.19.5` hybrid retrieval with tenant/collection keyword filters and application-side reciprocal-rank fusion. P8 scale evidence remains required before production SLO claims. |
 | OCR languages | Launch benchmark with `eng` only. Native Unicode extraction accepts any language but reports quality signals. |
 | Retention | Content remains until explicit deletion or legal hold. Deletion revokes retrieval within five minutes, removes primary artifacts/indexes within 24 hours, and expires backups within 35 days. |
 
