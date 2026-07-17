@@ -1,21 +1,129 @@
 name: atlas-rag-workers
 
+x-core-environment: &core-environment
+  APP_ENVIRONMENT: ${APP_ENVIRONMENT:?APP_ENVIRONMENT is required}
+  BROKER__URL: ${BROKER__URL:?BROKER__URL is required}
+  BROKER__USE_TLS: ${BROKER__USE_TLS:?BROKER__USE_TLS is required}
+  BROKER__TLS_CA_CERT_PATH: ${BROKER__TLS_CA_CERT_PATH:-}
+  BROKER__TLS_CERT_PATH: ${BROKER__TLS_CERT_PATH:-}
+  BROKER__TLS_KEY_PATH: ${BROKER__TLS_KEY_PATH:-}
+  BROKER__NATIVE_QUEUE_NAME: ${BROKER__NATIVE_QUEUE_NAME:-ingestion.native}
+  BROKER__OCR_QUEUE_NAME: ${BROKER__OCR_QUEUE_NAME:-ingestion.ocr}
+  BROKER__PUBLICATION_QUEUE_NAME: ${BROKER__PUBLICATION_QUEUE_NAME:-ingestion.publication}
+  BROKER__LIFECYCLE_QUEUE_NAME: ${BROKER__LIFECYCLE_QUEUE_NAME:-ingestion.lifecycle}
+  BROKER__DEAD_LETTER_EXCHANGE_NAME: ${BROKER__DEAD_LETTER_EXCHANGE_NAME:-ingestion.dead-letter.exchange}
+  BROKER__DEAD_LETTER_QUEUE_NAME: ${BROKER__DEAD_LETTER_QUEUE_NAME:-ingestion.dead-letter}
+  BROKER__QUEUE_MAX_MESSAGES: ${BROKER__QUEUE_MAX_MESSAGES:-10000}
+  BROKER__QUEUE_MAX_BYTES: ${BROKER__QUEUE_MAX_BYTES:-268435456}
+  BROKER__QUEUE_MESSAGE_TTL_SECONDS: ${BROKER__QUEUE_MESSAGE_TTL_SECONDS:-86400}
+  BROKER__PREFETCH_MULTIPLIER: ${BROKER__PREFETCH_MULTIPLIER:-1}
+  BROKER__MESSAGE_MAX_BYTES: ${BROKER__MESSAGE_MAX_BYTES:-65536}
+  BROKER__HEARTBEAT_SECONDS: ${BROKER__HEARTBEAT_SECONDS:-30}
+  BROKER__CONNECTION_MAX_RETRIES: ${BROKER__CONNECTION_MAX_RETRIES:-5}
+  BROKER__CONNECTION_TIMEOUT_SECONDS: ${BROKER__CONNECTION_TIMEOUT_SECONDS:-5}
+  WORKERS__NATIVE_CONCURRENCY: ${WORKERS__NATIVE_CONCURRENCY:-2}
+  WORKERS__OCR_CONCURRENCY: ${WORKERS__OCR_CONCURRENCY:-1}
+  WORKERS__PUBLICATION_CONCURRENCY: ${WORKERS__PUBLICATION_CONCURRENCY:-1}
+  WORKERS__LIFECYCLE_CONCURRENCY: ${WORKERS__LIFECYCLE_CONCURRENCY:-1}
+  WORKERS__NATIVE_PARSE_TIMEOUT_SECONDS: ${WORKERS__NATIVE_PARSE_TIMEOUT_SECONDS:-300}
+  WORKERS__OCR_TIMEOUT_SECONDS: ${WORKERS__OCR_TIMEOUT_SECONDS:-900}
+  WORKERS__PUBLICATION_TIMEOUT_SECONDS: ${WORKERS__PUBLICATION_TIMEOUT_SECONDS:-900}
+  WORKERS__LIFECYCLE_TIMEOUT_SECONDS: ${WORKERS__LIFECYCLE_TIMEOUT_SECONDS:-300}
+  WORKERS__SHUTDOWN_GRACE_SECONDS: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}
+  WORKERS__JOB_MAX_ATTEMPTS: ${WORKERS__JOB_MAX_ATTEMPTS:-3}
+  WORKERS__MAX_TASKS_PER_CHILD: ${WORKERS__MAX_TASKS_PER_CHILD:-25}
+  WORKERS__RETRY_BASE_SECONDS: ${WORKERS__RETRY_BASE_SECONDS:-30}
+  WORKERS__RETRY_MAX_SECONDS: ${WORKERS__RETRY_MAX_SECONDS:-900}
+  LIFECYCLE__DELETE_BATCH_SIZE: ${LIFECYCLE__DELETE_BATCH_SIZE:-250}
+  LIFECYCLE__RECONCILE_PAGE_SIZE: ${LIFECYCLE__RECONCILE_PAGE_SIZE:-200}
+  LIFECYCLE__STALE_JOB_SECONDS: ${LIFECYCLE__STALE_JOB_SECONDS:-900}
+  LIFECYCLE__RECONCILE_INTERVAL_SECONDS: ${LIFECYCLE__RECONCILE_INTERVAL_SECONDS:-60}
+  PROVIDER_TIMEOUTS__CONNECT_SECONDS: ${PROVIDER_TIMEOUTS__CONNECT_SECONDS:-5}
+  PROVIDER_TIMEOUTS__REQUEST_SECONDS: ${PROVIDER_TIMEOUTS__REQUEST_SECONDS:-30}
+  PROVIDER_TIMEOUTS__EMBEDDING_SECONDS: ${PROVIDER_TIMEOUTS__EMBEDDING_SECONDS:-60}
+  PROVIDER_TIMEOUTS__STORAGE_SECONDS: ${PROVIDER_TIMEOUTS__STORAGE_SECONDS:-30}
+
+x-worker-security: &worker-security
+  restart: unless-stopped
+  init: true
+  user: "10001:10001"
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+
+x-database-environment: &database-environment
+  DATABASE__URL: ${DATABASE__URL:?DATABASE__URL is required}
+  DATABASE__POOL_MIN_SIZE: ${DATABASE__POOL_MIN_SIZE:-2}
+  DATABASE__POOL_MAX_SIZE: ${DATABASE__POOL_MAX_SIZE:-10}
+  DATABASE__POOL_TIMEOUT_SECONDS: ${DATABASE__POOL_TIMEOUT_SECONDS:-10}
+  DATABASE__CONNECT_TIMEOUT_SECONDS: ${DATABASE__CONNECT_TIMEOUT_SECONDS:-5}
+
+x-storage-environment: &storage-environment
+  STORAGE__ENDPOINT_URL: ${STORAGE__ENDPOINT_URL:?STORAGE__ENDPOINT_URL is required}
+  STORAGE__REGION: ${STORAGE__REGION:-us-east-1}
+  STORAGE__BUCKET_NAME: ${STORAGE__BUCKET_NAME:?STORAGE__BUCKET_NAME is required}
+  STORAGE__ACCESS_KEY_ID: ${STORAGE__ACCESS_KEY_ID:?STORAGE__ACCESS_KEY_ID is required}
+  STORAGE__SECRET_ACCESS_KEY: ${STORAGE__SECRET_ACCESS_KEY:?STORAGE__SECRET_ACCESS_KEY is required}
+  STORAGE__USE_TLS: ${STORAGE__USE_TLS:?STORAGE__USE_TLS is required}
+  STORAGE__SERVER_SIDE_ENCRYPTION: ${STORAGE__SERVER_SIDE_ENCRYPTION:?STORAGE__SERVER_SIDE_ENCRYPTION is required}
+  STORAGE__KMS_KEY_ID: ${STORAGE__KMS_KEY_ID:-}
+  STORAGE__KEY_PREFIX: ${STORAGE__KEY_PREFIX:-rag}
+  STORAGE__SIGNED_URL_TTL_SECONDS: ${STORAGE__SIGNED_URL_TTL_SECONDS:-900}
+
+x-ingestion-environment: &ingestion-environment
+  INGESTION__ALLOWED_MIME_TYPES: ${INGESTION__ALLOWED_MIME_TYPES:-["application/pdf"]}
+  INGESTION__UPLOAD_MAX_BYTES: ${INGESTION__UPLOAD_MAX_BYTES:-104857600}
+  INGESTION__PDF_MAX_PAGES: ${INGESTION__PDF_MAX_PAGES:-500}
+  INGESTION__PDF_ALLOW_EMBEDDED_FILES: ${INGESTION__PDF_ALLOW_EMBEDDED_FILES:-false}
+  INGESTION__PDF_MAX_CONTENT_STREAM_BYTES_PER_PAGE: ${INGESTION__PDF_MAX_CONTENT_STREAM_BYTES_PER_PAGE:-16777216}
+  INGESTION__NORMALIZED_MAX_BYTES: ${INGESTION__NORMALIZED_MAX_BYTES:-268435456}
+  INGESTION__EXTRACTED_TEXT_MAX_CHARS: ${INGESTION__EXTRACTED_TEXT_MAX_CHARS:-20000000}
+  INGESTION__NATIVE_MIN_TEXT_CHARS_PER_PAGE: ${INGESTION__NATIVE_MIN_TEXT_CHARS_PER_PAGE:-20}
+  INGESTION__NATIVE_MAX_BLOCKS_PER_PAGE: ${INGESTION__NATIVE_MAX_BLOCKS_PER_PAGE:-10000}
+  INGESTION__MAX_CHUNKS: ${INGESTION__MAX_CHUNKS:-10000}
+  INGESTION__CHUNK_MAX_TOKENS: ${INGESTION__CHUNK_MAX_TOKENS:-96}
+  INGESTION__CHUNK_OVERLAP_TOKENS: ${INGESTION__CHUNK_OVERLAP_TOKENS:-16}
+  INGESTION__CHUNK_PAGE_MAX_CHARS: ${INGESTION__CHUNK_PAGE_MAX_CHARS:-2000000}
+  INGESTION__OCR_LANGUAGE_CODES: ${INGESTION__OCR_LANGUAGE_CODES:-["eng"]}
+  INGESTION__OCR_MIN_CONFIDENCE: ${INGESTION__OCR_MIN_CONFIDENCE:-0.70}
+  INGESTION__OCR_RENDER_DPI: ${INGESTION__OCR_RENDER_DPI:-300}
+  INGESTION__OCR_PAGE_TIMEOUT_SECONDS: ${INGESTION__OCR_PAGE_TIMEOUT_SECONDS:-120}
+  INGESTION__OCR_MAX_RENDERED_PAGE_BYTES: ${INGESTION__OCR_MAX_RENDERED_PAGE_BYTES:-67108864}
+
+x-embedding-environment: &embedding-environment
+  EMBEDDING__PROVIDER: ${EMBEDDING__PROVIDER:-fastembed}
+  EMBEDDING__MODEL_NAME: ${EMBEDDING__MODEL_NAME:-sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}
+  EMBEDDING__MODEL_REVISION: ${EMBEDDING__MODEL_REVISION:-faf4aa4225822f3bc6376869cb1164e8e3feedd0}
+  EMBEDDING__MODEL_VERSION: ${EMBEDDING__MODEL_VERSION:-faf4aa4225822f3bc6376869cb1164e8e3feedd0-fastembed-0.8.0-mean}
+  EMBEDDING__MODEL_DIRECTORY: ${EMBEDDING__MODEL_DIRECTORY:-/opt/rag/models/multilingual-minilm}
+  EMBEDDING__MODEL_SHA256: ${EMBEDDING__MODEL_SHA256:-634d0f66c29dc934c8fa72b8a4fe91dd4d420a22f1d82a241058d4316e659a99}
+  EMBEDDING__DIMENSIONS: ${EMBEDDING__DIMENSIONS:-384}
+  EMBEDDING__BATCH_SIZE: ${EMBEDDING__BATCH_SIZE:-16}
+  EMBEDDING__MAX_CONCURRENT_BATCHES: ${EMBEDDING__MAX_CONCURRENT_BATCHES:-1}
+
+x-search-environment: &search-environment
+  SEARCH__ENDPOINT_URL: ${SEARCH__ENDPOINT_URL:?SEARCH__ENDPOINT_URL is required}
+  SEARCH__USERNAME: ${SEARCH__USERNAME:?SEARCH__USERNAME is required}
+  SEARCH__PASSWORD: ${SEARCH__PASSWORD:?SEARCH__PASSWORD is required}
+  SEARCH__INDEX_NAME: ${SEARCH__INDEX_NAME:-rag-chunks-v1}
+  SEARCH__TARGET_VERSION: ${SEARCH__TARGET_VERSION:-opensearch-2.19.5-hybrid-v1}
+  SEARCH__VERIFY_TLS: ${SEARCH__VERIFY_TLS:?SEARCH__VERIFY_TLS is required}
+  SEARCH__REQUEST_TIMEOUT_SECONDS: ${SEARCH__REQUEST_TIMEOUT_SECONDS:-30}
+
 services:
   native-worker:
+    <<: *worker-security
     build:
       context: ..
       dockerfile: docker/worker/Dockerfile
       target: native
     environment:
-      BROKER__URL: ${BROKER__URL:?BROKER__URL is required}
-      DATABASE__URL: ${DATABASE__URL:?DATABASE__URL is required}
-      STORAGE__ENDPOINT_URL: ${STORAGE__ENDPOINT_URL:?STORAGE__ENDPOINT_URL is required}
-      STORAGE__BUCKET_NAME: ${STORAGE__BUCKET_NAME:?STORAGE__BUCKET_NAME is required}
-      STORAGE__ACCESS_KEY_ID: ${STORAGE__ACCESS_KEY_ID:?STORAGE__ACCESS_KEY_ID is required}
-      STORAGE__SECRET_ACCESS_KEY: ${STORAGE__SECRET_ACCESS_KEY:?STORAGE__SECRET_ACCESS_KEY is required}
+      <<: [*core-environment, *database-environment, *storage-environment, *ingestion-environment]
+      RUNTIME_ROLE: native-worker
       WORKERS__JOB_TEMP_DIRECTORY: /var/lib/rag-jobs
     read_only: true
     tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
       - /var/lib/rag-jobs:rw,noexec,nosuid,size=2048m,mode=0700,uid=10001,gid=10001
     cpus: ${WORKERS__NATIVE_CPU_LIMIT:-2.0}
     mem_limit: ${WORKERS__NATIVE_PARSE_MEMORY_MIB:-2048}m
@@ -23,21 +131,57 @@ services:
     stop_grace_period: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}s
     networks: [ingestion]
 
+  lifecycle-worker:
+    <<: *worker-security
+    build:
+      context: ..
+      dockerfile: docker/worker/Dockerfile
+      target: lifecycle
+    environment:
+      <<: [*core-environment, *database-environment, *storage-environment, *search-environment]
+      RUNTIME_ROLE: lifecycle-worker
+      WORKERS__JOB_TEMP_DIRECTORY: /var/lib/rag-jobs
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+      - /var/lib/rag-jobs:rw,noexec,nosuid,size=256m,mode=0700,uid=10001,gid=10001
+    cpus: ${WORKERS__LIFECYCLE_CPU_LIMIT:-1.0}
+    mem_limit: ${WORKERS__LIFECYCLE_MEMORY_MIB:-512}m
+    pids_limit: 128
+    stop_grace_period: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}s
+    networks: [ingestion]
+
+  reconciliation-scheduler:
+    <<: *worker-security
+    build:
+      context: ..
+      dockerfile: docker/worker/Dockerfile
+      target: scheduler
+    environment:
+      <<: *core-environment
+      RUNTIME_ROLE: scheduler
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    cpus: 0.25
+    mem_limit: 256m
+    pids_limit: 64
+    stop_grace_period: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}s
+    networks: [ingestion]
+
   ocr-worker:
+    <<: *worker-security
     build:
       context: ..
       dockerfile: docker/worker/Dockerfile
       target: ocr
     environment:
-      BROKER__URL: ${BROKER__URL:?BROKER__URL is required}
-      DATABASE__URL: ${DATABASE__URL:?DATABASE__URL is required}
-      STORAGE__ENDPOINT_URL: ${STORAGE__ENDPOINT_URL:?STORAGE__ENDPOINT_URL is required}
-      STORAGE__BUCKET_NAME: ${STORAGE__BUCKET_NAME:?STORAGE__BUCKET_NAME is required}
-      STORAGE__ACCESS_KEY_ID: ${STORAGE__ACCESS_KEY_ID:?STORAGE__ACCESS_KEY_ID is required}
-      STORAGE__SECRET_ACCESS_KEY: ${STORAGE__SECRET_ACCESS_KEY:?STORAGE__SECRET_ACCESS_KEY is required}
+      <<: [*core-environment, *database-environment, *storage-environment, *ingestion-environment]
+      RUNTIME_ROLE: ocr-worker
       WORKERS__JOB_TEMP_DIRECTORY: /var/lib/rag-jobs
     read_only: true
     tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
       - /var/lib/rag-jobs:rw,noexec,nosuid,size=512m,mode=0700,uid=10001,gid=10001
     cpus: ${WORKERS__OCR_CPU_LIMIT:-1.0}
     mem_limit: ${WORKERS__OCR_MEMORY_MIB:-512}m
@@ -45,6 +189,27 @@ services:
     stop_grace_period: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}s
     networks: [ingestion]
 
+  publication-worker:
+    <<: *worker-security
+    build:
+      context: ..
+      dockerfile: docker/worker/Dockerfile
+      target: publication
+    environment:
+      <<: [*core-environment, *database-environment, *storage-environment, *search-environment, *ingestion-environment, *embedding-environment]
+      RUNTIME_ROLE: publication-worker
+      WORKERS__JOB_TEMP_DIRECTORY: /var/lib/rag-jobs
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+      - /var/lib/rag-jobs:rw,noexec,nosuid,size=512m,mode=0700,uid=10001,gid=10001
+    cpus: ${WORKERS__PUBLICATION_CPU_LIMIT:-2.0}
+    mem_limit: ${WORKERS__PUBLICATION_MEMORY_MIB:-1024}m
+    pids_limit: 128
+    stop_grace_period: ${WORKERS__SHUTDOWN_GRACE_SECONDS:-30}s
+    networks: [ingestion]
+
 networks:
   ingestion:
-    internal: true
+    name: ${INGESTION_NETWORK_NAME:-atlas-rag-ingestion}
+    external: true
