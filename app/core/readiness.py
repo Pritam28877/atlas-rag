@@ -1,13 +1,17 @@
 """Bounded readiness checks for independently configured infrastructure."""
 
 import asyncio
+import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
+from sqlalchemy import text
+
 from app.core.config import Settings
 from app.core.database import Database
 from app.core.storage import ObjectStorage
+from app.services.ingestion.search_adapter import OpenSearchIndexAdapter
 from app.workers.celery_app import check_broker_connection, check_worker_connection
 
 
@@ -45,9 +49,30 @@ class InfrastructureReadiness:
     ) -> None:
         self._settings = settings
         self._checks = checks
+        self._cache_lock = asyncio.Lock()
+        self._cached_report: ReadinessReport | None = None
+        self._cache_expires_at = 0.0
 
     async def check(self) -> ReadinessReport:
         """Return safe readiness classifications for every platform dependency."""
+        current_time = time.monotonic()
+        if self._cached_report is not None and current_time < self._cache_expires_at:
+            return self._cached_report
+        async with self._cache_lock:
+            current_time = time.monotonic()
+            if (
+                self._cached_report is not None
+                and current_time < self._cache_expires_at
+            ):
+                return self._cached_report
+            report = await self._compute_report()
+            self._cached_report = report
+            self._cache_expires_at = (
+                current_time + self._settings.readiness.cache_ttl_seconds
+            )
+            return report
+
+    async def _compute_report(self) -> ReadinessReport:
         checks = self._checks or self._configured_checks()
         results = await asyncio.gather(
             *(check() for check in checks.values()),
@@ -80,6 +105,12 @@ class InfrastructureReadiness:
         if self._settings.broker.url is not None:
             checks["broker"] = self._check_broker
             checks["workers"] = self._check_workers
+            if self._settings.database.url is not None:
+                checks["scheduler"] = self._check_scheduler
+        if self._search_is_configured():
+            checks["search"] = self._check_search
+        elif self._search_has_any_configuration():
+            checks["search"] = self._misconfigured
 
         statuses = {
             "database": self._settings.database.url is not None,
@@ -87,6 +118,12 @@ class InfrastructureReadiness:
             or self._storage_has_any_configuration(),
             "broker": self._settings.broker.url is not None,
             "workers": self._settings.broker.url is not None,
+            "scheduler": (
+                self._settings.broker.url is not None
+                and self._settings.database.url is not None
+            ),
+            "search": self._search_is_configured()
+            or self._search_has_any_configuration(),
         }
         for name, configured in statuses.items():
             if not configured:
@@ -107,6 +144,13 @@ class InfrastructureReadiness:
             storage.access_key_id,
             storage.secret_access_key,
         ]
+
+    def _search_is_configured(self) -> bool:
+        return self._settings.search.endpoint_url is not None
+
+    def _search_has_any_configuration(self) -> bool:
+        search = self._settings.search
+        return any((search.endpoint_url, search.username, search.password))
 
     async def _check_database(self) -> None:
         database = Database(self._settings.database)
@@ -130,6 +174,44 @@ class InfrastructureReadiness:
 
     async def _check_workers(self) -> None:
         await asyncio.to_thread(check_worker_connection, self._settings)
+
+    async def _check_search(self) -> None:
+        search = OpenSearchIndexAdapter(
+            self._settings.search,
+            self._settings.embedding.dimensions,
+        )
+        try:
+            await search.check_connection()
+        finally:
+            await search.close()
+
+    async def _check_scheduler(self) -> None:
+        database = Database(self._settings.database)
+        try:
+            async with database.transaction() as session:
+                fresh = await session.scalar(
+                    text(
+                        """
+                        SELECT COALESCE((
+                            SELECT updated_at >= now()
+                                - (:maximum_age * interval '1 second')
+                            FROM service_heartbeats
+                            WHERE service_name =
+                                'document-loader-reconciliation'
+                        ), false)
+                        """
+                    ),
+                    {
+                        "maximum_age": (
+                            self._settings.readiness
+                            .scheduler_heartbeat_max_age_seconds
+                        )
+                    },
+                )
+            if not fresh:
+                raise RuntimeError("scheduler heartbeat is stale")
+        finally:
+            await database.close()
 
     async def _not_configured(self) -> object:
         return NOT_CONFIGURED
