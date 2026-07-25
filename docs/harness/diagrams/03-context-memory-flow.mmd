@@ -1,0 +1,23 @@
+flowchart LR
+    INPUT["New request"] --> MANIFEST["Prompt manifest builder"]
+    POLICY["Policy and agent instructions"] --> MANIFEST
+    HOT["Hot tier<br/>current request and recent paired turns"] --> MANIFEST
+    WARM["Warm tier<br/>anchored summaries and active task artifacts"] --> MANIFEST
+    COLD["Cold tier<br/>retained journal and content-addressed artifacts"] --> RETRIEVE
+    MEMORY["Provenance memory<br/>facts with source, confidence, TTL"] --> RETRIEVE
+    TOOLS["Progressive tool catalog"] --> SELECT
+    RETRIEVE["Budgeted hybrid retrieval"] --> VALIDATE
+    SELECT["Tool relevance selector"] --> VALIDATE
+    VALIDATE["Reconstruction validator<br/>IDs, paths, URLs, constraints, tool schemas"] --> MANIFEST
+    MANIFEST --> COUNT["Model-aware token accounting"]
+    COUNT --> FIT{"Within reserved budget?"}
+    FIT -- Yes --> PREFIX["Stable cacheable prefix plus dynamic tail"]
+    FIT -- No --> COMPACT["Summarize oldest safe boundary"]
+    COMPACT --> CHECK{"Critical facts preserved?"}
+    CHECK -- Yes --> WARM
+    CHECK -- No --> WIDEN["Restore source spans or widen retrieval"]
+    WIDEN --> MANIFEST
+    PREFIX --> PROVIDER["Canonical provider request"]
+    PROVIDER --> OBSERVE["Usage and quality signals"]
+    OBSERVE --> MEMORY
+    OBSERVE --> POLICY_TUNE["Offline policy evaluation only"]

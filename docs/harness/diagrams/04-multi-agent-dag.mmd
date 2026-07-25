@@ -1,0 +1,19 @@
+flowchart TB
+    GOAL["User goal and acceptance contract"] --> PLAN["Planner creates bounded DAG"]
+    PLAN --> READY["Ready queue ordered by dependencies and priority"]
+    READY --> BUDGET{"Agent, token, cost, and wall-time budget"}
+    BUDGET -- Exhausted --> PAUSE["Pause with resumable evidence"]
+    BUDGET -- Available --> LEASE["Lease task and file scope"]
+    LEASE --> WORKER["Isolated worker session"]
+    WORKER --> ARTIFACT["Typed handoff artifact<br/>claims, evidence, changes, unchecked items"]
+    ARTIFACT --> VERIFY{"Independent verification gate"}
+    VERIFY -- Pass --> COMMIT_EVENT["Record TaskSucceeded event"]
+    VERIFY -- Gap --> REPAIR["Create bounded repair node"]
+    VERIFY -- Conflict --> RESOLVE["Serialize owner or stage patch resolution"]
+    REPAIR --> READY
+    RESOLVE --> READY
+    COMMIT_EVENT --> UNBLOCK["Unblock dependent nodes"]
+    UNBLOCK --> READY
+    UNBLOCK --> DONE{"All acceptance criteria proven?"}
+    DONE -- No --> PLAN
+    DONE -- Yes --> FINAL["Synthesize result and evidence"]

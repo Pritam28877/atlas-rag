@@ -1,0 +1,98 @@
+flowchart TB
+    subgraph Clients["Untrusted and semi-trusted clients"]
+        CLI["CLI and TUI"]
+        IDE["IDE extension"]
+        WEB["Web or desktop UI"]
+        SDK["Generated SDK and automation"]
+    end
+
+    subgraph Control["Trusted control plane"]
+        API["Versioned app-server API<br/>JSON-RPC plus event stream"]
+        AUTH["Identity, workspace, and session authorization"]
+        COORD["Session coordinator<br/>single writer plus leases"]
+        TURN["Turn engine<br/>Thread / Turn / Item state machine"]
+        DAG["Validated graph compiler<br/>bounded durable DAG scheduler"]
+        CTX["Context compiler<br/>hot / warm / cold tiers"]
+        ROUTER["Provider router<br/>capability, policy, cost, health"]
+        GATE["Policy and budget gateway<br/>allow / ask / deny"]
+        EGRESS["Provider egress gateway<br/>credentials, data policy, cost, redaction"]
+        FILTER["Result validator and redactor"]
+        HOOKS["Trusted hook dispatcher<br/>typed, bounded, fail-closed gates"]
+        EXPORT["Telemetry export gateway<br/>policy, redaction, quota, audit"]
+    end
+
+    subgraph Data["Durable local data plane"]
+        JOURNAL[("Append-only event journal")]
+        SQL[("SQLite projections and leases")]
+        BLOBS[("Content-addressed artifacts")]
+        MEMORY[("Bounded provenance memory")]
+        AUDIT[("Redacted audit and approval receipts")]
+    end
+
+    subgraph Execution["Isolated execution plane"]
+        SANDBOX["Sandbox supervisor<br/>filesystem, process, network, limits"]
+        BUILTIN["Built-in tools"]
+        MCP["MCP process hosts"]
+        PLUGIN["Out-of-process plugin hosts"]
+        HOOKHOST["Out-of-process hook hosts"]
+        DOC["Evidence-grounded document adapter<br/>typed chunks and citations"]
+        WORKTREE["Per-agent worktree or overlay"]
+    end
+
+    subgraph Providers["External inference boundary"]
+        OPENAI["OpenAI-compatible"]
+        ANTHROPIC["Anthropic-compatible"]
+        CLOUD["Cloud and subscription providers"]
+        LOCAL["Local model runtime"]
+    end
+
+    subgraph Operations["Operations and evaluation"]
+        OTEL["OpenTelemetry<br/>redacted logs, metrics, traces"]
+        EVAL["Replay and evaluation runner"]
+        ADMIN["Policy and retention administration"]
+    end
+
+    CLI --> API
+    IDE --> API
+    WEB --> API
+    SDK --> API
+    API --> AUTH --> COORD
+    AUTH --> GATE
+    COORD --> TURN
+    TURN <--> DAG
+    TURN --> CTX --> ROUTER
+    TURN --> GATE
+    ROUTER --> GATE
+    GATE --> EGRESS
+    EGRESS <--> OPENAI
+    EGRESS <--> ANTHROPIC
+    EGRESS <--> CLOUD
+    EGRESS <--> LOCAL
+    EGRESS --> TURN
+    EGRESS --> JOURNAL
+    GATE <--> HOOKS
+    HOOKS --> SANDBOX
+    GATE --> SANDBOX
+    SANDBOX --> BUILTIN
+    SANDBOX --> MCP
+    SANDBOX --> PLUGIN
+    SANDBOX --> HOOKHOST
+    SANDBOX --> DOC
+    SANDBOX --> WORKTREE
+    SANDBOX --> JOURNAL
+    BUILTIN --> FILTER
+    MCP --> FILTER
+    PLUGIN --> FILTER
+    HOOKHOST --> FILTER
+    DOC --> FILTER
+    FILTER --> JOURNAL
+    FILTER --> BLOBS
+    TURN --> JOURNAL
+    JOURNAL --> SQL
+    TURN --> BLOBS
+    CTX <--> MEMORY
+    GATE --> AUDIT
+    GATE --> JOURNAL
+    JOURNAL --> EXPORT --> OTEL
+    EVAL --> API
+    ADMIN --> API

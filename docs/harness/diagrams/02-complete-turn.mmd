@@ -1,0 +1,76 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant Client
+    participant API as App server
+    participant Auth as Authorization
+    participant Journal as Event journal
+    participant Turn as Turn engine
+    participant Context as Context compiler
+    participant Router as Provider router
+    participant Policy as Policy and budget gateway
+    participant Egress as Provider egress gateway
+    participant Model as Model provider
+    participant Sandbox as Sandbox supervisor
+    participant Tool as Tool, MCP, or document adapter
+    participant Filter as Output validator and redactor
+
+    User->>Client: Submit request with idempotency key
+    Client->>API: thread.turn.start
+    API->>Auth: Bind authenticated principal and workspace grant
+    Auth-->>API: Authorized actor context
+    API->>Journal: Append TurnAccepted
+    Journal-->>API: Durable event sequence
+    API-->>Client: Authorized event stream
+    API->>Turn: Start from projected state
+    Turn->>Context: Compile immutable prompt manifest
+    Context->>Journal: Append ContextCompiled with hashes and token counts
+    Context->>Router: Request required capabilities
+    Router->>Journal: Append ProviderSelected with rationale
+    Router->>Policy: Authorize provider egress, data, and cost
+    Policy-->>Router: Scoped provider grant
+    Router->>Egress: Canonical request and credential handle
+    Egress->>Journal: Append ProviderAttemptStarted
+    Egress->>Model: Stream provider request
+    Model-->>Egress: Provider stream
+    Egress-->>Turn: Validated canonical deltas and usage
+    Turn->>Journal: Append normalized deltas
+
+    alt Tool call proposed
+        Turn->>Policy: Authorize typed operation and budget
+        alt Denied by policy
+            Policy->>Journal: Append ToolDenied
+            Journal-->>API: Denial event
+            API-->>Client: Explain denial
+        else Approval required
+            Policy->>Journal: Append ApprovalRequested
+            Journal-->>API: Approval event
+            API-->>Client: Stream bounded approval request
+            User->>Client: Approve once, scoped rule, or deny
+            Client->>API: Approval response
+            API->>Auth: Re-authorize actor and request hash
+            API->>Policy: Validated approval response
+            Policy->>Journal: Append immutable decision receipt
+        else Allowed
+            Policy->>Journal: Append ToolAllowed
+        end
+        opt Effective decision is allowed
+            Policy->>Sandbox: Execute with effective capability
+            Sandbox->>Journal: Append OperationPrepared with fencing token
+            Sandbox->>Journal: Append OperationDispatched with fencing token
+            Sandbox->>Tool: Start with filtered environment and hard limits
+            Tool-->>Sandbox: Bounded output, artifact, and exit status
+            Sandbox->>Filter: Raw result by bounded stream
+            Filter->>Journal: Append Completed, Failed, or Ambiguous
+        end
+        Turn->>Context: Add persisted operation outcome
+        Turn->>Egress: Continue under scoped provider grant
+        Egress->>Model: Stream next provider request
+    end
+
+    Model-->>Egress: Final response and usage
+    Egress-->>Turn: Validated canonical final event
+    Turn->>Journal: Append TurnCompleted
+    Journal-->>API: Final durable events
+    API-->>Client: Authorized final events
+    Client-->>User: Render result and verification evidence

@@ -1,0 +1,29 @@
+stateDiagram-v2
+    [*] --> Accepted
+    Accepted --> CompilingContext
+    CompilingContext --> CallingModel
+    CallingModel --> AwaitingApproval: tool needs approval
+    CallingModel --> ExecutingTool: tool allowed
+    CallingModel --> Completed: final response
+    AwaitingApproval --> ExecutingTool: approved
+    AwaitingApproval --> CallingModel: denied result
+    ExecutingTool --> CallingModel: paired result persisted
+    CallingModel --> Retrying: bounded retryable failure
+    Retrying --> CallingModel
+    Accepted --> Cancelling: user cancellation
+    CompilingContext --> Cancelling: user cancellation
+    CallingModel --> Cancelling: user cancellation
+    AwaitingApproval --> Cancelling: user cancellation
+    ExecutingTool --> Cancelling: user cancellation
+    ExecutingTool --> Reconciling: process lost or deadline exceeded
+    Cancelling --> Cancelled: provider and processes settled
+    Cancelling --> NeedsOperator: containment or side effect ambiguous
+    Reconciling --> CallingModel: idempotent result recovered
+    Reconciling --> NeedsOperator: side effect is ambiguous
+    Retrying --> Failed: retry or budget exhausted
+    CompilingContext --> Failed: invalid manifest
+    CallingModel --> Failed: terminal provider error
+    Completed --> [*]
+    Cancelled --> [*]
+    Failed --> [*]
+    NeedsOperator --> [*]

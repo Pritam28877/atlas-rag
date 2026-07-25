@@ -1,0 +1,18 @@
+flowchart LR
+    USER["Authenticated user"] --> CONTROL["Trusted control plane"]
+    CONTROL --> DECISION["Typed policy decision"]
+    DECISION --> RECEIPT[("Immutable receipt")]
+    DECISION --> SUPERVISOR["Sandbox supervisor"]
+    DECISION --> EGRESS["Provider or telemetry egress gateway"]
+    SUPERVISOR --> FS["Workspace view"]
+    SUPERVISOR --> NET["Network proxy allowlist"]
+    SUPERVISOR --> PROC["Process namespace and limits"]
+    SUPERVISOR --> SECRET["Per-call secret broker"]
+    FS --> UNTRUSTED["Untrusted tool, MCP, plugin, or parser"]
+    NET --> UNTRUSTED
+    PROC --> UNTRUSTED
+    SECRET --> UNTRUSTED
+    EGRESS --> EXTERNAL["External provider or exporter"]
+    EXTERNAL --> FILTER
+    UNTRUSTED --> FILTER["Size limits, validation, redaction"]
+    FILTER --> CONTROL
