@@ -1,0 +1,13 @@
+{
+  "client_id": "cli_0123456789abcdef0123456789abcdef",
+  "command": {
+    "destination": "future-overlay",
+    "kind": "turn.teleport",
+    "unknown_policy": {
+      "mode": "preserve-only"
+    }
+  },
+  "request_id": "req_0123456789abcdef0123456789abcdef",
+  "schema_version": "1.2",
+  "workspace_id": "wsp_0123456789abcdef0123456789abcdef"
+}

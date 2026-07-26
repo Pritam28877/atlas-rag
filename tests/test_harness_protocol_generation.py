@@ -12,6 +12,7 @@ from scripts.generate_harness_protocol import (
     SCHEMA_PATH,
     TYPESCRIPT_PATH,
 )
+from scripts.harness_protocol_fixtures import FIXTURE_PATHS
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,3 +84,4 @@ def test_generated_manifest_tracks_only_public_contract_artifacts() -> None:
         SCHEMA_PATH.as_posix(),
         TYPESCRIPT_PATH.as_posix(),
     }
+    assert all((ROOT / fixture_path).is_file() for fixture_path in FIXTURE_PATHS)

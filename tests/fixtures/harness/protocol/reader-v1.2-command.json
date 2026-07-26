@@ -1,0 +1,14 @@
+{
+  "client_id": "cli_0123456789abcdef0123456789abcdef",
+  "command": {
+    "after_sequence": 42,
+    "event_types": [
+      "Artifact.Durable",
+      "Turn.Completed"
+    ],
+    "kind": "event.subscribe"
+  },
+  "request_id": "req_0123456789abcdef0123456789abcdef",
+  "schema_version": "1.2",
+  "workspace_id": "wsp_0123456789abcdef0123456789abcdef"
+}
