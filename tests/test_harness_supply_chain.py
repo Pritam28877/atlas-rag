@@ -9,6 +9,7 @@ from scripts.verify_harness_supply_chain import (
     SupplyChainError,
     run_vulnerability_audits,
     validate_license_expression,
+    validate_node_sources,
     validate_python_sources,
 )
 
@@ -78,6 +79,49 @@ requires-python = ">=3.12"
 
     with pytest.raises(SupplyChainError, match="forbidden or unpinned source"):
         validate_python_sources(tmp_path, policy)
+
+
+def test_node_dependency_without_approved_license_is_rejected(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".node-version").write_text("22.22.0\n", encoding="utf-8")
+    package = {
+        "name": "fixture",
+        "private": True,
+        "packageManager": "npm@10.9.4",
+        "engines": {"node": "22.22.0", "npm": "10.9.4"},
+    }
+    (tmp_path / "package.json").write_text(
+        json.dumps(package),
+        encoding="utf-8",
+    )
+    lock = {
+        "lockfileVersion": 3,
+        "packages": {
+            "": {},
+            "node_modules/untrusted": {
+                "version": "1.0.0",
+                "resolved": "https://registry.npmjs.org/untrusted/-/untrusted-1.0.0.tgz",
+                "integrity": "sha512-fixture",
+                "license": "AGPL-3.0-only",
+            },
+        },
+    }
+    (tmp_path / "package-lock.json").write_text(
+        json.dumps(lock),
+        encoding="utf-8",
+    )
+    policy = {
+        "node": {
+            "version": "22.22.0",
+            "npm_version": "10.9.4",
+            "allowed_registry_hosts": ["registry.npmjs.org"],
+            "allowed_license_identifiers": ["MIT"],
+        }
+    }
+
+    with pytest.raises(SupplyChainError, match="forbidden identifiers"):
+        validate_node_sources(tmp_path, policy)
 
 
 def test_vulnerability_audit_failure_stops_gate(

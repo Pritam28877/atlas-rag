@@ -43,6 +43,11 @@
     "npm_version": "10.9.4",
     "allowed_registry_hosts": [
       "registry.npmjs.org"
+    ],
+    "allowed_license_identifiers": [
+      "Apache-2.0",
+      "MIT",
+      "Python-2.0"
     ]
   },
   "artifacts": {
