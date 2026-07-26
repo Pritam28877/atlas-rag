@@ -1,5 +1,19 @@
 """Owned Atlas Harness session and subscriber lifecycles."""
 
+from app.services.harness.sessions.single_turn_contracts import (
+    ProviderAttemptSource,
+    SingleTurnOutcome,
+    ToolResolution,
+    ToolResolutionStatus,
+    TurnLifecycleTrace,
+    TurnProviderTrace,
+    TurnTerminalTrace,
+    TurnToolExchangeTrace,
+    TurnToolResolver,
+    TurnTraceEvent,
+    TurnTraceKind,
+)
+from app.services.harness.sessions.single_turn_engine import SingleTurnEngine
 from app.services.harness.sessions.turn_budget import (
     RepeatedCallCounter,
     TurnBudgetCharge,
@@ -20,7 +34,12 @@ from app.services.harness.sessions.turn_state_machine import (
 )
 
 __all__ = (
+    "ProviderAttemptSource",
     "RepeatedCallCounter",
+    "SingleTurnEngine",
+    "SingleTurnOutcome",
+    "ToolResolution",
+    "ToolResolutionStatus",
     "TurnBudgetCharge",
     "TurnBudgetDimension",
     "TurnBudgetExceeded",
@@ -30,6 +49,13 @@ __all__ = (
     "TurnEngineSnapshot",
     "TurnEngineTransitionError",
     "TurnLoopLimits",
+    "TurnLifecycleTrace",
+    "TurnProviderTrace",
+    "TurnTerminalTrace",
+    "TurnToolExchangeTrace",
+    "TurnToolResolver",
+    "TurnTraceEvent",
+    "TurnTraceKind",
     "allowed_turn_signals",
     "charge_turn_budget",
     "initial_turn_budget",
