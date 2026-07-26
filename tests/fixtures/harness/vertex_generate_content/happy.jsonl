@@ -1,0 +1,3 @@
+{"candidates":[{"content":{"parts":[{"text":"I should answer briefly.","thought":true,"thoughtSignature":"opaque-thought-secret"}],"role":"model"},"index":0}],"modelVersion":"gemini-2.5-flash-001","responseId":"vertex-response-secret"}
+{"candidates":[{"content":{"parts":[{"text":"Hello from Vertex."}],"role":"model"},"index":0}],"modelVersion":"gemini-2.5-flash-001","responseId":"vertex-response-secret"}
+{"candidates":[{"finishReason":"STOP","index":0}],"modelVersion":"gemini-2.5-flash-001","responseId":"vertex-response-secret","usageMetadata":{"cachedContentTokenCount":3,"candidatesTokenCount":5,"promptTokenCount":10,"thoughtsTokenCount":2,"toolUsePromptTokenCount":0,"totalTokenCount":17}}
