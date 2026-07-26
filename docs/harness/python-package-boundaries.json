@@ -15,6 +15,7 @@
     "boto3",
     "celery",
     "fastapi",
+    "httpcore",
     "httpx",
     "sqlalchemy"
   ],
@@ -22,6 +23,7 @@
     "boto3": ["artifacts", "providers"],
     "celery": [],
     "fastapi": [],
+    "httpcore": ["providers"],
     "httpx": ["extensions", "observability", "providers"],
     "sqlalchemy": ["journal"],
     "subprocess": ["sandbox"]

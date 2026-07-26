@@ -47,6 +47,9 @@ from app.services.harness.providers.health_registry import (
     ProviderHealthRegistryError,
     ProviderHealthRegistryErrorCode,
 )
+from app.services.harness.providers.pinned_network import (
+    PinnedProviderNetworkBackend,
+)
 from app.services.harness.providers.recorded import (
     RecordedProviderError,
     RecordedProviderErrorCode,
@@ -84,6 +87,7 @@ __all__ = (
     "ProviderHealthRegistry",
     "ProviderHealthRegistryError",
     "ProviderHealthRegistryErrorCode",
+    "PinnedProviderNetworkBackend",
     "ProviderEgressPolicy",
     "ProviderEgressPolicyError",
     "ProviderEgressPolicyErrorCode",
