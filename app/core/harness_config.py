@@ -1,6 +1,6 @@
 from decimal import Decimal
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import Field, model_validator
 
@@ -14,6 +14,9 @@ class HarnessSettings(ImmutableSettingsModel):
     workspace_root: Path | None = None
     state_directory: Path | None = None
     isolation_executable: Path | None = None
+    local_transport: Literal["stdio", "unix"] = "stdio"
+    unix_socket_path: Path | None = None
+    loopback_http_enabled: Literal[False] = False
     active_sessions: int = Field(default=8, ge=1, le=64)
     queued_sessions: int = Field(default=64, ge=0, le=512)
     provider_concurrency: int = Field(default=4, ge=1, le=16)
@@ -37,6 +40,9 @@ class HarnessSettings(ImmutableSettingsModel):
     turn_max_steps: int = Field(default=64, ge=1, le=256)
     turn_max_seconds: int = Field(default=600, ge=1, le=3600)
     process_max_count: int = Field(default=16, ge=1, le=64)
+    request_timeout_seconds: float = Field(default=30, ge=0.001, le=3600)
+    handshake_timeout_seconds: float = Field(default=5, ge=0.001, le=30)
+    shutdown_timeout_seconds: float = Field(default=5, ge=0.001, le=30)
     cloud_spend_limit_usd: Decimal = Field(
         default=Decimal("0"),
         ge=Decimal("0"),
@@ -96,4 +102,22 @@ class HarnessSettings(ImmutableSettingsModel):
             raise ValueError(
                 "harness isolation_executable must be outside writable roots"
             )
+        self._validate_transport(state_directory)
         return self
+
+    def _validate_transport(self, state_directory: Path) -> None:
+        if self.local_transport == "stdio":
+            if self.unix_socket_path is not None:
+                raise ValueError(
+                    "stdio harness cannot configure a Unix socket path"
+                )
+            return
+        if self.unix_socket_path is None:
+            raise ValueError("Unix harness requires unix_socket_path")
+        if not self.unix_socket_path.is_absolute():
+            raise ValueError("Unix socket path must be absolute")
+        socket_path = self.unix_socket_path.resolve(strict=False)
+        if not socket_path.parent.is_relative_to(state_directory):
+            raise ValueError(
+                "Unix socket path must be inside harness state_directory"
+            )
