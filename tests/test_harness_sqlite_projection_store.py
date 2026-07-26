@@ -10,6 +10,7 @@ from app.services.harness.journal import (
     AppendRequest,
     JournalDurability,
     JournalEvent,
+    JournalReadRequest,
     SQLiteEventJournal,
 )
 from app.services.harness.journal.errors import JournalStorageError
@@ -71,13 +72,19 @@ def event(sequence: int) -> EventRecord:
     )
 
 
-def append_request(*events: EventRecord) -> AppendRequest:
+def append_request(
+    *events: EventRecord,
+    workspace_id: str = WORKSPACE_ID,
+    expected_sequence: int = 0,
+    key_number: int = 1,
+    request_sha256: str = "e" * 64,
+) -> AppendRequest:
     return AppendRequest(
-        workspace_id=WORKSPACE_ID,
+        workspace_id=workspace_id,
         aggregate_id=identifier("trn"),
-        expected_sequence=0,
-        idempotency_key="sqlite-projection-command",
-        request_sha256="e" * 64,
+        expected_sequence=expected_sequence,
+        idempotency_key=f"sqlite-projection-command-{key_number}",
+        request_sha256=request_sha256,
         durability=JournalDurability.SYNCHRONOUS,
         events=events,
     )
@@ -146,6 +153,89 @@ def test_runner_persists_resumes_and_rebuilds_sqlite_projection(
         assert restored is not None
         assert restored.generation == 2
         assert restored.checkpoint == rebuilt.checkpoint
+
+    asyncio.run(scenario())
+
+
+def test_sqlite_append_updates_projections_atomically_with_workspace_gaps(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        path = database_path(tmp_path)
+        other_workspace_id = "wsp_" + "5" * 32
+        journal = await SQLiteEventJournal.open(
+            path,
+            clock=lambda: NOW,
+            projections=(definition(),),
+        )
+        first_request = append_request(event(1), event(2))
+        first = await journal.append(first_request)
+        replay = await journal.append(first_request)
+        other = await journal.append(
+            append_request(
+                event(1),
+                workspace_id=other_workspace_id,
+                key_number=2,
+                request_sha256="f" * 64,
+            )
+        )
+        store = await SQLiteProjectionStore.open(path)
+        first_projection = await store.load(WORKSPACE_ID, PROJECTION_NAME)
+        other_projection = await store.load(
+            other_workspace_id,
+            PROJECTION_NAME,
+        )
+        await store.close()
+        await journal.close()
+
+        assert replay.receipt_sha256 == first.receipt_sha256
+        assert first_projection is not None
+        assert first_projection.checkpoint.state_json == '{"count":2}'
+        assert first_projection.checkpoint.last_journal_sequence == 2
+        assert other.journal_sequences == (3,)
+        assert other_projection is not None
+        assert other_projection.checkpoint.state_json == '{"count":1}'
+        assert other_projection.checkpoint.last_journal_sequence == 3
+
+    asyncio.run(scenario())
+
+
+def test_sqlite_append_rolls_back_when_projection_history_is_missing(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        path = database_path(tmp_path)
+        journal = await SQLiteEventJournal.open(path, clock=lambda: NOW)
+        await journal.append(append_request(event(1)))
+        await journal.close()
+
+        projected_journal = await SQLiteEventJournal.open(
+            path,
+            clock=lambda: NOW,
+            projections=(definition(),),
+        )
+        with pytest.raises(
+            JournalStorageError,
+            match="requires a complete rebuild",
+        ):
+            await projected_journal.append(
+                append_request(
+                    event(2),
+                    expected_sequence=1,
+                    key_number=2,
+                    request_sha256="f" * 64,
+                )
+            )
+        page = await projected_journal.read_aggregate(
+            JournalReadRequest(
+                workspace_id=WORKSPACE_ID,
+                aggregate_id=identifier("trn"),
+                after_sequence=0,
+            )
+        )
+        await projected_journal.close()
+
+        assert tuple(item.aggregate_sequence for item in page.events) == (1,)
 
     asyncio.run(scenario())
 

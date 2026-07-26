@@ -1,47 +1,44 @@
-"""Atomic online projection application within a journal transaction."""
+"""Atomic online projection application within a SQLite append."""
 
 from __future__ import annotations
 
+import sqlite3
+from datetime import datetime
 from typing import Any
-
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.harness.journal.contracts import JournalEvent
 from app.services.harness.journal.errors import JournalStorageError
-from app.services.harness.journal.postgres_projection_rows import (
-    stored_projection_from_row,
-)
-from app.services.harness.journal.postgres_projection_sql import (
-    ADVANCE_PROJECTION,
-    INSERT_PROJECTION,
-    LOCK_PROJECTION,
-)
 from app.services.harness.journal.projection_contracts import ProjectionDefinition
 from app.services.harness.journal.projection_engine import (
     advance_projection,
     initial_checkpoint,
 )
 from app.services.harness.journal.projection_store import ProjectionHealth
+from app.services.harness.journal.sqlite_projection_rows import (
+    stored_projection_from_row,
+)
+from app.services.harness.journal.sqlite_projection_sql import (
+    ADVANCE_PROJECTION,
+    INSERT_PROJECTION,
+    LOAD_PROJECTION,
+)
 
 
-async def apply_online_projections(
-    session: AsyncSession,
+def apply_online_projections(
+    connection: sqlite3.Connection,
     definitions: tuple[ProjectionDefinition[Any], ...],
     workspace_id: str,
     events: tuple[JournalEvent, ...],
+    *,
+    prior_journal_sequence: int,
+    updated_at: datetime,
 ) -> None:
-    if not definitions:
-        return
-    prior_journal_sequence = events[0].journal_sequence - 1
     for definition in definitions:
         parameters = {
             "workspace_id": workspace_id,
             "projection_name": definition.name,
         }
-        row = (
-            await session.execute(text(LOCK_PROJECTION), parameters)
-        ).mappings().one_or_none()
+        row = connection.execute(LOAD_PROJECTION, parameters).fetchone()
         if row is None:
             if prior_journal_sequence != 0:
                 raise JournalStorageError(
@@ -73,14 +70,13 @@ async def apply_online_projections(
             "event_count": next_checkpoint.event_count,
             "state_json": next_checkpoint.state_json,
             "state_sha256": next_checkpoint.state_sha256,
+            "updated_at": updated_at.isoformat(),
         }
         statement = INSERT_PROJECTION
         if expected_generation is not None:
             statement = ADVANCE_PROJECTION
             write_parameters["expected_generation"] = expected_generation
             write_parameters["expected_sequence"] = prior_journal_sequence
-        written = (
-            await session.execute(text(statement), write_parameters)
-        ).mappings().one_or_none()
+        written = connection.execute(statement, write_parameters).fetchone()
         if written is None:
             raise JournalStorageError("online projection write conflicted")
