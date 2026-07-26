@@ -46,6 +46,7 @@ type EvaluationId = Annotated[str, _identifier_constraints("evl")]
 type DecisionId = Annotated[str, _identifier_constraints("dcs")]
 type RequestId = Annotated[str, _identifier_constraints("req")]
 type ClientId = Annotated[str, _identifier_constraints("cli")]
+type SubscriptionId = Annotated[str, _identifier_constraints("sub")]
 type AggregateId = Annotated[
     str,
     StringConstraints(

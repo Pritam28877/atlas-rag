@@ -1,6 +1,6 @@
 """Versioned command envelope for authenticated harness clients."""
 
-from typing import Self
+from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
@@ -12,7 +12,13 @@ from app.services.harness.protocol.base import (
     WorkspaceId,
 )
 from app.services.harness.protocol.command_base import QueryCommand
-from app.services.harness.protocol.commands_session import SessionCommand
+from app.services.harness.protocol.commands_operations import OperationsCommandTypes
+from app.services.harness.protocol.commands_session import SessionCommandTypes
+
+Command = Annotated[
+    SessionCommandTypes | OperationsCommandTypes,
+    Field(discriminator="kind"),
+]
 
 
 class CommandEnvelope(StrictProtocolModel):
@@ -23,7 +29,7 @@ class CommandEnvelope(StrictProtocolModel):
     client_id: ClientId
     workspace_id: WorkspaceId
     expected_sequence: int | None = Field(default=None, ge=0, le=2**63 - 1)
-    command: SessionCommand
+    command: Command
 
     @model_validator(mode="after")
     def validate_sequence_precondition(self) -> Self:
