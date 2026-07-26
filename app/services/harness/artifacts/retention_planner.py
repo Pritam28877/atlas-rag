@@ -30,10 +30,13 @@ def admit_blob_write(
         raise ValueError("incoming blob bytes must be between 1 and 4294967296")
     if state.sealed:
         return _sealed(StorageSealReason.ALREADY_SEALED)
-    if state.used_blob_bytes + incoming_bytes > policy.blob_quota_bytes:
+    accounted_bytes = state.used_blob_bytes + state.reserved_blob_bytes
+    if accounted_bytes + incoming_bytes > policy.blob_quota_bytes:
         return _sealed(StorageSealReason.WORKSPACE_QUOTA)
     remaining_filesystem_bytes = (
-        state.available_filesystem_bytes - incoming_bytes
+        state.available_filesystem_bytes
+        - state.reserved_blob_bytes
+        - incoming_bytes
     )
     if remaining_filesystem_bytes < policy.disk_reserve_bytes:
         return _sealed(StorageSealReason.DISK_RESERVE)

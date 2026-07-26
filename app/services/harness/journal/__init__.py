@@ -39,6 +39,7 @@ from app.services.harness.journal.sqlite_snapshot_store import (
     SnapshotStoreConflict,
     SQLiteSnapshotStore,
 )
+from app.services.harness.journal.sqlite_storage_store import SQLiteStorageStore
 
 __all__ = (
     "AppendRequest",
@@ -64,6 +65,7 @@ __all__ = (
     "SQLiteJournalIntegrityVerifier",
     "SQLiteRetentionStore",
     "SQLiteSnapshotStore",
+    "SQLiteStorageStore",
     "RetentionStoreConflict",
     "SnapshotStoreConflict",
     "raise_expected_sequence_conflict",

@@ -27,6 +27,12 @@ class StorageSealReason(StrEnum):
     WORKSPACE_QUOTA = "workspace_quota"
 
 
+class BlobReservationStatus(StrEnum):
+    RESERVED = "reserved"
+    COMMITTED = "committed"
+    RELEASED = "released"
+
+
 class RetentionPolicy(StrictProtocolModel):
     retention_days: int = Field(default=90, ge=1, le=3650)
     blob_quota_bytes: int = Field(
@@ -231,8 +237,30 @@ class RetentionEvidence(StrictProtocolModel):
 class WorkspaceStorageState(StrictProtocolModel):
     workspace_id: WorkspaceId
     used_blob_bytes: int = Field(ge=0, le=64 * GIBIBYTE)
+    reserved_blob_bytes: int = Field(default=0, ge=0, le=64 * GIBIBYTE)
     available_filesystem_bytes: int = Field(ge=0, le=2**63 - 1)
     sealed: bool = False
+
+    @model_validator(mode="after")
+    def validate_total_usage(self) -> Self:
+        if self.used_blob_bytes + self.reserved_blob_bytes > 64 * GIBIBYTE:
+            raise ValueError("workspace storage accounting exceeds maximum")
+        return self
+
+
+class BlobReservation(StrictProtocolModel):
+    workspace_id: WorkspaceId
+    content_sha256: Sha256
+    size_bytes: int = Field(ge=1, le=4 * GIBIBYTE)
+    status: BlobReservationStatus
+    created_at: UtcTimestamp
+    updated_at: UtcTimestamp
+
+    @model_validator(mode="after")
+    def validate_timestamps(self) -> Self:
+        if self.updated_at < self.created_at:
+            raise ValueError("blob reservation update precedes creation")
+        return self
 
 
 class WriteAdmission(StrictProtocolModel):
@@ -246,6 +274,23 @@ class WriteAdmission(StrictProtocolModel):
             raise ValueError("storage admission decision is inconsistent")
         if self.allowed != (self.reason is None):
             raise ValueError("storage admission reason is inconsistent")
+        return self
+
+
+class StorageReservationDecision(StrictProtocolModel):
+    admission: WriteAdmission
+    reservation: BlobReservation | None = None
+    already_committed: bool = False
+
+    @model_validator(mode="after")
+    def validate_result(self) -> Self:
+        if self.admission.allowed != (self.reservation is not None):
+            raise ValueError("storage reservation decision is inconsistent")
+        if self.already_committed and (
+            self.reservation is None
+            or self.reservation.status is not BlobReservationStatus.COMMITTED
+        ):
+            raise ValueError("committed reservation decision is inconsistent")
         return self
 
 
