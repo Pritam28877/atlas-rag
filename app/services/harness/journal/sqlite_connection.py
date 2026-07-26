@@ -11,20 +11,16 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TypeVar
 
+from app.services.harness.journal.errors import (
+    JournalBusyError,
+    JournalStorageError,
+)
 from app.services.harness.journal.sqlite_schema import (
     SQLITE_SCHEMA,
     SQLITE_SCHEMA_VERSION,
 )
 
 ResultType = TypeVar("ResultType")
-
-
-class JournalBusyError(RuntimeError):
-    """Bounded local queue has no capacity for another operation."""
-
-
-class JournalStorageError(RuntimeError):
-    """Generic local storage failure without SQL or filesystem detail."""
 
 
 class SQLiteConnectionOwner:
