@@ -121,7 +121,7 @@ class ApprovalRespondCommand(MutatingCommand):
         return self
 
 
-SessionCommand = Annotated[
+type SessionCommandTypes = (
     WorkspaceOpenCommand
     | WorkspaceCloseCommand
     | ThreadCreateCommand
@@ -133,6 +133,6 @@ SessionCommand = Annotated[
     | TurnSteerCommand
     | TurnCancelCommand
     | TurnCompactCommand
-    | ApprovalRespondCommand,
-    Field(discriminator="kind"),
-]
+    | ApprovalRespondCommand
+)
+SessionCommand = Annotated[SessionCommandTypes, Field(discriminator="kind")]
