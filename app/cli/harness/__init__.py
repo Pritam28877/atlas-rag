@@ -19,6 +19,8 @@ from app.cli.harness.bedrock_smoke_contracts import (
     sign_bedrock_smoke_grant,
     verify_bedrock_smoke_grant,
 )
+from app.cli.harness.bedrock_smoke_io import BedrockSmokeResult
+from app.cli.harness.bedrock_smoke_runner import run_bedrock_smoke
 from app.cli.harness.provider_smoke_contracts import (
     AuthorizedProviderSmoke,
     ProviderSmokeGateError,
@@ -39,6 +41,7 @@ __all__ = (
     "BedrockSmokeGateErrorCode",
     "BedrockSmokeGrantPayload",
     "BedrockSmokeLaunchRequest",
+    "BedrockSmokeResult",
     "HarnessConnectionFactory",
     "LocalAppServerSnapshot",
     "ProviderSmokeGateError",
@@ -50,6 +53,7 @@ __all__ = (
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
     "run_provider_smoke",
+    "run_bedrock_smoke",
     "sign_bedrock_smoke_grant",
     "verify_bedrock_smoke_grant",
 )

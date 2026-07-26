@@ -129,6 +129,7 @@ def grant_payload() -> BedrockSmokeGrantPayload:
         authorization_id="awsg_" + "a" * 32,
         key_id="test-key",
         binding=binding(),
+        timeout_seconds=30,
         text_max_output_tokens=16,
         tool_max_output_tokens=16,
         text_cost_cap_microusd=50,

@@ -17,6 +17,7 @@ on:
       - "scripts/probe_harness_python_isolation.py"
       - "scripts/verify_harness_*.py"
       - "tests/test_harness_*.py"
+      - "tests/harness/**"
       - "uv.lock"
   push:
     branches:
@@ -37,6 +38,7 @@ on:
       - "scripts/probe_harness_python_isolation.py"
       - "scripts/verify_harness_*.py"
       - "tests/test_harness_*.py"
+      - "tests/harness/**"
       - "uv.lock"
 
 permissions:

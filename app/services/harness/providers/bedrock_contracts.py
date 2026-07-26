@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import Field, StringConstraints
+from pydantic import Field, StringConstraints, model_validator
 
 from app.services.harness.protocol import StrictProtocolModel
 from app.services.harness.protocol.provider_stream import ProviderCallId
@@ -97,6 +97,15 @@ class CompiledBedrockConverseStreamRequest(StrictProtocolModel):
     system: tuple[BedrockSystemContent, ...] = Field(max_length=64)
     inference_config: BedrockInferenceConfiguration
     tools: tuple[BedrockToolSpecification, ...] = Field(max_length=256)
+    tool_choice: BedrockToolName | None = None
+
+    @model_validator(mode="after")
+    def validate_tool_choice(self) -> Self:
+        if self.tool_choice is not None and self.tool_choice not in {
+            tool.name for tool in self.tools
+        }:
+            raise ValueError("Bedrock tool choice requires a declared tool")
+        return self
 
     def to_boto_request(self) -> dict[str, object]:
         request: dict[str, object] = {
@@ -107,7 +116,14 @@ class CompiledBedrockConverseStreamRequest(StrictProtocolModel):
         if self.system:
             request["system"] = [block.to_wire() for block in self.system]
         if self.tools:
-            request["toolConfig"] = {"tools": [tool.to_wire() for tool in self.tools]}
+            tool_config: dict[str, object] = {
+                "tools": [tool.to_wire() for tool in self.tools]
+            }
+            if self.tool_choice is not None:
+                tool_config["toolChoice"] = {
+                    "tool": {"name": self.tool_choice}
+                }
+            request["toolConfig"] = tool_config
         return request
 
 

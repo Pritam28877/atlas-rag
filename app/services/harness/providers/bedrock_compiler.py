@@ -56,6 +56,8 @@ class BedrockConverseStreamCompiler:
         request: CanonicalProviderRequest,
         model: ProviderModelCapabilities,
         context: ProviderContextPlan,
+        *,
+        tool_choice: str | None = None,
     ) -> CompiledBedrockConverseStreamRequest:
         _validate_evidence(request, model, context)
         system: list[BedrockSystemContent] = []
@@ -85,6 +87,7 @@ class BedrockConverseStreamCompiler:
                 )
             ),
             tools=tools,
+            tool_choice=tool_choice,
         )
 
 
