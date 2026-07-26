@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-07-26",
+  "outbound_license": {
+    "proposal": "Apache-2.0",
+    "status": "pending_human_approval",
+    "approval_required": true,
+    "notice_plan": [
+      "Ship the approved outbound LICENSE at the repository and package roots.",
+      "Retain required Apache-2.0 and MIT copyright and license notices.",
+      "List every adapted file, immutable upstream revision, original path, local change, license, and maintenance owner.",
+      "Generate an SBOM and provenance report from the locked release candidate.",
+      "Block release while any source or adapted file has unresolved reuse rights."
+    ]
+  },
+  "sources": [
+    {
+      "id": "openai-codex",
+      "name": "OpenAI Codex",
+      "kind": "git_repository",
+      "location": "https://github.com/openai/codex",
+      "revision": "4c43465133428898aa84f0bfc02c306ed65fb66a",
+      "revision_kind": "git_commit",
+      "reviewed_at": "2026-07-25",
+      "owner": "Atlas trusted-kernel maintainers",
+      "license": {
+        "spdx": "Apache-2.0",
+        "status": "verified",
+        "evidence": [
+          "https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/LICENSE"
+        ]
+      },
+      "usage": {
+        "treatment": "base_and_adapt",
+        "copy_allowed": true,
+        "conditions": [
+          "Retain Apache-2.0 license and required notices.",
+          "Record every adapted file and local change before copying.",
+          "Disable or wrap every privilege-bearing RPC identified by the P0 spike."
+        ]
+      }
+    },
+    {
+      "id": "anomalyco-opencode",
+      "name": "OpenCode",
+      "kind": "git_repository",
+      "location": "https://github.com/anomalyco/opencode",
+      "revision": "7534d23551f665e65080809975b4ca5c7d63807b",
+      "revision_kind": "git_commit",
+      "reviewed_at": "2026-07-25",
+      "owner": "Atlas provider and event maintainers",
+      "license": {
+        "spdx": "MIT",
+        "status": "verified",
+        "evidence": [
+          "https://github.com/anomalyco/opencode/blob/7534d23551f665e65080809975b4ca5c7d63807b/LICENSE"
+        ]
+      },
+      "usage": {
+        "treatment": "pattern_adaptation",
+        "copy_allowed": true,
+        "conditions": [
+          "Retain MIT copyright and license notice for copied or substantially adapted material.",
+          "Record every adapted file and exclude unrestricted execution and in-process plugin paths."
+        ]
+      }
+    },
+    {
+      "id": "jcode",
+      "name": "Jcode",
+      "kind": "git_repository",
+      "location": "https://github.com/1jehuang/jcode",
+      "revision": "11cda7dcbc4d685589d96a0af26af963be751352",
+      "revision_kind": "git_commit",
+      "reviewed_at": "2026-07-25",
+      "owner": "Atlas session and scheduler maintainers",
+      "license": {
+        "spdx": "MIT",
+        "status": "verified",
+        "evidence": [
+          "https://github.com/1jehuang/jcode/blob/11cda7dcbc4d685589d96a0af26af963be751352/LICENSE"
+        ]
+      },
+      "usage": {
+        "treatment": "pattern_adaptation",
+        "copy_allowed": true,
+        "conditions": [
+          "Retain MIT copyright and license notice for copied or substantially adapted material.",
+          "Record every adapted file and exclude unsandboxed shell and fail-open security behavior."
+        ]
+      }
+    },
+    {
+      "id": "claude-code-behavior",
+      "name": "Claude Code public behavior documentation",
+      "kind": "documentation",
+      "location": "https://code.claude.com/docs",
+      "revision": "2026-07-25",
+      "revision_kind": "documentation_snapshot_date",
+      "reviewed_at": "2026-07-25",
+      "owner": "Atlas product-contract maintainers",
+      "license": {
+        "spdx": null,
+        "status": "restricted",
+        "evidence": [
+          "https://github.com/anthropics/claude-code/blob/7ef6eec9d9ba84ea6f233f26c45f1df5c5991843/LICENSE.md"
+        ]
+      },
+      "usage": {
+        "treatment": "behavior_spec_only",
+        "copy_allowed": false,
+        "conditions": [
+          "Use public behavior as a neutral requirement only.",
+          "Copy no Claude Code implementation source.",
+          "Require legal review before claiming compatibility or using protected branding."
+        ]
+      }
+    },
+    {
+      "id": "local-orqen",
+      "name": "Local Orqen audit tree",
+      "kind": "local_git_tree",
+      "location": "/home/dragon/Documents/Orqen",
+      "revision": "155a115c0aa410585378d5d2358e00855243d75a",
+      "revision_kind": "git_commit",
+      "reviewed_at": "2026-07-25",
+      "owner": "Atlas provenance owner",
+      "license": {
+        "spdx": null,
+        "status": "unverified",
+        "evidence": [
+          "No LICENSE, COPYING, or NOTICE file was found within two levels of the reviewed tree on 2026-07-26."
+        ]
+      },
+      "usage": {
+        "treatment": "concept_only",
+        "copy_allowed": false,
+        "conditions": [
+          "Copy no source, tests, prompts, schemas, or assets without written permission.",
+          "Independently implement only concepts already captured in the approved Atlas specification.",
+          "Record a new immutable revision and license grant before changing this treatment."
+        ]
+      }
+    },
+    {
+      "id": "local-document-intelligence",
+      "name": "Local documentIntelligence audit tree",
+      "kind": "local_git_tree",
+      "location": "/home/dragon/Documents/documentIntelligence",
+      "revision": "ff35829cb9cf3b8e8d33d24ab202a372aa71dcbc",
+      "revision_kind": "git_commit",
+      "reviewed_at": "2026-07-25",
+      "owner": "Atlas provenance owner",
+      "license": {
+        "spdx": null,
+        "status": "unverified",
+        "evidence": [
+          "No LICENSE, COPYING, or NOTICE file was found within two levels of the reviewed tree on 2026-07-26."
+        ]
+      },
+      "usage": {
+        "treatment": "concept_only",
+        "copy_allowed": false,
+        "conditions": [
+          "Copy no source, tests, prompts, schemas, or assets without written permission.",
+          "Independently implement only concepts already captured in the approved Atlas specification.",
+          "Record a new immutable revision and license grant before changing this treatment."
+        ]
+      }
+    }
+  ],
+  "adapted_files": []
+}
