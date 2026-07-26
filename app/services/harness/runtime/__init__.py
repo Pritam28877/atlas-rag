@@ -7,6 +7,14 @@ from app.services.harness.runtime.admission import (
     RequestAdmission,
     decode_command,
 )
+from app.services.harness.runtime.authority import (
+    AuthenticatedCommandContext,
+    AuthorityDenialReason,
+    AuthorityDeniedError,
+    AuthorityRepository,
+    AuthoritySnapshot,
+    CommandAuthorityBinder,
+)
 from app.services.harness.runtime.framing import (
     FrameDecoder,
     FrameError,
@@ -25,6 +33,12 @@ __all__ = (
     "AdmissionError",
     "AdmissionErrorCode",
     "AdmissionLease",
+    "AuthenticatedCommandContext",
+    "AuthorityDeniedError",
+    "AuthorityDenialReason",
+    "AuthorityRepository",
+    "AuthoritySnapshot",
+    "CommandAuthorityBinder",
     "FrameDecoder",
     "FrameError",
     "FrameErrorCode",
