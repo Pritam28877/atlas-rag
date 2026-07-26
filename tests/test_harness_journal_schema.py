@@ -53,3 +53,16 @@ def test_journal_schema_protects_monotonic_immutable_facts(monkeypatch) -> None:
     assert "CREATE TRIGGER harness_journal_aggregates_monotonic" in sql
     assert "CREATE TRIGGER harness_journal_positions_monotonic" in sql
     assert "NEW.current_sequence < OLD.current_sequence" in sql
+
+
+def test_projection_schema_is_rebuildable_and_fail_closed(monkeypatch) -> None:
+    sql = render_upgrade_sql(monkeypatch)
+    normalized_sql = re.sub(r"\s+", " ", sql)
+
+    assert "CREATE TABLE harness_projection_checkpoints" in sql
+    assert "PRIMARY KEY (workspace_id, projection_name)" in normalized_sql
+    assert "octet_length(state_json) <= 4194304" in normalized_sql
+    assert "projection_status IN ('diverged', 'needs_operator')" in normalized_sql
+    assert "CREATE TRIGGER harness_projection_transition" in sql
+    assert "NEW.generation = OLD.generation + 1" in sql
+    assert "NEW.last_journal_sequence < OLD.last_journal_sequence" in sql
