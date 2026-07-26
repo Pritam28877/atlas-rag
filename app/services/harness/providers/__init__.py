@@ -51,6 +51,7 @@ from app.services.harness.providers.egress_contracts import (
     ProviderEgressResponse,
     ProviderPayloadInspector,
     SafeEgressHeader,
+    provider_egress_request_sha256,
 )
 from app.services.harness.providers.egress_dns import (
     ProviderDnsError,
@@ -77,6 +78,10 @@ from app.services.harness.providers.environment_credentials import (
     EnvironmentCredentialError,
     EnvironmentCredentialErrorCode,
     EnvironmentCredentialReference,
+)
+from app.services.harness.providers.gateway_attempt import (
+    GatewayProviderAttemptExecutor,
+    ProviderGateway,
 )
 from app.services.harness.providers.health_registry import (
     ProviderHealthRegistry,
@@ -134,6 +139,7 @@ __all__ = (
     "HttpCoreConnectorError",
     "HttpCoreConnectorErrorCode",
     "HttpCoreEgressConnector",
+    "GatewayProviderAttemptExecutor",
     "EgressAuditOutcome",
     "PayloadInspection",
     "AuthorizedEgressTarget",
@@ -145,6 +151,7 @@ __all__ = (
     "ProviderHealthRegistry",
     "ProviderHealthRegistryError",
     "ProviderHealthRegistryErrorCode",
+    "ProviderGateway",
     "ProviderCredentialHeaderEncoder",
     "ProviderDnsError",
     "ProviderDnsErrorCode",
@@ -183,5 +190,6 @@ __all__ = (
     "canonical_provider_url",
     "load_provider_configuration",
     "provider_destination_sha256",
+    "provider_egress_request_sha256",
     "plan_provider_retry",
 )

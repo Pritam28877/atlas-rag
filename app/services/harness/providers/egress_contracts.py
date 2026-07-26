@@ -122,6 +122,11 @@ class ProviderEgressRequest:
         )
 
 
+def provider_egress_request_sha256(request: ProviderEgressRequest) -> str:
+    metadata = request.metadata.model_dump_json().encode()
+    return hashlib.sha256(metadata).hexdigest()
+
+
 class ProviderEgressResponse:
     __slots__ = ("_body", "headers", "redirect_url", "status")
 
