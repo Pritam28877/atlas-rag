@@ -92,13 +92,33 @@ class BoundedLocalCompatibleResponsesTransport:
         cancellation: asyncio.Event,
         deadline_at: datetime,
     ) -> AsyncIterator[ProviderStreamEvent]:
-        if self._closed:
-            self._reject(LocalCompatibleTransportErrorCode.CLOSED)
         if compiled.model != route.model_id:
             self._reject(LocalCompatibleTransportErrorCode.MODEL)
+        request = _egress_request(canonical_request, compiled, route)
+        async for event in self.stream_egress(
+            request,
+            route,
+            credential,
+            decoder,
+            cancellation=cancellation,
+            deadline_at=deadline_at,
+        ):
+            yield event
+
+    async def stream_egress(
+        self,
+        request: ProviderEgressRequest,
+        route: AuthorizedLocalCompatibleRoute,
+        credential: CredentialLease | None,
+        decoder: OpenAIResponsesDecoder,
+        *,
+        cancellation: asyncio.Event,
+        deadline_at: datetime,
+    ) -> AsyncIterator[ProviderStreamEvent]:
+        if self._closed:
+            self._reject(LocalCompatibleTransportErrorCode.CLOSED)
         remaining = self._remaining(deadline_at)
         await _acquire_capacity(self._capacity, cancellation, remaining)
-        request = _egress_request(canonical_request, compiled, route)
         framer = BoundedSseFramer()
         terminal = False
         try:
