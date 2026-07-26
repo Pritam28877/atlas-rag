@@ -1,0 +1,8 @@
+: OPENROUTER PROCESSING
+{"response":{"id":"resp_1","status":"in_progress"},"type":"response.created"}
+{"item":{"content":[],"id":"msg_1","role":"assistant","status":"in_progress","type":"message"},"output_index":0,"type":"response.output_item.added"}
+{"content_index":0,"output_index":0,"part":{"text":"","type":"output_text"},"type":"response.content_part.added"}
+{"content_index":0,"delta":"OpenRouter ","output_index":0,"type":"response.content_part.delta"}
+{"content_index":0,"delta":"response.","output_index":0,"type":"response.content_part.delta"}
+{"response":{"id":"resp_1","openrouter_metadata":{"latency_ms":42,"provider_name":"approved-endpoint"},"status":"completed","usage":{"input_tokens":12,"output_tokens":4,"total_tokens":16}},"type":"response.done"}
+[DONE]

@@ -25,7 +25,7 @@ def test_checked_in_manifest_passes_real_cli() -> None:
 
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == (
-        "Provenance manifest valid: 7 sources, 0 adapted files"
+        "Provenance manifest valid: 8 sources, 0 adapted files"
     )
 
 

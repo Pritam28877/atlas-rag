@@ -195,6 +195,34 @@
           "Re-review the official schema before expanding the supported event or request surface."
         ]
       }
+    },
+    {
+      "id": "openrouter-responses-documentation",
+      "name": "OpenRouter Responses and provider-routing documentation",
+      "kind": "documentation",
+      "location": "https://openrouter.ai/docs",
+      "revision": "2026-07-27",
+      "revision_kind": "documentation_snapshot_date",
+      "reviewed_at": "2026-07-27",
+      "owner": "Atlas provider adapter maintainers",
+      "license": {
+        "spdx": null,
+        "status": "restricted",
+        "evidence": [
+          "https://openrouter.ai/docs/api/reference/responses/overview",
+          "https://openrouter.ai/docs/api/api-reference/responses/create-responses",
+          "https://openrouter.ai/docs/guides/routing/provider-selection"
+        ]
+      },
+      "usage": {
+        "treatment": "behavior_spec_only",
+        "copy_allowed": false,
+        "conditions": [
+          "Use current public request, stream, and routing behavior as neutral interoperability evidence only.",
+          "Copy no OpenRouter implementation or documentation prose.",
+          "Re-review the beta Responses contract before expanding or releasing this adapter."
+        ]
+      }
     }
   ],
   "adapted_files": []
