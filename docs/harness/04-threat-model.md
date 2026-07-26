@@ -48,7 +48,7 @@ must link its control and adversarial verification back to the threat IDs here.
 | Model provider and model output | Untrusted | May fail, drift, inject tool calls, leak data, or return malformed streams |
 | Tool/MCP/plugin/hook/parser | Untrusted process | May be malicious, hung, memory-hungry, or attempt escape/exfiltration |
 | Workspace content | Hostile input | Instructions, filenames, symlinks, archives, and source may be adversarial |
-| Atlas control plane | Trusted kernel | Must be memory-safe, authenticated, deterministic, and fail closed |
+| Atlas control plane | Trusted coordination process | Must be authenticated, deterministic, bounded, fail closed, and never execute untrusted extension code in process |
 | OS sandbox and egress proxy | Trusted enforcement | Capability detection must be accurate; unavailable controls cannot be assumed |
 | SQLite/blob filesystem | Trusted for availability, verified for integrity | May become full, corrupt, reordered, or partially written |
 | Operator/release maintainer | Privileged | Actions require audit, separation of duties, and documented recovery |
