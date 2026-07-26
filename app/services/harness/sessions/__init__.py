@@ -32,10 +32,19 @@ from app.services.harness.sessions.turn_state_machine import (
     allowed_turn_signals,
     transition_turn,
 )
+from app.services.harness.sessions.writer_coordinator import (
+    SessionWriterCoordinator,
+    SessionWriterLease,
+    WakeDisposition,
+    WriterCoordinatorError,
+    WriterCoordinatorErrorCode,
+)
 
 __all__ = (
     "ProviderAttemptSource",
     "RepeatedCallCounter",
+    "SessionWriterCoordinator",
+    "SessionWriterLease",
     "SingleTurnEngine",
     "SingleTurnOutcome",
     "ToolResolution",
@@ -56,6 +65,9 @@ __all__ = (
     "TurnToolResolver",
     "TurnTraceEvent",
     "TurnTraceKind",
+    "WakeDisposition",
+    "WriterCoordinatorError",
+    "WriterCoordinatorErrorCode",
     "allowed_turn_signals",
     "charge_turn_budget",
     "initial_turn_budget",
