@@ -1,4 +1,4 @@
-"""Pinned HTTP-core streaming connector for authorized local endpoints."""
+"""Pinned HTTP-core connector for authorized regional Vertex streams."""
 
 from __future__ import annotations
 
@@ -17,17 +17,11 @@ from app.services.harness.providers.egress_policy import AuthorizedEgressTarget
 from app.services.harness.providers.httpcore_connector import (
     ProviderCredentialHeaderEncoder,
 )
-from app.services.harness.providers.local_compatible_identity import (
-    LocalAuthenticationMode,
-)
-from app.services.harness.providers.local_compatible_policy import (
-    AuthorizedLocalCompatibleRoute,
-    LocalEndpointMode,
-)
 from app.services.harness.providers.provider_sse_httpcore import (
     AuthorizedSseHttpRoute,
     PinnedSseHttpCoreConnector,
 )
+from app.services.harness.providers.vertex_policy import AuthorizedVertexRoute
 
 NetworkBackendFactory = Callable[
     [AuthorizedEgressTarget],
@@ -35,7 +29,7 @@ NetworkBackendFactory = Callable[
 ]
 
 
-class LocalCompatibleHttpCoreConnector:
+class VertexHttpCoreConnector:
     def __init__(
         self,
         resolver: ProviderAddressResolver,
@@ -54,24 +48,19 @@ class LocalCompatibleHttpCoreConnector:
     async def stream(
         self,
         request: ProviderEgressRequest,
-        route: AuthorizedLocalCompatibleRoute,
-        credential: CredentialLease | None,
+        route: AuthorizedVertexRoute,
+        credential: CredentialLease,
         *,
         cancellation: asyncio.Event,
         deadline_at: datetime,
     ) -> AsyncGenerator[bytes, None]:
         generic_route = AuthorizedSseHttpRoute(
-            provider="local-compatible",
-            target_url=route.responses_url,
+            provider="vertex",
+            target_url=f"{route.stream_url}?alt=sse",
             destination_sha256=route.destination_sha256,
             credential_handle=route.credential_handle,
-            credential_required=(
-                route.authentication
-                is LocalAuthenticationMode.BEARER_ENVIRONMENT
-            ),
-            loopback_literal=(
-                route.endpoint_mode is LocalEndpointMode.LOOPBACK
-            ),
+            credential_required=True,
+            loopback_literal=False,
         )
         async for chunk in self._delegate.stream(
             request,

@@ -1,7 +1,6 @@
 import asyncio
 from datetime import timedelta
 
-import httpcore
 import pytest
 
 from app.services.harness.providers.credential_material import CredentialLease
@@ -23,6 +22,12 @@ from app.services.harness.providers.local_compatible_policy import (
     LocalEndpointMode,
     local_destination_sha256,
 )
+from tests.harness.providers.common.httpcore_fixtures import (
+    RecordingBackend,
+    RecordingCredentialEncoder,
+    Resolver,
+    sse_response,
+)
 from tests.harness.providers.local_compatible.fixtures import (
     NOW,
     authorized_route,
@@ -30,76 +35,8 @@ from tests.harness.providers.local_compatible.fixtures import (
 )
 
 
-class RecordingStream(httpcore.AsyncMockStream):
-    def __init__(self, response_parts: list[bytes]) -> None:
-        super().__init__(response_parts)
-        self.writes: list[bytes] = []
-
-    async def write(
-        self,
-        buffer: bytes,
-        timeout: float | None = None,
-    ) -> None:
-        del timeout
-        self.writes.append(buffer)
-
-
-class RecordingBackend(httpcore.AsyncNetworkBackend):
-    def __init__(self, response_parts: list[bytes]) -> None:
-        self.stream = RecordingStream(response_parts)
-        self.connections: list[tuple[str, int]] = []
-
-    async def connect_tcp(
-        self,
-        host,
-        port,
-        timeout=None,
-        local_address=None,
-        socket_options=None,
-    ):
-        del timeout, local_address, socket_options
-        self.connections.append((host, port))
-        return self.stream
-
-    async def connect_unix_socket(self, *args, **kwargs):
-        del args, kwargs
-        raise AssertionError("unexpected Unix socket")
-
-    async def sleep(self, seconds: float) -> None:
-        del seconds
-
-
-class Resolver:
-    def __init__(self, addresses: tuple[str, ...] = ("1.1.1.1",)) -> None:
-        self.addresses = addresses
-        self.calls: list[tuple[str, int]] = []
-
-    async def resolve(
-        self,
-        hostname,
-        port,
-        *,
-        cancellation,
-        deadline_at,
-    ):
-        del cancellation, deadline_at
-        self.calls.append((hostname, port))
-        return self.addresses
-
-
-class Encoder:
-    def __init__(self) -> None:
-        self.buffers: list[bytearray] = []
-
-    def encode(self, credential):
-        value = bytearray(b"Bearer ")
-        value.extend(credential.secret_view())
-        self.buffers.append(value)
-        return b"authorization", value
-
-
 def test_loopback_is_pinned_without_dns_and_streams_sse() -> None:
-    backend = RecordingBackend([_response()])
+    backend = RecordingBackend([sse_response(body=b"data: [DONE]\n\n")])
     resolver = Resolver()
     connector = LocalCompatibleHttpCoreConnector(
         resolver,
@@ -120,11 +57,11 @@ def test_loopback_is_pinned_without_dns_and_streams_sse() -> None:
 def test_content_type_redirect_and_pre_cancellation_fail_closed() -> None:
     for response, code in (
         (
-            _response(content_type=b"application/json"),
+            sse_response(content_type=b"application/json"),
             LocalHttpCoreErrorCode.CONTENT_TYPE,
         ),
         (
-            _response(status=b"307 Temporary Redirect"),
+            sse_response(status=b"307 Temporary Redirect"),
             LocalHttpCoreErrorCode.REDIRECT,
         ),
     ):
@@ -141,7 +78,7 @@ def test_content_type_redirect_and_pre_cancellation_fail_closed() -> None:
     cancellation.set()
     connector = LocalCompatibleHttpCoreConnector(
         Resolver(),
-        backend_factory=lambda target: RecordingBackend([_response()]),
+        backend_factory=lambda target: RecordingBackend([sse_response()]),
         clock=lambda: NOW,
     )
     with pytest.raises(LocalHttpCoreError) as cancelled:
@@ -157,8 +94,8 @@ def test_content_type_redirect_and_pre_cancellation_fail_closed() -> None:
 
 
 def test_bearer_mode_requires_bound_credential_and_zeros_header() -> None:
-    backend = RecordingBackend([_response()])
-    encoder = Encoder()
+    backend = RecordingBackend([sse_response()])
+    encoder = RecordingCredentialEncoder()
     route = authorized_route().model_copy(
         update={
             "authentication": LocalAuthenticationMode.BEARER_ENVIRONMENT
@@ -199,7 +136,7 @@ def test_remote_tls_rejects_private_dns_resolution() -> None:
     )
     connector = LocalCompatibleHttpCoreConnector(
         Resolver(("10.0.0.5",)),
-        backend_factory=lambda target: RecordingBackend([_response()]),
+        backend_factory=lambda target: RecordingBackend([sse_response()]),
         clock=lambda: NOW,
     )
 
@@ -256,22 +193,4 @@ def _credential() -> CredentialLease:
         destination_sha256=route.destination_sha256,
         expires_at=NOW + timedelta(minutes=1),
         secret=bytearray(b"local-secret"),
-    )
-
-
-def _response(
-    *,
-    status: bytes = b"200 OK",
-    content_type: bytes = b"text/event-stream; charset=utf-8",
-) -> bytes:
-    body = b"data: [DONE]\n\n"
-    return (
-        b"HTTP/1.1 "
-        + status
-        + b"\r\nContent-Type: "
-        + content_type
-        + b"\r\nContent-Length: "
-        + str(len(body)).encode()
-        + b"\r\n\r\n"
-        + body
     )
