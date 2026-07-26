@@ -204,6 +204,7 @@ from app.services.harness.protocol.resume import (
     command_result_sha256,
 )
 from app.services.harness.protocol.routing import (
+    MAXIMUM_PROVIDER_DECISION_ROUTES,
     MAXIMUM_PROVIDER_ROUTE_COST_MICROUSD,
     ModelName,
     ProviderName,
@@ -307,6 +308,7 @@ __all__ = (
     "ItemId",
     "ItemKind",
     "ItemRecord",
+    "MAXIMUM_PROVIDER_DECISION_ROUTES",
     "MAXIMUM_PROVIDER_ROUTE_COST_MICROUSD",
     "ModelName",
     "ModelCatalog",

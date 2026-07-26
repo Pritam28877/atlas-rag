@@ -18,6 +18,7 @@ from app.services.harness.protocol.base import (
 )
 from app.services.harness.protocol.conversation import DataClassification
 
+MAXIMUM_PROVIDER_DECISION_ROUTES = 64
 MAXIMUM_PROVIDER_ROUTE_COST_MICROUSD = 25_120_000_000
 
 type RouteId = Annotated[
@@ -206,7 +207,9 @@ class ProviderRouteDecisionRecord(StrictProtocolModel):
     provider_decision_id: ProviderDecisionId
     turn_id: TurnId
     requirements: ProviderRequirements
-    eligible_routes: tuple[ProviderRoute, ...] = Field(max_length=64)
+    eligible_routes: tuple[ProviderRoute, ...] = Field(
+        max_length=MAXIMUM_PROVIDER_DECISION_ROUTES
+    )
     rejected_routes: tuple[RejectedProviderRoute, ...] = Field(max_length=256)
     selected_route_id: RouteId | None = None
     selection_reason: BoundedReason

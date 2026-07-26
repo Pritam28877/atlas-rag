@@ -26,11 +26,19 @@ from app.services.harness.providers.recorded import (
     RecordedProviderErrorCode,
     RecordedProviderStream,
 )
+from app.services.harness.providers.route_inventory import (
+    ConfiguredRouteInventory,
+    ConfiguredRouteInventoryError,
+    ConfiguredRouteInventoryErrorCode,
+)
 
 __all__ = (
     "ConfiguredCatalogError",
     "ConfiguredCatalogErrorCode",
     "ConfiguredModelCatalog",
+    "ConfiguredRouteInventory",
+    "ConfiguredRouteInventoryError",
+    "ConfiguredRouteInventoryErrorCode",
     "LoadedProviderConfiguration",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",

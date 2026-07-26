@@ -7,6 +7,7 @@ from datetime import datetime
 from enum import StrEnum
 
 from app.services.harness.protocol import (
+    MAXIMUM_PROVIDER_DECISION_ROUTES,
     ProviderDecisionId,
     ProviderRequirements,
     ProviderRoute,
@@ -17,7 +18,7 @@ from app.services.harness.protocol import (
     TurnId,
 )
 
-MAXIMUM_PROVIDER_CANDIDATES = 64
+MAXIMUM_PROVIDER_CANDIDATES = MAXIMUM_PROVIDER_DECISION_ROUTES
 
 
 class ProviderRoutingErrorCode(StrEnum):
