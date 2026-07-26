@@ -66,6 +66,7 @@ class ProviderRouteRejectionCode(StrEnum):
     INPUT_MODALITY = "input_modality"
     OUTPUT_LIMIT = "output_limit"
     OUTPUT_MODALITY = "output_modality"
+    PRICE = "price"
     REGION = "region"
     RETENTION = "retention"
     TRAINING = "training"
@@ -140,6 +141,7 @@ class ProviderRoute(StrictProtocolModel):
     estimated_cost_microusd: int = Field(ge=0, le=10_000_000_000)
     health_snapshot_sha256: Sha256
     price_version_sha256: Sha256
+    price_active: bool = True
 
     @model_validator(mode="after")
     def validate_capabilities(self) -> Self:
@@ -249,6 +251,7 @@ class ProviderRouteDecisionRecord(StrictProtocolModel):
             < self.requirements.reserved_output_tokens
             or route.estimated_cost_microusd
             > self.requirements.max_cost_microusd
+            or not route.price_active
             or bool(missing_capabilities)
             or bool(missing_input_modalities)
             or bool(missing_output_modalities)

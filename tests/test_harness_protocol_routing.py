@@ -108,6 +108,8 @@ def test_eligible_provider_route_must_satisfy_every_requirement() -> None:
     with pytest.raises(ValidationError, match="violates requirements"):
         decision(eligible_routes=(route(estimated_cost_microusd=100_001),))
     with pytest.raises(ValidationError, match="violates requirements"):
+        decision(eligible_routes=(route(price_active=False),))
+    with pytest.raises(ValidationError, match="violates requirements"):
         decision(eligible_routes=(route(capabilities=("reasoning",)),))
     with pytest.raises(ValidationError, match="violates requirements"):
         decision(eligible_routes=(route(training_enabled=True),))

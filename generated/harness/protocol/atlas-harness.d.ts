@@ -1596,6 +1596,7 @@ export type OutputModalities =
       string,
       string,
     ];
+export type PriceActive = boolean;
 export type PriceVersionSha256 = string;
 export type Priority1 = number;
 export type RetentionDays = number;
@@ -1792,6 +1793,7 @@ export type ProviderRouteRejectionCode =
   | "input_modality"
   | "output_limit"
   | "output_modality"
+  | "price"
   | "region"
   | "retention"
   | "training";
@@ -2571,6 +2573,7 @@ export interface ProviderRoute {
   model: ModelName;
   model_revision_sha256: ModelRevisionSha2561;
   output_modalities?: OutputModalities;
+  price_active?: PriceActive;
   price_version_sha256: PriceVersionSha256;
   priority?: Priority1;
   provider: ProviderName;
