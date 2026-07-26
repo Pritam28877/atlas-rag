@@ -202,3 +202,45 @@ def test_subscription_cursors_are_monotonic_and_bounded(tmp_path: Path) -> None:
             )
     finally:
         connection.close()
+
+
+def test_session_keys_cannot_be_reowned(tmp_path: Path) -> None:
+    path = database_path(tmp_path)
+    initialize_database(path)
+    connection = sqlite3.connect(path)
+    try:
+        insert_command_receipt(connection)
+        insert_subscription_cursor(connection)
+        other_principal_id = "prn_" + "9" * 32
+        with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint"):
+            connection.execute(
+                """
+                INSERT INTO harness_command_receipts (
+                    workspace_id, principal_id, idempotency_key, command_kind,
+                    request_sha256, response_kind, result_json, result_sha256,
+                    committed_at
+                )
+                SELECT workspace_id, ?, idempotency_key, command_kind,
+                       request_sha256, response_kind, result_json,
+                       result_sha256, committed_at
+                FROM harness_command_receipts
+                """,
+                (other_principal_id,),
+            )
+        with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint"):
+            connection.execute(
+                """
+                INSERT INTO harness_subscription_cursors (
+                    workspace_id, principal_id, subscription_id, generation,
+                    acknowledged_sequence, delivered_sequence,
+                    updated_at, expires_at
+                )
+                SELECT workspace_id, ?, subscription_id, generation,
+                       acknowledged_sequence, delivered_sequence,
+                       updated_at, expires_at
+                FROM harness_subscription_cursors
+                """,
+                (other_principal_id,),
+            )
+    finally:
+        connection.close()

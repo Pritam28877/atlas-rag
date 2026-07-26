@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS harness_command_receipts (
     result_json TEXT NOT NULL,
     result_sha256 TEXT NOT NULL,
     committed_at TEXT NOT NULL,
-    PRIMARY KEY (workspace_id, principal_id, idempotency_key),
+    PRIMARY KEY (workspace_id, idempotency_key),
     CHECK (
         length(workspace_id) = 36
         AND substr(workspace_id, 1, 4) = 'wsp_'
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS harness_subscription_cursors (
         ),
     updated_at TEXT NOT NULL,
     expires_at TEXT NOT NULL,
-    PRIMARY KEY (workspace_id, principal_id, subscription_id),
+    PRIMARY KEY (workspace_id, subscription_id),
     CHECK (
         length(workspace_id) = 36
         AND substr(workspace_id, 1, 4) = 'wsp_'
