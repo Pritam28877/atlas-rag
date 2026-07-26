@@ -19,6 +19,20 @@ class RecoveryStoreConflict(RuntimeError):
     """Requested recovery fact conflicts with durable recovery evidence."""
 
 
+class ProviderCostLedgerConflictCode(StrEnum):
+    IDENTITY = "identity"
+    RECONCILIATION = "reconciliation"
+    STATE = "state"
+
+
+class ProviderCostLedgerConflict(RuntimeError):
+    """A cost reservation conflicts with durable accounting evidence."""
+
+    def __init__(self, code: ProviderCostLedgerConflictCode) -> None:
+        super().__init__("provider cost ledger operation rejected")
+        self.code = code
+
+
 class SessionStoreConflictCode(StrEnum):
     CAPACITY = "capacity"
     CURSOR_CONFLICT = "cursor_conflict"

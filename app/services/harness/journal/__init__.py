@@ -19,6 +19,8 @@ from app.services.harness.journal.contracts import (
 from app.services.harness.journal.errors import (
     JournalBusyError,
     JournalStorageError,
+    ProviderCostLedgerConflict,
+    ProviderCostLedgerConflictCode,
     RecoveryStoreConflict,
     RetentionStoreConflict,
     SessionStoreConflict,
@@ -37,6 +39,9 @@ from app.services.harness.journal.provider_egress_audit import (
 from app.services.harness.journal.sqlite import SQLiteEventJournal
 from app.services.harness.journal.sqlite_integrity import (
     SQLiteJournalIntegrityVerifier,
+)
+from app.services.harness.journal.sqlite_provider_cost_ledger import (
+    SQLiteProviderCostLedger,
 )
 from app.services.harness.journal.sqlite_recovery_store import SQLiteRecoveryStore
 from app.services.harness.journal.sqlite_retention_store import (
@@ -70,9 +75,12 @@ __all__ = (
     "JournalBusyError",
     "JournalStorageError",
     "JournalVerificationResult",
+    "ProviderCostLedgerConflict",
+    "ProviderCostLedgerConflictCode",
     "RecoveryStoreConflict",
     "SQLiteEventJournal",
     "SQLiteJournalIntegrityVerifier",
+    "SQLiteProviderCostLedger",
     "SQLiteRecoveryStore",
     "SQLiteSessionStore",
     "SQLiteRetentionStore",
