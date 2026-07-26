@@ -9,6 +9,9 @@ from app.services.harness.journal.sqlite_retention_evidence_schema import (
 from app.services.harness.journal.sqlite_retention_schema import (
     SQLITE_RETENTION_SCHEMA,
 )
+from app.services.harness.journal.sqlite_session_schema import (
+    SQLITE_SESSION_SCHEMA,
+)
 from app.services.harness.journal.sqlite_storage_schema import (
     SQLITE_STORAGE_SCHEMA,
 )
@@ -116,6 +119,19 @@ BEGIN IMMEDIATE;
     + SQLITE_RECOVERY_SCHEMA
     + """
 UPDATE harness_journal_schema SET schema_version = 6 WHERE singleton = 1;
+COMMIT;
+PRAGMA foreign_keys = ON;
+"""
+)
+
+SQLITE_MIGRATE_V6_TO_V7 = (
+    """
+PRAGMA foreign_keys = OFF;
+BEGIN IMMEDIATE;
+"""
+    + SQLITE_SESSION_SCHEMA
+    + """
+UPDATE harness_journal_schema SET schema_version = 7 WHERE singleton = 1;
 COMMIT;
 PRAGMA foreign_keys = ON;
 """
