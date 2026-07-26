@@ -22,6 +22,7 @@ from app.services.harness.journal.contracts import (
     raise_idempotency_conflict,
 )
 from app.services.harness.journal.errors import JournalStorageError
+from app.services.harness.journal.faults import JournalFaultPoint
 from app.services.harness.journal.projection_contracts import ProjectionDefinition
 from app.services.harness.journal.projection_online import (
     prepare_online_projections,
@@ -45,10 +46,12 @@ class SQLiteEventJournal:
         *,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
         projections: Sequence[ProjectionDefinition[Any]] = (),
+        fault_injector: Callable[[JournalFaultPoint], None] | None = None,
     ) -> None:
         self._connection_owner = connection_owner
         self._clock = clock
         self._projections = prepare_online_projections(projections)
+        self._fault_injector = fault_injector
 
     @classmethod
     async def open(
@@ -59,6 +62,7 @@ class SQLiteEventJournal:
         maximum_pending_operations: int = 64,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
         projections: Sequence[ProjectionDefinition[Any]] = (),
+        fault_injector: Callable[[JournalFaultPoint], None] | None = None,
     ) -> SQLiteEventJournal:
         connection_owner = SQLiteConnectionOwner(
             database_path,
@@ -70,6 +74,7 @@ class SQLiteEventJournal:
             connection_owner,
             clock=clock,
             projections=projections,
+            fault_injector=fault_injector,
         )
 
     async def append(self, request: AppendRequest) -> AppendResult:
@@ -159,6 +164,7 @@ class SQLiteEventJournal:
                         "journal storage omitted global sequence"
                     )
                 journal_sequences.append(int(inserted.lastrowid))
+            self._inject_fault(JournalFaultPoint.AFTER_EVENTS_INSERTED)
             last_sequence = request.events[-1].aggregate_sequence
             updated = connection.execute(
                 """
@@ -181,6 +187,7 @@ class SQLiteEventJournal:
                     request.aggregate_id,
                 )
                 raise_expected_sequence_conflict(latest_sequence)
+            self._inject_fault(JournalFaultPoint.AFTER_AGGREGATE_UPDATED)
             result = build_append_result(
                 request,
                 committed_at,
@@ -202,6 +209,7 @@ class SQLiteEventJournal:
                 prior_journal_sequence=prior_journal_sequence,
                 updated_at=committed_at,
             )
+            self._inject_fault(JournalFaultPoint.AFTER_PROJECTIONS_APPLIED)
             connection.execute(
                 """
                 INSERT INTO harness_idempotency (
@@ -217,7 +225,9 @@ class SQLiteEventJournal:
                     result.model_dump_json(),
                 ),
             )
+            self._inject_fault(JournalFaultPoint.BEFORE_COMMIT)
             connection.commit()
+            self._inject_fault(JournalFaultPoint.AFTER_COMMIT)
             return result
         except BaseException:
             connection.rollback()
@@ -353,3 +363,7 @@ class SQLiteEventJournal:
         if value.tzinfo is None or value.utcoffset() != timedelta(0):
             raise ValueError("journal clock must return UTC")
         return value
+
+    def _inject_fault(self, fault_point: JournalFaultPoint) -> None:
+        if self._fault_injector is not None:
+            self._fault_injector(fault_point)
