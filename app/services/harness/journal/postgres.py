@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable, Sequence
 from contextlib import AbstractAsyncContextManager
 from datetime import datetime
@@ -28,6 +29,10 @@ from app.services.harness.journal.contracts import (
     raise_idempotency_conflict,
 )
 from app.services.harness.journal.errors import JournalStorageError
+from app.services.harness.journal.faults import (
+    AsyncJournalFaultInjector,
+    JournalFaultPoint,
+)
 from app.services.harness.journal.postgres_batch import insert_event_batch
 from app.services.harness.journal.postgres_projection_apply import (
     apply_online_projections,
@@ -65,14 +70,21 @@ class PostgresEventJournal:
         transaction_factory: TransactionFactory,
         *,
         projections: Sequence[ProjectionDefinition[Any]] = (),
+        fault_injector: AsyncJournalFaultInjector | None = None,
     ) -> None:
         self._transaction_factory = transaction_factory
         self._projections = prepare_online_projections(projections)
+        self._fault_injector = fault_injector
 
     async def append(self, request: AppendRequest) -> AppendResult:
         try:
             async with self._transaction_factory() as session:
-                return await self._append(session, request)
+                result = await self._append(session, request)
+                if result.status is AppendStatus.APPENDED:
+                    await self._inject_fault(JournalFaultPoint.BEFORE_COMMIT)
+            if result.status is AppendStatus.APPENDED:
+                await self._inject_fault(JournalFaultPoint.AFTER_COMMIT)
+            return result
         except JournalConflictError:
             raise
         except (SQLAlchemyError, ValidationError) as error:
@@ -146,6 +158,7 @@ class PostgresEventJournal:
             committed_at_value,
             journal_sequences,
         )
+        await self._inject_fault(JournalFaultPoint.AFTER_EVENTS_INSERTED)
         result = build_append_result(
             request,
             committed_at_value,
@@ -171,6 +184,7 @@ class PostgresEventJournal:
         )
         if updated_position != last_journal_sequence:
             raise JournalStorageError("journal position update failed")
+        await self._inject_fault(JournalFaultPoint.AFTER_AGGREGATE_UPDATED)
         journal_events = tuple(
             JournalEvent(journal_sequence=journal_sequence, event=event)
             for journal_sequence, event in zip(
@@ -185,6 +199,7 @@ class PostgresEventJournal:
             request.workspace_id,
             journal_events,
         )
+        await self._inject_fault(JournalFaultPoint.AFTER_PROJECTIONS_APPLIED)
         await session.execute(
             text(INSERT_IDEMPOTENCY),
             {
@@ -296,3 +311,10 @@ class PostgresEventJournal:
             else BUFFERED_COMMIT
         )
         await session.execute(text(statement))
+
+    async def _inject_fault(self, fault_point: JournalFaultPoint) -> None:
+        if self._fault_injector is None:
+            return
+        pending_fault = self._fault_injector(fault_point)
+        if inspect.isawaitable(pending_fault):
+            await pending_fault
