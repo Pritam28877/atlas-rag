@@ -25,6 +25,7 @@ def test_identity_sources_require_exact_non_secret_fields() -> None:
     external_account = identity(
         VertexCredentialSourceKind.EXTERNAL_ACCOUNT_FILE,
         external_account_file=external_account_path(),
+        external_account_file_sha256="9" * 64,
     )
     impersonated = identity(
         VertexCredentialSourceKind.IMPERSONATED_SERVICE_ACCOUNT,
@@ -40,11 +41,13 @@ def test_identity_sources_require_exact_non_secret_fields() -> None:
         identity(
             VertexCredentialSourceKind.APPLICATION_DEFAULT,
             external_account_file=external_account_path(),
+            external_account_file_sha256="9" * 64,
         )
     with pytest.raises(ValidationError, match="inconsistent"):
         identity(
             VertexCredentialSourceKind.EXTERNAL_ACCOUNT_FILE,
             external_account_file=external_account_path().relative_to("/"),
+            external_account_file_sha256="9" * 64,
         )
 
 

@@ -52,18 +52,34 @@ class VertexIdentityReference(StrictProtocolModel):
     quota_project_id: GcpProjectId
     expected_principal_sha256: Sha256
     external_account_file: Path | None = None
+    external_account_file_sha256: Sha256 | None = None
     target_service_account: ServiceAccountEmail | None = None
 
     @model_validator(mode="after")
     def validate_source_fields(self) -> Self:
         has_external_account = self.external_account_file is not None
+        has_external_account_hash = (
+            self.external_account_file_sha256 is not None
+        )
         has_target_service_account = self.target_service_account is not None
         if self.source is VertexCredentialSourceKind.EXTERNAL_ACCOUNT_FILE:
-            valid = has_external_account and not has_target_service_account
+            valid = (
+                has_external_account
+                and has_external_account_hash
+                and not has_target_service_account
+            )
         elif self.source is VertexCredentialSourceKind.IMPERSONATED_SERVICE_ACCOUNT:
-            valid = has_target_service_account and not has_external_account
+            valid = (
+                has_target_service_account
+                and not has_external_account
+                and not has_external_account_hash
+            )
         else:
-            valid = not (has_external_account or has_target_service_account)
+            valid = not (
+                has_external_account
+                or has_external_account_hash
+                or has_target_service_account
+            )
         if (
             valid
             and self.external_account_file is not None

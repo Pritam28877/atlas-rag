@@ -39,6 +39,7 @@ def identity(
         "source": source,
         "quota_project_id": PROJECT_ID,
         "expected_principal_sha256": "8" * 64,
+        "external_account_file_sha256": None,
         **updates,
     }
     return VertexIdentityReference.model_validate(values)

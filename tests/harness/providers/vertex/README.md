@@ -2,6 +2,7 @@
 
 - `fixtures.py`: shared regional contracts.
 - `test_compiler.py`: canonical request mapping.
+- `test_credentials.py`: ADC and identity binding.
 - `test_decoder.py`: golden stream normalization.
 - `test_identity_policy.py`: identity and route authorization.
 - `test_httpcore.py`: pinned regional HTTP connector.
