@@ -47,6 +47,7 @@ class BedrockIdentityReference(StrictProtocolModel):
     credential_handle: ProviderCredentialHandle
     source: BedrockCredentialSourceKind
     profile_name: AwsProfileName | None = None
+    shared_credentials_file: Path | None = None
     role_arn: AwsRoleArn | None = None
     web_identity_token_file: Path | None = None
     role_session_name: str | None = Field(
@@ -59,18 +60,42 @@ class BedrockIdentityReference(StrictProtocolModel):
     @model_validator(mode="after")
     def validate_source_fields(self) -> Self:
         has_profile = self.profile_name is not None
+        has_credentials_file = self.shared_credentials_file is not None
         has_role = self.role_arn is not None
         has_token = self.web_identity_token_file is not None
         has_session = self.role_session_name is not None
         if self.source is BedrockCredentialSourceKind.PROFILE:
-            valid = has_profile and not (has_role or has_token or has_session)
+            valid = (
+                has_profile
+                and has_credentials_file
+                and not (has_role or has_token or has_session)
+            )
+            credentials_file = self.shared_credentials_file
+            if (
+                valid
+                and credentials_file is not None
+                and not credentials_file.is_absolute()
+            ):
+                valid = False
         elif self.source is BedrockCredentialSourceKind.WEB_IDENTITY:
-            valid = not has_profile and has_role and has_token and has_session
+            valid = (
+                not has_profile
+                and not has_credentials_file
+                and has_role
+                and has_token
+                and has_session
+            )
             token_file = self.web_identity_token_file
             if valid and token_file is not None and not token_file.is_absolute():
                 valid = False
         else:
-            valid = not (has_profile or has_role or has_token or has_session)
+            valid = not (
+                has_profile
+                or has_credentials_file
+                or has_role
+                or has_token
+                or has_session
+            )
         if not valid:
             raise ValueError("AWS credential source fields are inconsistent")
         return self

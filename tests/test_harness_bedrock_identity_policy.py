@@ -33,6 +33,7 @@ def test_identity_sources_require_exact_non_secret_fields() -> None:
     profile = identity(
         BedrockCredentialSourceKind.PROFILE,
         profile_name="atlas-test",
+        shared_credentials_file=Path("/var/run/secrets/aws-credentials"),
     )
     web_identity = identity(
         BedrockCredentialSourceKind.WEB_IDENTITY,
@@ -48,6 +49,7 @@ def test_identity_sources_require_exact_non_secret_fields() -> None:
         identity(
             BedrockCredentialSourceKind.INSTANCE_METADATA,
             profile_name="fallback-must-not-be-possible",
+            shared_credentials_file=Path("/var/run/secrets/aws-credentials"),
         )
     with pytest.raises(ValidationError, match="inconsistent"):
         identity(
