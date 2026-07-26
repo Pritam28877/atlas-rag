@@ -31,6 +31,9 @@ from app.services.harness.journal.health import (
     JournalHealthStatus,
     JournalVerificationResult,
 )
+from app.services.harness.journal.provider_egress_audit import (
+    JournalProviderEgressAuditSink,
+)
 from app.services.harness.journal.sqlite import SQLiteEventJournal
 from app.services.harness.journal.sqlite_integrity import (
     SQLiteJournalIntegrityVerifier,
@@ -62,6 +65,7 @@ __all__ = (
     "JournalHealthRecord",
     "JournalHealthStatus",
     "JournalPage",
+    "JournalProviderEgressAuditSink",
     "JournalReadRequest",
     "JournalBusyError",
     "JournalStorageError",
