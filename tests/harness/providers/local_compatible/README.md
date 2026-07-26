@@ -5,5 +5,7 @@
 - `test_compiler.py`: capability-gated mapping.
 - `test_identity_policy.py`: auth and SSRF policy.
 - `test_httpcore.py`: pinned live HTTP connector.
+- `test_offline_conformance.py`: six-case adapter proof.
 - `test_probe.py`: bounded behavioral probing.
+- `test_probe_backend.py`: production probe composition.
 - `test_stream_transport.py`: SSE and cancellation bounds.
