@@ -107,6 +107,31 @@ ON harness_projection_checkpoints (
     projection_status, updated_at, workspace_id, projection_name
 ) WHERE projection_status <> 'healthy';
 
+CREATE TABLE IF NOT EXISTS harness_journal_health (
+    singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+    generation INTEGER NOT NULL DEFAULT 1 CHECK (generation > 0),
+    journal_status TEXT NOT NULL DEFAULT 'healthy',
+    failure_code TEXT,
+    verified_event_count INTEGER NOT NULL DEFAULT 0
+        CHECK (verified_event_count >= 0),
+    verified_at TEXT NOT NULL,
+    CHECK (
+        (
+            journal_status = 'healthy'
+            AND failure_code IS NULL
+        ) OR (
+            journal_status = 'needs_operator'
+            AND length(failure_code) BETWEEN 3 AND 128
+            AND substr(failure_code, 1, 1) GLOB '[a-z]'
+            AND failure_code NOT GLOB '*[^a-z0-9_]*'
+        )
+    )
+);
+
+INSERT OR IGNORE INTO harness_journal_health (
+    singleton, verified_at
+) VALUES (1, '1970-01-01T00:00:00+00:00');
+
 CREATE TRIGGER IF NOT EXISTS harness_events_no_update
 BEFORE UPDATE ON harness_events
 BEGIN
@@ -169,5 +194,39 @@ BEGIN
         WHEN NEW.generation NOT IN (OLD.generation, OLD.generation + 1)
         THEN RAISE(ABORT, 'projection generation must advance by one')
     END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS harness_journal_health_transition
+BEFORE UPDATE ON harness_journal_health
+BEGIN
+    SELECT CASE
+        WHEN NEW.singleton <> OLD.singleton
+        THEN RAISE(ABORT, 'journal health identity is immutable')
+        WHEN NEW.generation = OLD.generation AND (
+            NEW.verified_event_count < OLD.verified_event_count
+            OR NEW.verified_at < OLD.verified_at
+            OR (
+                OLD.journal_status = 'needs_operator'
+                AND NEW.journal_status = 'healthy'
+            )
+        )
+        THEN RAISE(ABORT, 'journal health is monotonic')
+        WHEN NEW.generation = OLD.generation + 1 AND (
+            NEW.journal_status <> 'healthy'
+            OR NEW.failure_code IS NOT NULL
+        )
+        THEN RAISE(ABORT, 'journal recovery must finish healthy')
+        WHEN NEW.generation NOT IN (OLD.generation, OLD.generation + 1)
+        THEN RAISE(ABORT, 'journal health generation must advance by one')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS harness_events_require_health
+BEFORE INSERT ON harness_events
+WHEN (
+    SELECT journal_status FROM harness_journal_health WHERE singleton = 1
+) = 'needs_operator'
+BEGIN
+    SELECT RAISE(ABORT, 'harness journal requires operator');
 END;
 """
