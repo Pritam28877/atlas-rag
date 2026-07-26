@@ -22,6 +22,13 @@ from app.services.harness.providers.bedrock_contracts import (
     BedrockToolSpecification,
     CompiledBedrockConverseStreamRequest,
 )
+from app.services.harness.providers.bedrock_credentials import (
+    BedrockBlockingCredentialBackend,
+    BedrockCredentialMaterial,
+    BedrockCredentialResolutionError,
+    BedrockCredentialResolutionErrorCode,
+    BoundedBedrockCredentialResolver,
+)
 from app.services.harness.providers.bedrock_decode_support import (
     MAXIMUM_BEDROCK_BLOCKS,
     MAXIMUM_BEDROCK_EVENT_BYTES,
@@ -225,6 +232,10 @@ __all__ = (
     "BedrockCompileErrorCode",
     "BedrockConverseStreamCompiler",
     "BedrockConverseStreamDecoder",
+    "BedrockBlockingCredentialBackend",
+    "BedrockCredentialMaterial",
+    "BedrockCredentialResolutionError",
+    "BedrockCredentialResolutionErrorCode",
     "BedrockDecodeError",
     "BedrockDecodeErrorCode",
     "BedrockCredentialSourceKind",
@@ -237,6 +248,7 @@ __all__ = (
     "BedrockTextContent",
     "BedrockToolResultContent",
     "BedrockToolSpecification",
+    "BoundedBedrockCredentialResolver",
     "BedrockRoutePolicy",
     "AuthorizedBedrockRoute",
     "CompiledBedrockConverseStreamRequest",
