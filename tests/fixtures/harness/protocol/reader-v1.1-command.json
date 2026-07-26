@@ -1,0 +1,10 @@
+{
+  "client_id": "cli_0123456789abcdef0123456789abcdef",
+  "command": {
+    "kind": "task.inspect",
+    "task_id": "tsk_0123456789abcdef0123456789abcdef"
+  },
+  "request_id": "req_0123456789abcdef0123456789abcdef",
+  "schema_version": "1.1",
+  "workspace_id": "wsp_0123456789abcdef0123456789abcdef"
+}

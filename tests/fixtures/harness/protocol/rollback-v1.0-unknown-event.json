@@ -1,0 +1,13 @@
+{
+  "event_id": "evt_0123456789abcdef0123456789abcdef",
+  "event_type": "Future.Checkpointed",
+  "future_evidence": {
+    "hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "unknown_fields": [
+      "retained",
+      "without",
+      "projection"
+    ]
+  },
+  "schema_version": "1.2"
+}

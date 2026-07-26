@@ -1,0 +1,13 @@
+{
+  "client_id": "cli_0123456789abcdef0123456789abcdef",
+  "command": {
+    "access_mode": "read_write",
+    "idempotency_key": "fixture-command-0001",
+    "kind": "workspace.open",
+    "repository_fingerprint_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "expected_sequence": 0,
+  "request_id": "req_0123456789abcdef0123456789abcdef",
+  "schema_version": "1.0",
+  "workspace_id": "wsp_0123456789abcdef0123456789abcdef"
+}

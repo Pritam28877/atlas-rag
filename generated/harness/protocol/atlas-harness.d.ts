@@ -566,6 +566,21 @@ export type RequestId = string;
 export type SchemaVersion = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "CompatibilityAction".
+ */
+export type CompatibilityAction = "project" | "preserve_opaque" | "reject";
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "CompatibleRecordKind".
+ */
+export type CompatibleRecordKind = "command" | "event";
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "CompatibleRecordType".
+ */
+export type CompatibleRecordType = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ContextId".
  */
 export type ContextId = string;
@@ -834,6 +849,11 @@ export type EvaluatedAt = string;
 export type MatchedRuleIds1 = [string, ...string[]];
 export type PolicyVersion2 = string;
 export type Reason10 = string;
+export type ContentSha2564 = string;
+export type RawJson = string;
+export type ReaderSchemaVersion = string;
+export type SchemaVersion2 = string;
+export type SizeBytes3 = number;
 export type AuthenticatedAt = string;
 export type SessionBindingSha256 = string;
 export type SubjectSha256 = string;
@@ -1546,6 +1566,22 @@ export interface PolicyDecisionRecord {
   policy_version: PolicyVersion2;
   reason: Reason10;
   trace: TraceLink;
+}
+/**
+ * Exact bounded bytes retained when an older reader cannot project a record.
+ *
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "PreservedUnknownRecord".
+ */
+export interface PreservedUnknownRecord {
+  content_sha256: ContentSha2564;
+  raw_json: RawJson;
+  reader_action: CompatibilityAction;
+  reader_schema_version: ReaderSchemaVersion;
+  record_kind: CompatibleRecordKind;
+  record_type: CompatibleRecordType;
+  schema_version: SchemaVersion2;
+  size_bytes: SizeBytes3;
 }
 /**
  * Authenticated actor derived by the server, never accepted from a command.

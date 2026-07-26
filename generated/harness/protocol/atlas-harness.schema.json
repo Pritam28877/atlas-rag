@@ -712,6 +712,29 @@
       "title": "CommandResponseKind",
       "type": "string"
     },
+    "CompatibilityAction": {
+      "enum": [
+        "project",
+        "preserve_opaque",
+        "reject"
+      ],
+      "title": "CompatibilityAction",
+      "type": "string"
+    },
+    "CompatibleRecordKind": {
+      "enum": [
+        "command",
+        "event"
+      ],
+      "title": "CompatibleRecordKind",
+      "type": "string"
+    },
+    "CompatibleRecordType": {
+      "maxLength": 128,
+      "minLength": 3,
+      "pattern": "^[A-Za-z][A-Za-z0-9]*(?:[._:-][A-Za-z0-9]+)*$",
+      "type": "string"
+    },
     "ContextId": {
       "maxLength": 36,
       "minLength": 36,
@@ -2093,6 +2116,63 @@
         "trace"
       ],
       "title": "PolicyDecisionRecord",
+      "type": "object"
+    },
+    "PreservedUnknownRecord": {
+      "additionalProperties": false,
+      "description": "Exact bounded bytes retained when an older reader cannot project a record.",
+      "properties": {
+        "content_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "raw_json": {
+          "format": "binary",
+          "maxLength": 131072,
+          "minLength": 2,
+          "title": "Raw Json",
+          "type": "string"
+        },
+        "reader_action": {
+          "$ref": "#/$defs/CompatibilityAction"
+        },
+        "reader_schema_version": {
+          "maxLength": 5,
+          "pattern": "^1\\.[0-9]{1,3}$",
+          "title": "Reader Schema Version",
+          "type": "string"
+        },
+        "record_kind": {
+          "$ref": "#/$defs/CompatibleRecordKind"
+        },
+        "record_type": {
+          "$ref": "#/$defs/CompatibleRecordType"
+        },
+        "schema_version": {
+          "maxLength": 5,
+          "pattern": "^1\\.[0-9]{1,3}$",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "size_bytes": {
+          "maximum": 131072,
+          "minimum": 2,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "reader_schema_version",
+        "reader_action",
+        "record_kind",
+        "record_type",
+        "raw_json",
+        "size_bytes",
+        "content_sha256"
+      ],
+      "title": "PreservedUnknownRecord",
       "type": "object"
     },
     "PrincipalId": {
@@ -3895,6 +3975,9 @@
     },
     "PolicyDecisionRecord": {
       "$ref": "#/$defs/PolicyDecisionRecord"
+    },
+    "PreservedUnknownRecord": {
+      "$ref": "#/$defs/PreservedUnknownRecord"
     },
     "PrincipalRecord": {
       "$ref": "#/$defs/PrincipalRecord"
