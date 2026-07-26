@@ -1,3 +1,13 @@
-"""Atlas Harness CLI composition boundary; no commands are registered yet."""
+"""Atlas Harness CLI and local app-server composition boundary."""
 
-__all__: tuple[str, ...] = ()
+from app.cli.harness.app_server import (
+    AtlasLocalAppServer,
+    HarnessConnectionFactory,
+    LocalAppServerSnapshot,
+)
+
+__all__ = (
+    "AtlasLocalAppServer",
+    "HarnessConnectionFactory",
+    "LocalAppServerSnapshot",
+)
