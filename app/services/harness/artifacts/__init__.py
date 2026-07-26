@@ -9,21 +9,23 @@ from app.services.harness.artifacts.contracts import (
     BlobWriteResult,
 )
 from app.services.harness.artifacts.local import LocalBlobStore
-from app.services.harness.artifacts.retention_contracts import (
+from app.services.harness.artifacts.retention_planner import (
+    admit_blob_write,
+    plan_garbage_collection,
+)
+from app.services.harness.protocol.retention import (
     ArtifactLegalHold,
     ArtifactReference,
     ArtifactTombstone,
     GarbageCollectionPlan,
     RetainedBlob,
     RetentionPolicy,
+    SealedJournalSegment,
     StorageSealReason,
     SyncedSnapshot,
+    SyncedSnapshotBundle,
     WorkspaceStorageState,
     WriteAdmission,
-)
-from app.services.harness.artifacts.retention_planner import (
-    admit_blob_write,
-    plan_garbage_collection,
 )
 
 __all__ = (
@@ -40,8 +42,10 @@ __all__ = (
     "LocalBlobStore",
     "RetainedBlob",
     "RetentionPolicy",
+    "SealedJournalSegment",
     "StorageSealReason",
     "SyncedSnapshot",
+    "SyncedSnapshotBundle",
     "WorkspaceStorageState",
     "WriteAdmission",
     "admit_blob_write",

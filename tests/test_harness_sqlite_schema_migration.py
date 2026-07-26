@@ -12,6 +12,9 @@ from app.services.harness.journal import (
     SQLiteEventJournal,
 )
 from app.services.harness.journal.receipts import build_append_result
+from app.services.harness.journal.sqlite_migrations import (
+    SQLITE_MIGRATE_V1_TO_V2,
+)
 from scripts.probe_harness_sqlite_kill import NOW, append_request
 
 SECOND_WORKSPACE_ID = "wsp_" + "2" * 32
@@ -211,12 +214,58 @@ def test_v1_migration_preserves_facts_and_uses_workspace_positions(
             2,
             3,
         )
-        assert schema_version == (2,)
+        assert schema_version == (3,)
         key_columns = {
             row[1]: row[5]
             for row in primary_key
             if row[5] > 0
         }
         assert key_columns == {"workspace_id": 1, "journal_sequence": 2}
+
+    asyncio.run(scenario())
+
+
+def test_v2_migration_preserves_journal_and_adds_snapshot_schema(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        path = database_path(tmp_path)
+        first_request, _ = create_v1_database(path)
+        connection = sqlite3.connect(path)
+        try:
+            connection.executescript(SQLITE_MIGRATE_V1_TO_V2)
+        finally:
+            connection.close()
+        os.chmod(path, 0o600)
+
+        journal = await SQLiteEventJournal.open(path)
+        replay = await journal.append(first_request)
+        await journal.close()
+
+        migrated = sqlite3.connect(path)
+        try:
+            schema_version = migrated.execute(
+                "SELECT schema_version FROM harness_journal_schema"
+            ).fetchone()
+            event_count = migrated.execute(
+                "SELECT COUNT(*) FROM harness_events"
+            ).fetchone()
+            retention_tables = migrated.execute(
+                """
+                SELECT COUNT(*) FROM sqlite_master
+                WHERE type = 'table'
+                  AND name IN (
+                      'harness_synced_snapshots',
+                      'harness_sealed_segments'
+                  )
+                """
+            ).fetchone()
+        finally:
+            migrated.close()
+
+        assert replay.status is AppendStatus.IDEMPOTENT_REPLAY
+        assert schema_version == (3,)
+        assert event_count == (2,)
+        assert retention_tables == (2,)
 
     asyncio.run(scenario())

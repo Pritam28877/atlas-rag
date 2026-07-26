@@ -15,7 +15,7 @@ from app.services.harness.artifacts import (
     admit_blob_write,
     plan_garbage_collection,
 )
-from app.services.harness.artifacts.retention_contracts import (
+from app.services.harness.protocol.retention import (
     MAXIMUM_TRACKED_BLOBS,
 )
 

@@ -31,6 +31,10 @@ from app.services.harness.journal.sqlite import SQLiteEventJournal
 from app.services.harness.journal.sqlite_integrity import (
     SQLiteJournalIntegrityVerifier,
 )
+from app.services.harness.journal.sqlite_snapshot_store import (
+    SnapshotStoreConflict,
+    SQLiteSnapshotStore,
+)
 
 __all__ = (
     "AppendRequest",
@@ -54,6 +58,8 @@ __all__ = (
     "JournalVerificationResult",
     "SQLiteEventJournal",
     "SQLiteJournalIntegrityVerifier",
+    "SQLiteSnapshotStore",
+    "SnapshotStoreConflict",
     "raise_expected_sequence_conflict",
     "raise_idempotency_conflict",
 )
