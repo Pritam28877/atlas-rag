@@ -102,6 +102,11 @@ class LocalBlobFiles:
             digest=hashlib.sha256(),
         )
 
+    def available_bytes(self) -> int:
+        filesystem = os.fstatvfs(self._workspace_descriptor)
+        available_bytes = filesystem.f_bavail * filesystem.f_frsize
+        return min(available_bytes, 2**63 - 1)
+
     @staticmethod
     def write(staged: StagedBlob, value: bytes, maximum_size: int) -> None:
         if not value or len(value) > MAXIMUM_IO_CHUNK_BYTES:

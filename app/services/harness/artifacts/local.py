@@ -105,6 +105,11 @@ class LocalBlobStore:
             created=created,
         )
 
+    async def available_bytes(self) -> int:
+        return await self._io_owner.execute(
+            self._io_owner.files.available_bytes
+        )
+
     async def inspect(self, content_sha256: str) -> BlobMetadata:
         request = BlobRangeRequest(
             content_sha256=content_sha256,

@@ -150,6 +150,22 @@ class SQLiteStorageStore:
                         "blob reservation size conflicts with durable evidence"
                     )
                 if existing.status is BlobReservationStatus.COMMITTED:
+                    retained = connection.execute(
+                        """
+                        SELECT garbage_collected_at
+                        FROM harness_retained_blobs
+                        WHERE workspace_id = ? AND content_sha256 = ?
+                        """,
+                        (workspace_id, content_sha256),
+                    ).fetchone()
+                    if retained is None:
+                        raise RetentionStoreConflict(
+                            "committed reservation lacks retained evidence"
+                        )
+                    if retained["garbage_collected_at"] is not None:
+                        raise RetentionStoreConflict(
+                            "collected blob cannot be republished"
+                        )
                     connection.commit()
                     return allowed_reservation(
                         existing,
