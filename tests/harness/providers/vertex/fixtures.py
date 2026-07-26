@@ -13,7 +13,10 @@ from app.services.harness.providers.vertex_identity import (
     VertexCredentialSourceKind,
     VertexIdentityReference,
 )
-from app.services.harness.providers.vertex_policy import VertexRoutePolicy
+from app.services.harness.providers.vertex_policy import (
+    VertexRoutePolicy,
+    authorize_vertex_route,
+)
 from tests.harness_provider_capability_fixtures import model, policy, price
 
 ENDPOINT = "https://us-central1-aiplatform.googleapis.com/"
@@ -117,3 +120,13 @@ def configuration() -> tuple[
 
 def external_account_path() -> Path:
     return Path("/var/run/secrets/google/external-account.json")
+
+
+def authorized_route():
+    loaded, route = configuration()
+    return authorize_vertex_route(
+        loaded,
+        route,
+        route_policy(),
+        identity(),
+    )

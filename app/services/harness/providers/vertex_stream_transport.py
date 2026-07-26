@@ -1,8 +1,9 @@
-"""Bounded local-compatible Responses transport over an authorized connector."""
+"""Bounded Vertex GenerateContent transport over an authorized connector."""
 
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import AsyncIterator, Callable
 from contextlib import aclosing
 from datetime import datetime
@@ -21,13 +22,6 @@ from app.services.harness.providers.egress_contracts import (
     ProviderEgressRequest,
     SafeEgressHeader,
 )
-from app.services.harness.providers.local_compatible_policy import (
-    AuthorizedLocalCompatibleRoute,
-)
-from app.services.harness.providers.openai_contracts import (
-    CompiledOpenAIResponsesRequest,
-)
-from app.services.harness.providers.openai_decoder import OpenAIResponsesDecoder
 from app.services.harness.providers.provider_stream_contracts import (
     ProviderStreamingBody,
 )
@@ -38,21 +32,28 @@ from app.services.harness.providers.provider_stream_control import (
     remaining_seconds,
 )
 from app.services.harness.providers.sse_framer import BoundedSseFramer
+from app.services.harness.providers.vertex_contracts import (
+    CompiledVertexGenerateContentRequest,
+)
+from app.services.harness.providers.vertex_decoder import (
+    VertexGenerateContentDecoder,
+)
+from app.services.harness.providers.vertex_policy import AuthorizedVertexRoute
 
 
-class LocalStreamingConnector(Protocol):
+class VertexStreamingConnector(Protocol):
     def stream(
         self,
         request: ProviderEgressRequest,
-        route: AuthorizedLocalCompatibleRoute,
-        credential: CredentialLease | None,
+        route: AuthorizedVertexRoute,
+        credential: CredentialLease,
         *,
         cancellation: asyncio.Event,
         deadline_at: datetime,
     ) -> ProviderStreamingBody: ...
 
 
-class LocalCompatibleTransportErrorCode(StrEnum):
+class VertexTransportErrorCode(StrEnum):
     CANCELLED = "cancelled"
     CLOSED = "closed"
     DEADLINE = "deadline"
@@ -61,22 +62,22 @@ class LocalCompatibleTransportErrorCode(StrEnum):
     STREAM = "stream"
 
 
-class LocalCompatibleTransportError(RuntimeError):
-    def __init__(self, code: LocalCompatibleTransportErrorCode) -> None:
-        super().__init__("local-compatible Responses transport failed")
+class VertexTransportError(RuntimeError):
+    def __init__(self, code: VertexTransportErrorCode) -> None:
+        super().__init__("Vertex GenerateContent transport failed")
         self.code = code
 
 
-class BoundedLocalCompatibleResponsesTransport:
+class BoundedVertexGenerateContentTransport:
     def __init__(
         self,
-        connector: LocalStreamingConnector,
+        connector: VertexStreamingConnector,
         *,
         clock: Callable[[], datetime],
         maximum_concurrent_streams: int = 4,
     ) -> None:
         if not 1 <= maximum_concurrent_streams <= 16:
-            raise ValueError("local-compatible stream concurrency is invalid")
+            raise ValueError("Vertex stream concurrency is invalid")
         self._connector = connector
         self._clock = clock
         self._capacity = asyncio.Semaphore(maximum_concurrent_streams)
@@ -85,39 +86,19 @@ class BoundedLocalCompatibleResponsesTransport:
     async def stream(
         self,
         canonical_request: CanonicalProviderRequest,
-        compiled: CompiledOpenAIResponsesRequest,
-        route: AuthorizedLocalCompatibleRoute,
-        credential: CredentialLease | None,
-        decoder: OpenAIResponsesDecoder,
-        *,
-        cancellation: asyncio.Event,
-        deadline_at: datetime,
-    ) -> AsyncIterator[ProviderStreamEvent]:
-        if compiled.model != route.model_id:
-            self._reject(LocalCompatibleTransportErrorCode.MODEL)
-        request = _egress_request(canonical_request, compiled, route)
-        async for event in self.stream_egress(
-            request,
-            route,
-            credential,
-            decoder,
-            cancellation=cancellation,
-            deadline_at=deadline_at,
-        ):
-            yield event
-
-    async def stream_egress(
-        self,
-        request: ProviderEgressRequest,
-        route: AuthorizedLocalCompatibleRoute,
-        credential: CredentialLease | None,
-        decoder: OpenAIResponsesDecoder,
+        compiled: CompiledVertexGenerateContentRequest,
+        route: AuthorizedVertexRoute,
+        credential: CredentialLease,
+        decoder: VertexGenerateContentDecoder,
         *,
         cancellation: asyncio.Event,
         deadline_at: datetime,
     ) -> AsyncIterator[ProviderStreamEvent]:
         if self._closed:
-            self._reject(LocalCompatibleTransportErrorCode.CLOSED)
+            self._reject(VertexTransportErrorCode.CLOSED)
+        if compiled.model != route.model_id:
+            self._reject(VertexTransportErrorCode.MODEL)
+        request = _egress_request(canonical_request, compiled, route)
         try:
             remaining = remaining_seconds(self._clock, deadline_at)
             await acquire_stream_capacity(
@@ -130,31 +111,23 @@ class BoundedLocalCompatibleResponsesTransport:
         framer = BoundedSseFramer()
         terminal = False
         try:
-            stream = self._connector.stream(
+            response = self._connector.stream(
                 request,
                 route,
                 credential,
                 cancellation=cancellation,
                 deadline_at=deadline_at,
             )
-            async with aclosing(stream):
-                async for chunk in stream:
+            async with aclosing(response):
+                async for chunk in response:
                     if cancellation.is_set():
                         yield decoder.cancel()
                         return
                     try:
                         remaining_seconds(self._clock, deadline_at)
                     except ProviderStreamControlError:
-                        self._reject(
-                            LocalCompatibleTransportErrorCode.DEADLINE
-                        )
+                        self._reject(VertexTransportErrorCode.DEADLINE)
                     for record in framer.feed(chunk):
-                        if record == b"[DONE]":
-                            if not terminal:
-                                self._reject(
-                                    LocalCompatibleTransportErrorCode.STREAM
-                                )
-                            continue
                         for event in decoder.decode(record):
                             yield event
                             terminal = isinstance(
@@ -169,41 +142,49 @@ class BoundedLocalCompatibleResponsesTransport:
                                 yield decoder.cancel()
                                 return
             framer.finish()
-        except LocalCompatibleTransportError:
+        except VertexTransportError:
             raise
         except Exception:
             if cancellation.is_set() and not terminal:
                 yield decoder.cancel()
                 return
-            self._reject(LocalCompatibleTransportErrorCode.PROVIDER)
+            self._reject(VertexTransportErrorCode.PROVIDER)
         finally:
             self._capacity.release()
         if not terminal:
-            self._reject(LocalCompatibleTransportErrorCode.STREAM)
+            self._reject(VertexTransportErrorCode.STREAM)
 
     async def close(self) -> None:
         self._closed = True
 
     @staticmethod
-    def _reject(code: LocalCompatibleTransportErrorCode) -> None:
-        raise LocalCompatibleTransportError(code)
+    def _reject(code: VertexTransportErrorCode) -> None:
+        raise VertexTransportError(code)
 
 
 def _egress_request(
     request: CanonicalProviderRequest,
-    compiled: CompiledOpenAIResponsesRequest,
-    route: AuthorizedLocalCompatibleRoute,
+    compiled: CompiledVertexGenerateContentRequest,
+    route: AuthorizedVertexRoute,
 ) -> ProviderEgressRequest:
-    body = compiled.model_dump_json(exclude_none=True).encode()
+    body = json.dumps(
+        compiled.to_wire(),
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
     return ProviderEgressRequest(
         request_id=request.request_id,
-        provider="local-compatible",
+        provider="vertex",
         credential_handle=route.credential_handle,
-        target_url=route.responses_url,
+        target_url=f"{route.stream_url}?alt=sse",
         classification=request.classification,
         content_type="application/json",
         safe_headers=(
             SafeEgressHeader(name="accept", value="text/event-stream"),
+            SafeEgressHeader(
+                name="x-goog-user-project",
+                value=route.project_id,
+            ),
         ),
         body=body,
     )
@@ -211,7 +192,7 @@ def _egress_request(
 
 def _control_error_code(
     error: ProviderStreamControlError,
-) -> LocalCompatibleTransportErrorCode:
+) -> VertexTransportErrorCode:
     if error.code is ProviderStreamControlErrorCode.CANCELLED:
-        return LocalCompatibleTransportErrorCode.CANCELLED
-    return LocalCompatibleTransportErrorCode.DEADLINE
+        return VertexTransportErrorCode.CANCELLED
+    return VertexTransportErrorCode.DEADLINE
