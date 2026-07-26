@@ -26,6 +26,16 @@ from app.services.harness.providers.credential_material import (
     CredentialSecretBackend,
     CredentialSecretMaterial,
 )
+from app.services.harness.providers.egress_policy import (
+    AuthorizedEgressTarget,
+    ProviderEgressPolicy,
+    ProviderEgressPolicyError,
+    ProviderEgressPolicyErrorCode,
+    authorize_egress_target,
+    canonical_provider_origin,
+    canonical_provider_url,
+    provider_destination_sha256,
+)
 from app.services.harness.providers.environment_credentials import (
     EnvironmentCredentialBackend,
     EnvironmentCredentialError,
@@ -65,6 +75,7 @@ __all__ = (
     "EnvironmentCredentialError",
     "EnvironmentCredentialErrorCode",
     "EnvironmentCredentialReference",
+    "AuthorizedEgressTarget",
     "LoadedProviderConfiguration",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",
@@ -73,9 +84,16 @@ __all__ = (
     "ProviderHealthRegistry",
     "ProviderHealthRegistryError",
     "ProviderHealthRegistryErrorCode",
+    "ProviderEgressPolicy",
+    "ProviderEgressPolicyError",
+    "ProviderEgressPolicyErrorCode",
     "RecordedProviderError",
     "RecordedProviderErrorCode",
     "RecordedProviderStream",
     "ProviderRouteConfiguration",
+    "authorize_egress_target",
+    "canonical_provider_origin",
+    "canonical_provider_url",
     "load_provider_configuration",
+    "provider_destination_sha256",
 )
