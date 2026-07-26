@@ -66,6 +66,11 @@ from app.services.harness.runtime.unix_peer import (
     UnixPeerCredentialError,
     UnixPeerCredentialReader,
 )
+from app.services.harness.runtime.unix_server import (
+    LocalConnectionFactory,
+    UnixHarnessServer,
+    UnixServerSnapshot,
+)
 
 __all__ = (
     "AdmissionError",
@@ -93,6 +98,7 @@ __all__ = (
     "HandshakeChallenge",
     "HandshakeProof",
     "LocalConnection",
+    "LocalConnectionFactory",
     "LocalStreamRunner",
     "PeerAuthenticationError",
     "PeerAuthenticationErrorCode",
@@ -113,6 +119,8 @@ __all__ = (
     "UnixChallengeHandshake",
     "UnixHandshakeError",
     "UnixHandshakeErrorCode",
+    "UnixHarnessServer",
+    "UnixServerSnapshot",
     "VerifiedPeerSession",
     "decode_command",
     "encode_frame",
