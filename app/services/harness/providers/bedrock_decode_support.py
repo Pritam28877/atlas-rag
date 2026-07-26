@@ -32,6 +32,23 @@ STREAM_ERROR_CLASSIFICATION = {
 }
 
 
+def validate_bedrock_wire_event(event: dict[str, object]) -> None:
+    if not isinstance(event, dict) or len(event) != 1:
+        raise BedrockDecodeError(BedrockDecodeErrorCode.MALFORMED)
+    try:
+        encoded = json.dumps(
+            event,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode()
+    except (TypeError, ValueError):
+        raise BedrockDecodeError(BedrockDecodeErrorCode.MALFORMED) from None
+    if not 1 <= len(encoded) <= MAXIMUM_BEDROCK_EVENT_BYTES:
+        raise BedrockDecodeError(BedrockDecodeErrorCode.EVENT_SIZE)
+
+
 class BedrockDecodeErrorCode(StrEnum):
     EVENT_LIMIT = "event_limit"
     EVENT_SIZE = "event_size"

@@ -7,6 +7,14 @@ from app.services.harness.protocol import (
 from app.services.harness.providers.bearer_authorization import (
     BearerProviderCredentialEncoder,
 )
+from app.services.harness.providers.bedrock_boto_client import (
+    BedrockEventStream,
+    BedrockResponseEnvelope,
+    BedrockRuntimeClient,
+    BedrockRuntimeClientFactory,
+    Boto3BedrockRuntimeClientFactory,
+    response_event_stream,
+)
 from app.services.harness.providers.bedrock_botocore_sources import (
     BotocoreStaticCredentialBackend,
 )
@@ -58,6 +66,12 @@ from app.services.harness.providers.bedrock_policy import (
     AuthorizedBedrockRoute,
     BedrockRoutePolicy,
     authorize_bedrock_route,
+)
+from app.services.harness.providers.bedrock_stream_transport import (
+    MAXIMUM_BEDROCK_TRANSPORT_QUEUE,
+    BedrockTransportError,
+    BedrockTransportErrorCode,
+    BoundedBedrockConverseTransport,
 )
 from app.services.harness.providers.config_contracts import (
     LoadedProviderConfiguration,
@@ -248,18 +262,26 @@ __all__ = (
     "BedrockDecodeError",
     "BedrockDecodeErrorCode",
     "BedrockCredentialSourceKind",
+    "BedrockEventStream",
     "BotocoreStaticCredentialBackend",
     "BotocoreNetworkCredentialBackend",
     "BedrockIdentityReference",
     "BedrockIdentityReferenceId",
     "BedrockInferenceConfiguration",
     "BedrockMessage",
+    "BedrockResponseEnvelope",
+    "BedrockRuntimeClient",
+    "BedrockRuntimeClientFactory",
     "BedrockStreamMetadata",
     "BedrockSystemContent",
     "BedrockTextContent",
     "BedrockToolResultContent",
     "BedrockToolSpecification",
+    "BedrockTransportError",
+    "BedrockTransportErrorCode",
     "BoundedBedrockCredentialResolver",
+    "BoundedBedrockConverseTransport",
+    "Boto3BedrockRuntimeClientFactory",
     "BedrockRoutePolicy",
     "AuthorizedBedrockRoute",
     "CompiledBedrockConverseStreamRequest",
@@ -269,6 +291,7 @@ __all__ = (
     "MAXIMUM_BEDROCK_EVENT_BYTES",
     "MAXIMUM_BEDROCK_EVENTS",
     "MAXIMUM_BEDROCK_TOOL_ARGUMENT_BYTES",
+    "MAXIMUM_BEDROCK_TRANSPORT_QUEUE",
     "MAXIMUM_WEB_IDENTITY_TOKEN_BYTES",
     "INSTANCE_METADATA_URL",
     "MAXIMUM_OPENAI_WIRE_EVENT_BYTES",
@@ -339,5 +362,6 @@ __all__ = (
     "load_provider_configuration",
     "provider_destination_sha256",
     "provider_egress_request_sha256",
+    "response_event_stream",
     "plan_provider_retry",
 )

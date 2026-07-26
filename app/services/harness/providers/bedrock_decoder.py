@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import cast
@@ -26,7 +25,6 @@ from app.services.harness.providers.bedrock_contracts import (
 from app.services.harness.providers.bedrock_decode_support import (
     FINISH_REASONS,
     MAXIMUM_BEDROCK_BLOCKS,
-    MAXIMUM_BEDROCK_EVENT_BYTES,
     MAXIMUM_BEDROCK_EVENTS,
     MAXIMUM_BEDROCK_TOOL_ARGUMENT_BYTES,
     STREAM_ERROR_CLASSIFICATION,
@@ -39,6 +37,7 @@ from app.services.harness.providers.bedrock_decode_support import (
     metadata_sha256,
     optional_integer,
     string,
+    validate_bedrock_wire_event,
 )
 
 
@@ -71,6 +70,16 @@ class BedrockConverseStreamDecoder:
     @property
     def metadata(self) -> BedrockStreamMetadata | None:
         return self._metadata
+
+    def record_response_metadata_sha256(self, digest: str) -> None:
+        self._require_active()
+        if (
+            len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+            or "responseMetadataSha256" in self._provider_metadata
+        ):
+            raise BedrockDecodeError(BedrockDecodeErrorCode.MALFORMED)
+        self._provider_metadata["responseMetadataSha256"] = digest
 
     def decode(
         self,
@@ -123,20 +132,7 @@ class BedrockConverseStreamDecoder:
         self,
         event: dict[str, object],
     ) -> dict[str, dict[str, object]]:
-        if not isinstance(event, dict) or len(event) != 1:
-            raise BedrockDecodeError(BedrockDecodeErrorCode.MALFORMED)
-        try:
-            encoded = json.dumps(
-                event,
-                allow_nan=False,
-                ensure_ascii=False,
-                separators=(",", ":"),
-                sort_keys=True,
-            ).encode()
-        except (TypeError, ValueError):
-            raise BedrockDecodeError(BedrockDecodeErrorCode.MALFORMED) from None
-        if not 1 <= len(encoded) <= MAXIMUM_BEDROCK_EVENT_BYTES:
-            raise BedrockDecodeError(BedrockDecodeErrorCode.EVENT_SIZE)
+        validate_bedrock_wire_event(event)
         self._event_count += 1
         if self._event_count > MAXIMUM_BEDROCK_EVENTS:
             raise BedrockDecodeError(BedrockDecodeErrorCode.EVENT_LIMIT)
