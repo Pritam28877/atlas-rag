@@ -86,7 +86,7 @@ def authorize_provider_smoke(
         or not 1 <= request.cost_cap_microusd <= 10_000_000_000
     ):
         raise ProviderSmokeGateError(ProviderSmokeGateErrorCode.COST_CAP)
-    if not _environment_name_is_safe(request.environment_variable):
+    if not environment_name_is_safe(request.environment_variable):
         raise ProviderSmokeGateError(
             ProviderSmokeGateErrorCode.ENVIRONMENT
         )
@@ -130,7 +130,7 @@ def authorize_provider_smoke(
     )
 
 
-def _environment_name_is_safe(value: str) -> bool:
+def environment_name_is_safe(value: str) -> bool:
     return (
         bool(value)
         and value[0].isalpha()
