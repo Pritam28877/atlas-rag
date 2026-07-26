@@ -5,9 +5,21 @@ from app.cli.harness.app_server import (
     HarnessConnectionFactory,
     LocalAppServerSnapshot,
 )
+from app.cli.harness.provider_smoke_contracts import (
+    AuthorizedProviderSmoke,
+    ProviderSmokeGateError,
+    ProviderSmokeGateErrorCode,
+    ProviderSmokeLaunchRequest,
+    authorize_provider_smoke,
+)
 
 __all__ = (
     "AtlasLocalAppServer",
+    "AuthorizedProviderSmoke",
     "HarnessConnectionFactory",
     "LocalAppServerSnapshot",
+    "ProviderSmokeGateError",
+    "ProviderSmokeGateErrorCode",
+    "ProviderSmokeLaunchRequest",
+    "authorize_provider_smoke",
 )
