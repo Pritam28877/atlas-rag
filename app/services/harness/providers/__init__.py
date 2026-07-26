@@ -16,6 +16,16 @@ from app.services.harness.providers.configured_catalog import (
     ConfiguredCatalogErrorCode,
     ConfiguredModelCatalog,
 )
+from app.services.harness.providers.credential_broker import (
+    ConfiguredCredentialBroker,
+)
+from app.services.harness.providers.credential_material import (
+    CredentialBrokerError,
+    CredentialBrokerErrorCode,
+    CredentialLease,
+    CredentialSecretBackend,
+    CredentialSecretMaterial,
+)
 from app.services.harness.providers.health_registry import (
     ProviderHealthRegistry,
     ProviderHealthRegistryError,
@@ -36,9 +46,15 @@ __all__ = (
     "ConfiguredCatalogError",
     "ConfiguredCatalogErrorCode",
     "ConfiguredModelCatalog",
+    "ConfiguredCredentialBroker",
     "ConfiguredRouteInventory",
     "ConfiguredRouteInventoryError",
     "ConfiguredRouteInventoryErrorCode",
+    "CredentialBrokerError",
+    "CredentialBrokerErrorCode",
+    "CredentialLease",
+    "CredentialSecretBackend",
+    "CredentialSecretMaterial",
     "LoadedProviderConfiguration",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",
