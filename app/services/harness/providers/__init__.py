@@ -1,3 +1,13 @@
 """Capability-split Atlas Harness provider adapters."""
 
-__all__: tuple[str, ...] = ()
+from app.services.harness.providers.recorded import (
+    RecordedProviderError,
+    RecordedProviderErrorCode,
+    RecordedProviderStream,
+)
+
+__all__ = (
+    "RecordedProviderError",
+    "RecordedProviderErrorCode",
+    "RecordedProviderStream",
+)
