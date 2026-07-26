@@ -33,7 +33,6 @@ from app.services.harness.providers.local_compatible_probe import (
 from app.services.harness.providers.local_compatible_stream_transport import (
     BoundedLocalCompatibleResponsesTransport,
     LocalCompatibleTransportError,
-    LocalStreamingBody,
     LocalStreamingConnector,
 )
 from app.services.harness.providers.openai_contracts import (
@@ -43,6 +42,9 @@ from app.services.harness.providers.openai_contracts import (
     OpenAIMessageInput,
 )
 from app.services.harness.providers.openai_decoder import OpenAIResponsesDecoder
+from app.services.harness.providers.provider_stream_contracts import (
+    ProviderStreamingBody,
+)
 
 _PROBE_OUTPUT_TOKENS = 64
 _PROMPT_CACHE_KEY = hashlib.sha256(b"atlas-local-probe-cache").hexdigest()
@@ -131,7 +133,7 @@ class _CountingConnector:
         *,
         cancellation: asyncio.Event,
         deadline_at: datetime,
-    ) -> LocalStreamingBody:
+    ) -> ProviderStreamingBody:
         return self._stream(
             request,
             route,
