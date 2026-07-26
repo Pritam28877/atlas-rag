@@ -187,6 +187,11 @@ from app.services.harness.protocol.provider_request import (
     ProviderModality,
     ProviderToolDefinition,
 )
+from app.services.harness.protocol.provider_retry import (
+    ProviderRetryBudget,
+    ProviderRetryDecision,
+    ProviderRetryDecisionCode,
+)
 from app.services.harness.protocol.provider_stream import (
     ProviderCancelled,
     ProviderCompleted,
@@ -385,6 +390,9 @@ __all__ = (
     "ProviderReasoningDelta",
     "ProviderRequirements",
     "ProviderRetryDisposition",
+    "ProviderRetryBudget",
+    "ProviderRetryDecision",
+    "ProviderRetryDecisionCode",
     "ProviderRoute",
     "ProviderRouteDecisionRecord",
     "ProviderRouteRejectionCode",

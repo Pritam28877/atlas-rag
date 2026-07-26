@@ -90,6 +90,7 @@ from app.services.harness.providers.recorded import (
     RecordedProviderErrorCode,
     RecordedProviderStream,
 )
+from app.services.harness.providers.retry_planner import plan_provider_retry
 from app.services.harness.providers.route_inventory import (
     ConfiguredRouteInventory,
     ConfiguredRouteInventoryError,
@@ -158,4 +159,5 @@ __all__ = (
     "canonical_provider_url",
     "load_provider_configuration",
     "provider_destination_sha256",
+    "plan_provider_retry",
 )

@@ -1300,6 +1300,22 @@ export type RequiredOutputModalities =
     ];
 export type ReservedOutputTokens1 = number;
 /**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderRetryDecisionCode".
+ */
+export type ProviderRetryDecisionCode =
+  | "ambiguous"
+  | "attempts_exhausted"
+  | "retry"
+  | "retry_prohibited"
+  | "wall_time_exhausted";
+export type CurrentAttempt = number;
+export type DecidedAt1 = string;
+export type DelayMs = number | null;
+export type NextAttempt = number | null;
+export type Reason15 = string;
+export type Retry = boolean;
+/**
  * @minItems 1
  * @maxItems 4
  */
@@ -1657,7 +1673,7 @@ export type RetentionDays = number;
  */
 export type RouteId = string;
 export type TrainingEnabled = boolean;
-export type DecidedAt1 = string;
+export type DecidedAt2 = string;
 /**
  * @maxItems 64
  */
@@ -1665,7 +1681,7 @@ export type EligibleRoutes = ProviderRoute[];
 export type HealthSnapshotSha2561 = string | null;
 export type ModelRevisionSha2562 = string | null;
 export type PriceVersionSha2561 = string | null;
-export type Reason15 = string;
+export type Reason16 = string;
 /**
  * @maxItems 16
  */
@@ -2689,6 +2705,19 @@ export interface ProviderRequirements {
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderRetryDecision".
+ */
+export interface ProviderRetryDecision {
+  code: ProviderRetryDecisionCode;
+  current_attempt: CurrentAttempt;
+  decided_at: DecidedAt1;
+  delay_ms?: DelayMs;
+  next_attempt?: NextAttempt;
+  reason: Reason15;
+  retry: Retry;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderRoute".
  */
 export interface ProviderRoute {
@@ -2721,7 +2750,7 @@ export interface ProviderRoute {
  * via the `definition` "ProviderRouteDecisionRecord".
  */
 export interface ProviderRouteDecisionRecord {
-  decided_at: DecidedAt1;
+  decided_at: DecidedAt2;
   eligible_routes: EligibleRoutes;
   provider_decision_id: ProviderDecisionId;
   rejected_routes: RejectedRoutes;
@@ -2741,7 +2770,7 @@ export interface RejectedProviderRoute {
   model_revision_sha256?: ModelRevisionSha2562;
   price_version_sha256?: PriceVersionSha2561;
   provider?: ProviderName | null;
-  reason: Reason15;
+  reason: Reason16;
   rejection_codes?: RejectionCodes;
   route_id: RouteId;
 }
