@@ -18,14 +18,34 @@ from app.services.harness.journal import (
     JournalStorageError,
 )
 from app.services.harness.journal.postgres import PostgresEventJournal
+from app.services.harness.journal.projection_contracts import ProjectionDefinition
 from app.services.harness.protocol import (
     EventActorKind,
     EventRecord,
     InlinePayload,
+    StrictProtocolModel,
     TraceLink,
 )
 
 NOW = datetime(2026, 7, 26, 20, 0, tzinfo=UTC)
+
+
+class CountState(StrictProtocolModel):
+    count: int
+
+
+def count_projection() -> ProjectionDefinition[CountState]:
+    def reducer(state: CountState, journal_event) -> CountState:
+        _ = journal_event
+        return CountState(count=state.count + 1)
+
+    return ProjectionDefinition(
+        name="append_counter",
+        version="1.0",
+        state_model=CountState,
+        initial_state=CountState(count=0),
+        reducer=reducer,
+    )
 
 
 def identifier(prefix: str, number: int = 0) -> str:
@@ -154,6 +174,46 @@ def append_session() -> RecordingSession:
     )
 
 
+def projected_append_session() -> RecordingSession:
+    return RecordingSession(
+        scalar_values=[0, 0, NOW, 2, 2],
+        execute_results=[
+            MappingResult(),
+            MappingResult(),
+            MappingResult(),
+            MappingResult(),
+            MappingResult(
+                rows=(
+                    {"aggregate_sequence": 1, "journal_sequence": 1},
+                    {"aggregate_sequence": 2, "journal_sequence": 2},
+                )
+            ),
+            MappingResult(),
+            MappingResult(one={"written": True}),
+            MappingResult(),
+        ],
+    )
+
+
+def missing_projection_history_session() -> RecordingSession:
+    return RecordingSession(
+        scalar_values=[0, 2, NOW, 2, 4],
+        execute_results=[
+            MappingResult(),
+            MappingResult(),
+            MappingResult(),
+            MappingResult(),
+            MappingResult(
+                rows=(
+                    {"aggregate_sequence": 1, "journal_sequence": 3},
+                    {"aggregate_sequence": 2, "journal_sequence": 4},
+                )
+            ),
+            MappingResult(),
+        ],
+    )
+
+
 def test_append_is_one_bounded_batch_with_workspace_cursor() -> None:
     async def scenario() -> None:
         session = append_session()
@@ -170,6 +230,69 @@ def test_append_is_one_bounded_batch_with_workspace_cursor() -> None:
         assert "UPDATE harness_journal_positions" in statement_text
 
     asyncio.run(scenario())
+
+
+def test_append_applies_registered_projection_in_the_same_session() -> None:
+    async def scenario() -> None:
+        session = projected_append_session()
+        transactions = TransactionQueue(session)
+        journal = PostgresEventJournal(
+            transactions.transaction,
+            projections=(count_projection(),),
+        )
+
+        await journal.append(append_request(event(1), event(2)))
+
+        projection_writes = [
+            (statement, parameters)
+            for statement, parameters in session.statements
+            if "INSERT INTO harness_projection_checkpoints" in statement
+        ]
+        assert len(projection_writes) == 1
+        assert projection_writes[0][1]["last_journal_sequence"] == 2
+        assert projection_writes[0][1]["state_json"] == '{"count":2}'
+        assert "INSERT INTO harness_journal_idempotency" in (
+            session.statements[-1][0]
+        )
+
+    asyncio.run(scenario())
+
+
+def test_append_rejects_projection_with_missing_history() -> None:
+    async def scenario() -> None:
+        session = missing_projection_history_session()
+        transactions = TransactionQueue(session)
+        journal = PostgresEventJournal(
+            transactions.transaction,
+            projections=(count_projection(),),
+        )
+
+        with pytest.raises(
+            JournalStorageError,
+            match="requires a complete rebuild",
+        ):
+            await journal.append(append_request(event(1), event(2)))
+        assert all(
+            "INSERT INTO harness_journal_idempotency" not in statement
+            for statement, _ in session.statements
+        )
+
+    asyncio.run(scenario())
+
+
+def test_online_projection_registration_is_unique_and_bounded() -> None:
+    transactions = TransactionQueue()
+    duplicate = count_projection()
+    with pytest.raises(ValueError, match="unique"):
+        PostgresEventJournal(
+            transactions.transaction,
+            projections=(duplicate, duplicate),
+        )
+    with pytest.raises(ValueError, match="exceeds 32"):
+        PostgresEventJournal(
+            transactions.transaction,
+            projections=tuple(count_projection() for _ in range(33)),
+        )
 
 
 def test_idempotent_replay_preserves_the_original_receipt() -> None:

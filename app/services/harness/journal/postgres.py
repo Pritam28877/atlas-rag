@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from contextlib import AbstractAsyncContextManager
 from datetime import datetime
-from typing import cast
+from typing import Any, cast
 
 from pydantic import ValidationError
 from sqlalchemy import text
@@ -29,6 +29,10 @@ from app.services.harness.journal.contracts import (
 )
 from app.services.harness.journal.errors import JournalStorageError
 from app.services.harness.journal.postgres_batch import insert_event_batch
+from app.services.harness.journal.postgres_projection_apply import (
+    apply_online_projections,
+    prepare_online_projections,
+)
 from app.services.harness.journal.postgres_sql import (
     BUFFERED_COMMIT,
     DATABASE_TIMESTAMP,
@@ -44,6 +48,7 @@ from app.services.harness.journal.postgres_sql import (
     UPDATE_AGGREGATE,
     UPDATE_POSITION,
 )
+from app.services.harness.journal.projection_contracts import ProjectionDefinition
 from app.services.harness.journal.receipts import build_append_result
 from app.services.harness.protocol import EventRecord
 
@@ -56,8 +61,14 @@ type TransactionFactory = Callable[
 class PostgresEventJournal:
     """Uses caller-owned bounded sessions and transaction lifecycle."""
 
-    def __init__(self, transaction_factory: TransactionFactory) -> None:
+    def __init__(
+        self,
+        transaction_factory: TransactionFactory,
+        *,
+        projections: Sequence[ProjectionDefinition[Any]] = (),
+    ) -> None:
         self._transaction_factory = transaction_factory
+        self._projections = prepare_online_projections(projections)
 
     async def append(self, request: AppendRequest) -> AppendResult:
         try:
@@ -161,6 +172,20 @@ class PostgresEventJournal:
         )
         if updated_position != last_journal_sequence:
             raise JournalStorageError("journal position update failed")
+        journal_events = tuple(
+            JournalEvent(journal_sequence=journal_sequence, event=event)
+            for journal_sequence, event in zip(
+                journal_sequences,
+                request.events,
+                strict=True,
+            )
+        )
+        await apply_online_projections(
+            session,
+            self._projections,
+            request.workspace_id,
+            journal_events,
+        )
         await session.execute(
             text(INSERT_IDEMPOTENCY),
             {

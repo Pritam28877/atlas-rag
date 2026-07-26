@@ -22,14 +22,37 @@ from app.services.harness.journal import (
     JournalReadRequest,
 )
 from app.services.harness.journal.postgres import PostgresEventJournal
+from app.services.harness.journal.postgres_projection_store import (
+    PostgresProjectionStore,
+)
+from app.services.harness.journal.projection_contracts import ProjectionDefinition
 from app.services.harness.protocol import (
     EventActorKind,
     EventRecord,
     InlinePayload,
+    StrictProtocolModel,
     TraceLink,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+class CountState(StrictProtocolModel):
+    count: int
+
+
+def count_projection() -> ProjectionDefinition[CountState]:
+    def reducer(state: CountState, journal_event) -> CountState:
+        _ = journal_event
+        return CountState(count=state.count + 1)
+
+    return ProjectionDefinition(
+        name="integration_counter",
+        version="1.0",
+        state_model=CountState,
+        initial_state=CountState(count=0),
+        reducer=reducer,
+    )
 
 
 def identifier(prefix: str) -> str:
@@ -100,7 +123,11 @@ def test_postgres_journal_end_to_end(monkeypatch: pytest.MonkeyPatch) -> None:
 
     async def scenario() -> None:
         database = Database(get_settings().database)
-        journal = PostgresEventJournal(database.transaction)
+        journal = PostgresEventJournal(
+            database.transaction,
+            projections=(count_projection(),),
+        )
+        projection_store = PostgresProjectionStore(database.transaction)
         workspace_id = identifier("wsp")
         other_workspace_id = identifier("wsp")
         aggregate_id = identifier("trn")
@@ -191,6 +218,10 @@ def test_postgres_journal_end_to_end(monkeypatch: pytest.MonkeyPatch) -> None:
                 *(journal.append(candidate) for candidate in competing_requests),
                 return_exceptions=True,
             )
+            projection = await projection_store.load(
+                workspace_id,
+                "integration_counter",
+            )
         finally:
             await database.close()
 
@@ -209,6 +240,9 @@ def test_postgres_journal_end_to_end(monkeypatch: pytest.MonkeyPatch) -> None:
         ]
         assert len(conflicts) == 1
         assert conflicts[0].code is JournalConflictCode.EXPECTED_SEQUENCE
+        assert projection is not None
+        assert projection.checkpoint.last_journal_sequence == 3
+        assert projection.checkpoint.state_json == '{"count":3}'
 
     try:
         asyncio.run(scenario())

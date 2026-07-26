@@ -13,6 +13,14 @@ WHERE workspace_id = :workspace_id
   AND projection_name = :projection_name
 """
 
+LOCK_PROJECTION = f"""
+SELECT {PROJECTION_COLUMNS}
+FROM harness_projection_checkpoints
+WHERE workspace_id = :workspace_id
+  AND projection_name = :projection_name
+FOR UPDATE
+"""
+
 INSERT_PROJECTION = f"""
 INSERT INTO harness_projection_checkpoints (
     workspace_id, projection_name, projection_version, generation,
