@@ -7,5 +7,14 @@
     "node": "22.22.0",
     "npm": "10.9.4"
   },
-  "packageManager": "npm@10.9.4"
+  "packageManager": "npm@10.9.4",
+  "scripts": {
+    "generate:harness-protocol": "uv run --locked python scripts/generate_harness_protocol.py --write",
+    "check:harness-protocol": "uv run --locked python scripts/generate_harness_protocol.py --check",
+    "typecheck:harness-protocol": "tsc --project tsconfig.generated.json"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "15.0.4",
+    "typescript": "6.0.3"
+  }
 }

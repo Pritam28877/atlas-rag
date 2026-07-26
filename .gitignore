@@ -23,6 +23,9 @@ __pycache__/
 coverage.xml
 htmlcov/
 
+# Locked Node build tooling
+node_modules/
+
 # Python build and package artifacts
 build/
 dist/

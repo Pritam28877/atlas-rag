@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and validate a reproducible CycloneDX dependency graph from uv.lock."""
+"""Generate a reproducible CycloneDX graph from the uv and npm lockfiles."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import tempfile
 from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
+from urllib.parse import quote
 
 
 class SbomError(ValueError):
@@ -70,8 +71,8 @@ def validate_sbom(document: Mapping[str, object]) -> tuple[int, int]:
             raise SbomError(f"duplicate SBOM reference: {reference}")
         if package_url in package_urls:
             raise SbomError(f"duplicate package URL: {package_url}")
-        if not package_url.startswith("pkg:pypi/"):
-            raise SbomError(f"non-PyPI component in Python SBOM: {package_url}")
+        if not package_url.startswith(("pkg:pypi/", "pkg:npm/")):
+            raise SbomError(f"unsupported SBOM package URL: {package_url}")
         component_references.add(reference)
         package_urls.add(package_url)
 
@@ -100,6 +101,121 @@ def validate_sbom(document: Mapping[str, object]) -> tuple[int, int]:
     return len(components), len(dependencies)
 
 
+def _load_json(path: Path) -> dict[str, object]:
+    try:
+        return _mapping(
+            json.loads(path.read_text(encoding="utf-8")),
+            str(path),
+        )
+    except (OSError, json.JSONDecodeError) as error:
+        raise SbomError(f"{path} is unreadable: {error}") from error
+
+
+def _node_package_name(package_path: str) -> str:
+    marker = "node_modules/"
+    if marker not in package_path:
+        raise SbomError(f"invalid npm lock package path: {package_path}")
+    return package_path.rsplit(marker, maxsplit=1)[1]
+
+
+def _node_reference(name: str, version: str) -> str:
+    return f"npm:{name}@{version}"
+
+
+def _augment_node_components(
+    document: dict[str, object],
+    root: Path,
+) -> None:
+    lock = _load_json(root / "package-lock.json")
+    packages = _mapping(lock.get("packages"), "package-lock packages")
+    components = _array(document.get("components"), "components")
+    dependencies = _array(document.get("dependencies"), "dependencies")
+    path_references: dict[str, str] = {}
+
+    for package_path, raw_package in sorted(packages.items()):
+        if not package_path:
+            continue
+        package = _mapping(raw_package, f"npm package {package_path}")
+        name = _node_package_name(package_path)
+        version = _required_string(
+            package.get("version"),
+            f"npm package {package_path}.version",
+        )
+        license_identifier = _required_string(
+            package.get("license"),
+            f"npm package {package_path}.license",
+        )
+        reference = _node_reference(name, version)
+        if reference in path_references.values():
+            raise SbomError(f"duplicate npm component reference: {reference}")
+        path_references[package_path] = reference
+        encoded_name = quote(name, safe="/")
+        components.append(
+            {
+                "bom-ref": reference,
+                "licenses": [{"license": {"id": license_identifier}}],
+                "name": name,
+                "purl": f"pkg:npm/{encoded_name}@{version}",
+                "type": "library",
+                "version": version,
+            }
+        )
+
+    for package_path, raw_package in sorted(packages.items()):
+        if not package_path:
+            continue
+        package = _mapping(raw_package, f"npm package {package_path}")
+        raw_targets = package.get("dependencies", {})
+        target_versions = _mapping(
+            raw_targets,
+            f"npm package {package_path}.dependencies",
+        )
+        target_references: list[str] = []
+        for target_name in sorted(target_versions):
+            target_path = f"node_modules/{target_name}"
+            target_reference = path_references.get(target_path)
+            if target_reference is None:
+                raise SbomError(
+                    f"npm dependency {target_name} has no locked package"
+                )
+            target_references.append(target_reference)
+        dependencies.append(
+            {
+                "dependsOn": target_references,
+                "ref": path_references[package_path],
+            }
+        )
+
+    root_package = _mapping(packages.get(""), "package-lock root package")
+    root_dependencies = _mapping(
+        root_package.get("devDependencies", {}),
+        "package-lock root devDependencies",
+    )
+    root_targets: list[str] = []
+    for target_name in sorted(root_dependencies):
+        target_reference = path_references.get(f"node_modules/{target_name}")
+        if target_reference is None:
+            raise SbomError(f"root npm dependency {target_name} is not locked")
+        root_targets.append(target_reference)
+    metadata = _mapping(document.get("metadata"), "metadata")
+    root_component = _mapping(metadata.get("component"), "metadata.component")
+    root_reference = _required_string(
+        root_component.get("bom-ref"),
+        "metadata.component.bom-ref",
+    )
+    for raw_dependency in dependencies:
+        dependency = _mapping(raw_dependency, "dependency")
+        if dependency.get("ref") == root_reference:
+            depends_on = _array(dependency.get("dependsOn"), "root dependsOn")
+            depends_on.extend(root_targets)
+            depends_on.sort()
+            break
+    components.sort(key=lambda component: str(_mapping(component, "component")["purl"]))
+    dependencies.sort(
+        key=lambda dependency: str(_mapping(dependency, "dependency")["ref"])
+    )
+
+
 def _generate_sbom(root: Path, destination: Path) -> dict[str, object]:
     command = [
         "uv",
@@ -124,13 +240,9 @@ def _generate_sbom(root: Path, destination: Path) -> dict[str, object]:
         raise SbomError(f"uv SBOM export failed: {output}")
     if destination.stat().st_size > 8 * 1024 * 1024:
         raise SbomError("generated SBOM exceeds 8 MiB")
-    try:
-        return _mapping(
-            json.loads(destination.read_text(encoding="utf-8")),
-            str(destination),
-        )
-    except (OSError, json.JSONDecodeError) as error:
-        raise SbomError(f"generated SBOM is unreadable: {error}") from error
+    document = _load_json(destination)
+    _augment_node_components(document, root)
+    return document
 
 
 def _stable_document(document: Mapping[str, object]) -> dict[str, object]:

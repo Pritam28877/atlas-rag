@@ -29,7 +29,7 @@ def test_checked_in_generated_manifest_passes_real_cli() -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "Generated-artifact manifest valid: 0 artifacts"
+    assert result.stdout.strip() == "Generated-artifact manifest valid: 2 artifacts"
 
 
 def test_hand_edited_generated_artifact_is_rejected(tmp_path: Path) -> None:
@@ -91,6 +91,34 @@ def test_sbom_unknown_dependency_is_rejected() -> None:
     document["dependencies"][0]["dependsOn"].append("unknown@1.0.0")
 
     with pytest.raises(SbomError, match="unknown component"):
+        validate_sbom(document)
+
+
+def test_sbom_accepts_locked_npm_build_dependency() -> None:
+    document = valid_sbom()
+    document["components"].append(
+        {
+            "name": "typescript",
+            "version": "6.0.3",
+            "bom-ref": "npm:typescript@6.0.3",
+            "purl": "pkg:npm/typescript@6.0.3",
+        }
+    )
+    document["dependencies"][0]["dependsOn"].append(
+        "npm:typescript@6.0.3"
+    )
+    document["dependencies"].append(
+        {"ref": "npm:typescript@6.0.3", "dependsOn": []}
+    )
+
+    assert validate_sbom(document) == (2, 3)
+
+
+def test_sbom_rejects_unsupported_package_ecosystem() -> None:
+    document = valid_sbom()
+    document["components"][0]["purl"] = "pkg:generic/example@1.0.0"
+
+    with pytest.raises(SbomError, match="unsupported SBOM package URL"):
         validate_sbom(document)
 
 

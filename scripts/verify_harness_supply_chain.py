@@ -246,6 +246,10 @@ def validate_node_sources(root: Path, policy: Mapping[str, object]) -> int:
     allowed_hosts = _string_set(
         node_policy.get("allowed_registry_hosts"), "allowed_registry_hosts"
     )
+    allowed_licenses = _string_set(
+        node_policy.get("allowed_license_identifiers"),
+        "allowed_license_identifiers",
+    )
     actual_node = (root / ".node-version").read_text(encoding="utf-8").strip()
     if actual_node != expected_node:
         raise SupplyChainError(f".node-version must be {expected_node}")
@@ -277,6 +281,11 @@ def validate_node_sources(root: Path, policy: Mapping[str, object]) -> int:
             raise SupplyChainError(f"{package_path} must have sha512 integrity")
         if locked_package.get("link") is True:
             raise SupplyChainError(f"{package_path} cannot be a linked dependency")
+        license_expression = _string(
+            locked_package.get("license"),
+            f"{package_path}.license",
+        )
+        validate_license_expression(license_expression, allowed_licenses)
     return len(packages) - 1
 
 
