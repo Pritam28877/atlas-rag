@@ -21,7 +21,7 @@ type ProviderCallId = Annotated[
     StringConstraints(
         min_length=8,
         max_length=128,
-        pattern=r"^call_[0-9a-f]{3,123}$",
+        pattern=r"^call_[A-Za-z0-9_-]{3,123}$",
     ),
 ]
 type ProviderDeltaText = Annotated[

@@ -2233,7 +2233,7 @@
     "ProviderCallId": {
       "maxLength": 128,
       "minLength": 8,
-      "pattern": "^call_[0-9a-f]{3,123}$",
+      "pattern": "^call_[A-Za-z0-9_-]{3,123}$",
       "type": "string"
     },
     "ProviderCancelled": {
