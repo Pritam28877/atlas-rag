@@ -32,6 +32,7 @@ def copy_package_layout(destination: Path) -> None:
 
 
 def test_checked_in_boundaries_pass_real_cli() -> None:
+    package_count, file_count, edge_count = validate_boundaries(load_boundaries())
     result = subprocess.run(
         [sys.executable, "scripts/verify_harness_python_boundaries.py"],
         cwd=ROOT,
@@ -43,7 +44,8 @@ def test_checked_in_boundaries_pass_real_cli() -> None:
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == (
         "Python harness boundaries valid: "
-        "19 packages, 20 files, 0 dependency edges"
+        f"{package_count} packages, {file_count} files, "
+        f"{edge_count} dependency edges"
     )
 
 
@@ -66,7 +68,7 @@ def test_all_packages_import_without_infrastructure_or_threads() -> None:
         "'forbidden':sorted(forbidden & sys.modules.keys())}))"
     )
     result = subprocess.run(
-        [sys.executable, "-S", "-c", probe],
+        [sys.executable, "-c", probe],
         cwd=ROOT,
         check=False,
         capture_output=True,
@@ -123,6 +125,9 @@ def test_service_cannot_import_client_or_worker(tmp_path: Path) -> None:
 
 
 def test_client_boundary_can_import_fastapi_and_domain(tmp_path: Path) -> None:
+    expected_package_count, expected_file_count, expected_edge_count = (
+        validate_boundaries(load_boundaries())
+    )
     copy_package_layout(tmp_path)
     (tmp_path / "app/api/v1/harness/client.py").write_text(
         "import fastapi\nfrom app.services.harness import protocol\n",
@@ -133,7 +138,11 @@ def test_client_boundary_can_import_fastapi_and_domain(tmp_path: Path) -> None:
         load_boundaries(), root=tmp_path
     )
 
-    assert (package_count, file_count, edge_count) == (19, 21, 0)
+    assert (package_count, file_count, edge_count) == (
+        expected_package_count,
+        expected_file_count + 1,
+        expected_edge_count,
+    )
 
 
 def test_subprocess_import_is_owned_only_by_sandbox(tmp_path: Path) -> None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import stat
 import subprocess
 import sys
@@ -111,11 +112,15 @@ def validate_sdist(path: Path, maximum_bytes: int) -> int:
 
 
 def _build(root: Path, destination: Path) -> dict[str, Path]:
+    environment = os.environ.copy()
+    environment["PYTHONHASHSEED"] = "0"
+    environment["SOURCE_DATE_EPOCH"] = "1735689600"
     completed = subprocess.run(
         ["uv", "build", "--out-dir", str(destination)],
         cwd=root,
         check=False,
         capture_output=True,
+        env=environment,
         text=True,
         timeout=120,
     )
