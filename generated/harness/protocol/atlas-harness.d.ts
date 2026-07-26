@@ -859,14 +859,52 @@ export type SessionBindingSha256 = string;
 export type SubjectSha256 = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCallId".
+ */
+export type ProviderCallId = string;
+export type Kind23 = "cancelled";
+export type Reason11 = string;
+export type Sequence = number;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderFinishReason".
+ */
+export type ProviderFinishReason = "stop" | "tool_calls" | "length";
+export type Kind24 = "completed";
+export type Sequence1 = number;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderDecisionId".
  */
 export type ProviderDecisionId = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderDeltaText".
+ */
+export type ProviderDeltaText = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderFailureClass".
+ */
+export type ProviderFailureClass =
+  | "transient"
+  | "rate_limit"
+  | "context_length"
+  | "authentication"
+  | "policy"
+  | "malformed"
+  | "internal";
+export type Kind25 = "error";
+export type Reason12 = string;
+export type RetryAllowed = boolean;
+export type Sequence2 = number;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderName".
  */
 export type ProviderName = string;
+export type Kind26 = "reasoning_delta";
+export type Sequence3 = number;
 export type AllowTraining = boolean;
 /**
  * @minItems 1
@@ -923,12 +961,42 @@ export type DecidedAt1 = string;
  * @maxItems 64
  */
 export type EligibleRoutes = ProviderRoute[];
-export type Reason11 = string;
+export type Reason13 = string;
 /**
  * @maxItems 256
  */
 export type RejectedRoutes = RejectedProviderRoute[];
 export type SelectionReason = string;
+/**
+ * @minItems 1
+ * @maxItems 256
+ */
+export type Events = [ProviderStreamEvent, ...ProviderStreamEvent[]];
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderStreamEvent".
+ */
+export type ProviderStreamEvent =
+  | ProviderTextDelta
+  | ProviderReasoningDelta
+  | ProviderToolCall
+  | ProviderUsage
+  | ProviderError
+  | ProviderCompleted
+  | ProviderCancelled;
+export type Kind27 = "text_delta";
+export type Sequence4 = number;
+export type ArgumentsJson = string;
+export type ArgumentsSha256 = string;
+export type Kind28 = "tool_call";
+export type Sequence5 = number;
+export type Kind29 = "usage";
+export type Sequence6 = number;
+export type CachedInputTokens = number;
+export type CostMicrousd1 = number;
+export type InputTokens2 = number;
+export type OutputTokens1 = number;
+export type ReasoningTokens = number;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "RootUri".
@@ -1599,6 +1667,44 @@ export interface PrincipalRecord {
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCancelled".
+ */
+export interface ProviderCancelled {
+  kind?: Kind23;
+  reason: Reason11;
+  sequence: Sequence;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCompleted".
+ */
+export interface ProviderCompleted {
+  finish_reason: ProviderFinishReason;
+  kind?: Kind24;
+  sequence: Sequence1;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderError".
+ */
+export interface ProviderError {
+  failure_class: ProviderFailureClass;
+  kind?: Kind25;
+  reason: Reason12;
+  retry_allowed: RetryAllowed;
+  sequence: Sequence2;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderReasoningDelta".
+ */
+export interface ProviderReasoningDelta {
+  kind?: Kind26;
+  sequence: Sequence3;
+  text: ProviderDeltaText;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderRequirements".
  */
 export interface ProviderRequirements {
@@ -1654,8 +1760,56 @@ export interface ProviderRouteDecisionRecord {
  * via the `definition` "RejectedProviderRoute".
  */
 export interface RejectedProviderRoute {
-  reason: Reason11;
+  reason: Reason13;
   route_id: RouteId;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderStreamBatch".
+ */
+export interface ProviderStreamBatch {
+  events: Events;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderTextDelta".
+ */
+export interface ProviderTextDelta {
+  kind?: Kind27;
+  sequence: Sequence4;
+  text: ProviderDeltaText;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderToolCall".
+ */
+export interface ProviderToolCall {
+  arguments_json: ArgumentsJson;
+  arguments_sha256: ArgumentsSha256;
+  call_id: ProviderCallId;
+  kind?: Kind28;
+  sequence: Sequence5;
+  tool_name: ToolName;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderUsage".
+ */
+export interface ProviderUsage {
+  kind?: Kind29;
+  sequence: Sequence6;
+  usage: ProviderTokenUsage;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderTokenUsage".
+ */
+export interface ProviderTokenUsage {
+  cached_input_tokens: CachedInputTokens;
+  cost_microusd: CostMicrousd1;
+  input_tokens: InputTokens2;
+  output_tokens: OutputTokens1;
+  reasoning_tokens: ReasoningTokens;
 }
 /**
  * One bounded DAG node with explicit ownership and workspace isolation.
