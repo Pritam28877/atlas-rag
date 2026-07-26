@@ -25,6 +25,7 @@ def _identifier_constraints(prefix: str) -> StringConstraints:
 
 
 type PrincipalId = Annotated[str, _identifier_constraints("prn")]
+type TenantId = Annotated[str, _identifier_constraints("ten")]
 type GrantId = Annotated[str, _identifier_constraints("grt")]
 type WorkspaceId = Annotated[str, _identifier_constraints("wsp")]
 type ThreadId = Annotated[str, _identifier_constraints("thr")]
