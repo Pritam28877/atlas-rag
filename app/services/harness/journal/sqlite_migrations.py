@@ -1,5 +1,8 @@
 """Forward-only local SQLite journal schema migrations."""
 
+from app.services.harness.journal.sqlite_retention_evidence_schema import (
+    SQLITE_RETENTION_EVIDENCE_SCHEMA,
+)
 from app.services.harness.journal.sqlite_retention_schema import (
     SQLITE_RETENTION_SCHEMA,
 )
@@ -68,6 +71,19 @@ BEGIN IMMEDIATE;
     + SQLITE_RETENTION_SCHEMA
     + """
 UPDATE harness_journal_schema SET schema_version = 3 WHERE singleton = 1;
+COMMIT;
+PRAGMA foreign_keys = ON;
+"""
+)
+
+SQLITE_MIGRATE_V3_TO_V4 = (
+    """
+PRAGMA foreign_keys = OFF;
+BEGIN IMMEDIATE;
+"""
+    + SQLITE_RETENTION_EVIDENCE_SCHEMA
+    + """
+UPDATE harness_journal_schema SET schema_version = 4 WHERE singleton = 1;
 COMMIT;
 PRAGMA foreign_keys = ON;
 """

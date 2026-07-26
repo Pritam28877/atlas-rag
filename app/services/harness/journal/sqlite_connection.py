@@ -18,6 +18,7 @@ from app.services.harness.journal.errors import (
 from app.services.harness.journal.sqlite_migrations import (
     SQLITE_MIGRATE_V1_TO_V2,
     SQLITE_MIGRATE_V2_TO_V3,
+    SQLITE_MIGRATE_V3_TO_V4,
 )
 from app.services.harness.journal.sqlite_schema import (
     SQLITE_SCHEMA,
@@ -134,9 +135,14 @@ class SQLiteConnectionOwner:
             elif schema_version["schema_version"] == 1:
                 connection.executescript(SQLITE_MIGRATE_V1_TO_V2)
                 connection.executescript(SQLITE_MIGRATE_V2_TO_V3)
+                connection.executescript(SQLITE_MIGRATE_V3_TO_V4)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == 2:
                 connection.executescript(SQLITE_MIGRATE_V2_TO_V3)
+                connection.executescript(SQLITE_MIGRATE_V3_TO_V4)
+                connection.executescript(SQLITE_SCHEMA)
+            elif schema_version["schema_version"] == 3:
+                connection.executescript(SQLITE_MIGRATE_V3_TO_V4)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == SQLITE_SCHEMA_VERSION:
                 connection.executescript(SQLITE_SCHEMA)
