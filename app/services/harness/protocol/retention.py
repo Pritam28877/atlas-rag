@@ -60,6 +60,17 @@ class ArtifactReference(StrictProtocolModel):
     reference_sha256: Sha256
     content_sha256: Sha256
     created_at: UtcTimestamp
+    released_at: UtcTimestamp | None = None
+
+    @model_validator(mode="after")
+    def validate_release(self) -> Self:
+        if self.released_at is not None and self.released_at <= self.created_at:
+            raise ValueError("artifact reference release must follow creation")
+        return self
+
+    @property
+    def active(self) -> bool:
+        return self.released_at is None
 
 
 class SyncedSnapshot(StrictProtocolModel):
@@ -173,16 +184,47 @@ class RetainedBlob(StrictProtocolModel):
     size_bytes: int = Field(ge=1, le=4 * GIBIBYTE)
     created_at: UtcTimestamp
     tombstone: ArtifactTombstone | None = None
+    garbage_collected_at: UtcTimestamp | None = None
 
     @model_validator(mode="after")
     def validate_tombstone_scope(self) -> Self:
         if self.tombstone is None:
-            return self
-        if (
+            if self.garbage_collected_at is not None:
+                raise ValueError("collected artifact requires a tombstone")
+        elif (
             self.tombstone.workspace_id != self.workspace_id
             or self.tombstone.content_sha256 != self.content_sha256
         ):
             raise ValueError("artifact tombstone scope does not match blob")
+        if (
+            self.garbage_collected_at is not None
+            and self.garbage_collected_at <= self.created_at
+        ):
+            raise ValueError("artifact collection must follow creation")
+        return self
+
+
+class RetentionEvidence(StrictProtocolModel):
+    workspace_id: WorkspaceId
+    blobs: tuple[RetainedBlob, ...] = Field(max_length=MAXIMUM_TRACKED_BLOBS)
+    references: tuple[ArtifactReference, ...] = Field(
+        max_length=MAXIMUM_TRACKED_BLOBS
+    )
+    legal_holds: tuple[ArtifactLegalHold, ...] = Field(
+        max_length=MAXIMUM_TRACKED_BLOBS
+    )
+
+    @model_validator(mode="after")
+    def validate_scope(self) -> Self:
+        for blob in self.blobs:
+            if blob.workspace_id != self.workspace_id:
+                raise ValueError("retention evidence must use one workspace")
+        for reference in self.references:
+            if reference.workspace_id != self.workspace_id:
+                raise ValueError("retention evidence must use one workspace")
+        for legal_hold in self.legal_holds:
+            if legal_hold.workspace_id != self.workspace_id:
+                raise ValueError("retention evidence must use one workspace")
         return self
 
 
