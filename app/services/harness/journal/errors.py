@@ -7,3 +7,7 @@ class JournalBusyError(RuntimeError):
 
 class JournalStorageError(RuntimeError):
     """A journal backend failed without exposing storage internals."""
+
+
+class RetentionStoreConflict(RuntimeError):
+    """Requested immutable retention evidence conflicts with durable state."""

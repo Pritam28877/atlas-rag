@@ -63,7 +63,13 @@ def plan_garbage_collection(
             continue
         if reference.created_at > validated_planned_at:
             raise ValueError("artifact reference cannot be created in the future")
-        reachable.add(reference.content_sha256)
+        if (
+            reference.released_at is not None
+            and reference.released_at > validated_planned_at
+        ):
+            raise ValueError("artifact reference cannot be released in the future")
+        if reference.active:
+            reachable.add(reference.content_sha256)
 
     held = {
         hold.content_sha256
@@ -84,6 +90,8 @@ def plan_garbage_collection(
         observed_hashes.add(blob.content_sha256)
         if blob.created_at > validated_planned_at:
             raise ValueError("retained blob cannot be created in the future")
+        if blob.garbage_collected_at is not None:
+            continue
         if blob.content_sha256 in reachable or blob.content_sha256 in held:
             continue
         if blob.tombstone is None:

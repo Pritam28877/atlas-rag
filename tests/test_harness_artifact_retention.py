@@ -170,6 +170,28 @@ def test_gc_excludes_references_created_after_the_synced_snapshot() -> None:
     assert plan.complete
 
 
+def test_gc_allows_tombstoned_blob_after_reference_release() -> None:
+    candidate = blob(7, marked=tombstone(7))
+    released_reference = ArtifactReference(
+        workspace_id=WORKSPACE_ID,
+        reference_sha256=digest(207),
+        content_sha256=candidate.content_sha256,
+        created_at=NOW - timedelta(days=2),
+        released_at=NOW - timedelta(days=1),
+    )
+
+    plan = plan_garbage_collection(
+        RetentionPolicy(disk_reserve_bytes=1024 * 1024),
+        snapshot(),
+        (candidate,),
+        (released_reference,),
+        (),
+        planned_at=NOW,
+    )
+
+    assert plan.candidate_content_sha256s == (candidate.content_sha256,)
+
+
 def test_write_admission_seals_at_quota_and_reserve_boundaries() -> None:
     policy = RetentionPolicy(
         blob_quota_bytes=2 * 1024 * 1024,
