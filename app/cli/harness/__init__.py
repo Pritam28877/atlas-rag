@@ -1,5 +1,12 @@
 """Atlas Harness CLI and local app-server composition boundary."""
 
+from app.cli.harness.adapter_smoke_contracts import (
+    AdapterSmokeGateError,
+    AdapterSmokeGateErrorCode,
+    AdapterSmokeLaunchRequest,
+    AuthorizedAdapterSmoke,
+    authorize_adapter_smoke,
+)
 from app.cli.harness.app_server import (
     AtlasLocalAppServer,
     HarnessConnectionFactory,
@@ -33,7 +40,11 @@ from app.cli.harness.provider_smoke_runner import run_provider_smoke
 
 __all__ = (
     "AdmittedBedrockSmokeLaunch",
+    "AdapterSmokeGateError",
+    "AdapterSmokeGateErrorCode",
+    "AdapterSmokeLaunchRequest",
     "AtlasLocalAppServer",
+    "AuthorizedAdapterSmoke",
     "AuthorizedProviderSmoke",
     "AuthorizedBedrockSmoke",
     "BedrockSmokeBinding",
@@ -50,6 +61,7 @@ __all__ = (
     "ProviderSmokeResult",
     "SignedBedrockSmokeGrant",
     "admit_bedrock_smoke",
+    "authorize_adapter_smoke",
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
     "run_provider_smoke",
