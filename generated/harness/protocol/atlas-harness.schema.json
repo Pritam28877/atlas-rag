@@ -2589,6 +2589,11 @@
           "title": "Output Modalities",
           "type": "array"
         },
+        "price_active": {
+          "default": true,
+          "title": "Price Active",
+          "type": "boolean"
+        },
         "price_version_sha256": {
           "pattern": "^[0-9a-f]{64}$",
           "title": "Price Version Sha256",
@@ -2718,6 +2723,7 @@
         "input_modality",
         "output_limit",
         "output_modality",
+        "price",
         "region",
         "retention",
         "training"
