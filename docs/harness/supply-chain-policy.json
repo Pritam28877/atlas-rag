@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "python": {
+    "project_name": "rag-api",
+    "allowed_registry_urls": [
+      "https://pypi.org/simple"
+    ],
+    "allowed_license_identifiers": [
+      "0BSD",
+      "Apache-2.0",
+      "BSD-2-Clause",
+      "BSD-3-Clause",
+      "CC0-1.0",
+      "LGPL-3.0-only",
+      "MIT",
+      "MIT-0",
+      "MIT-CMU",
+      "MPL-2.0",
+      "PSF-2.0",
+      "Zlib"
+    ],
+    "license_exceptions": [
+      {
+        "name": "py-rust-stemmers",
+        "version": "0.1.8",
+        "owner": "Atlas dependency maintainers",
+        "reason": "The installed wheel and PyPI metadata expose no license declaration; replacement or upstream evidence is required before release.",
+        "expires": "2026-10-24",
+        "release_blocking": true
+      },
+      {
+        "name": "rag-api",
+        "version": "0.1.0",
+        "owner": "Atlas provenance owner",
+        "reason": "The repository outbound license proposal is pending explicit human approval.",
+        "expires": "2026-10-24",
+        "release_blocking": true
+      }
+    ]
+  },
+  "node": {
+    "version": "22.22.0",
+    "npm_version": "10.9.4",
+    "allowed_registry_hosts": [
+      "registry.npmjs.org"
+    ]
+  },
+  "artifacts": {
+    "wheel_max_bytes": 8388608,
+    "sdist_max_bytes": 16777216,
+    "container_max_bytes": 536870912,
+    "container_gate_activates_with_parent": "P15"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "atlas-harness-generated-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Build tooling boundary for future generated Atlas Harness TypeScript contracts.",
+  "engines": {
+    "node": "22.22.0",
+    "npm": "10.9.4"
+  },
+  "packageManager": "npm@10.9.4"
+}
