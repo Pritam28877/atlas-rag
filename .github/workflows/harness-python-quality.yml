@@ -18,6 +18,7 @@ on:
       - "scripts/run_harness_bedrock_smoke.py"
       - "scripts/verify_harness_*.py"
       - "tests/test_harness_*.py"
+      - "tests/fixtures/harness/**"
       - "tests/harness/**"
       - "uv.lock"
   push:
@@ -40,6 +41,7 @@ on:
       - "scripts/run_harness_bedrock_smoke.py"
       - "scripts/verify_harness_*.py"
       - "tests/test_harness_*.py"
+      - "tests/fixtures/harness/**"
       - "tests/harness/**"
       - "uv.lock"
 

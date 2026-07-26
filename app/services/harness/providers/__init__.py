@@ -221,6 +221,19 @@ from app.services.harness.providers.route_inventory import (
     ConfiguredRouteInventoryError,
     ConfiguredRouteInventoryErrorCode,
 )
+from app.services.harness.providers.vertex_identity import (
+    GcpProjectId,
+    ServiceAccountEmail,
+    VertexCredentialSourceKind,
+    VertexIdentityReference,
+    VertexIdentityReferenceId,
+)
+from app.services.harness.providers.vertex_policy import (
+    AuthorizedVertexRoute,
+    VertexModelId,
+    VertexRoutePolicy,
+    authorize_vertex_route,
+)
 
 __all__ = (
     "ConfiguredCatalogError",
@@ -364,4 +377,13 @@ __all__ = (
     "provider_egress_request_sha256",
     "response_event_stream",
     "plan_provider_retry",
+    "AuthorizedVertexRoute",
+    "GcpProjectId",
+    "ServiceAccountEmail",
+    "VertexCredentialSourceKind",
+    "VertexIdentityReference",
+    "VertexIdentityReferenceId",
+    "VertexModelId",
+    "VertexRoutePolicy",
+    "authorize_vertex_route",
 )
