@@ -30,6 +30,17 @@ from app.services.harness.providers.credential_material import (
     CredentialSecretBackend,
     CredentialSecretMaterial,
 )
+from app.services.harness.providers.dispatch_contracts import (
+    ProviderAttemptExecutor,
+    ProviderAttemptSuccess,
+    ProviderDispatchRequest,
+    ProviderRetryDelay,
+)
+from app.services.harness.providers.dispatch_coordinator import (
+    ProviderDispatchCoordinator,
+    ProviderDispatchError,
+    ProviderDispatchErrorCode,
+)
 from app.services.harness.providers.egress_contracts import (
     PayloadInspection,
     ProviderAddressResolver,
@@ -90,6 +101,10 @@ from app.services.harness.providers.recorded import (
     RecordedProviderErrorCode,
     RecordedProviderStream,
 )
+from app.services.harness.providers.retry_delay import (
+    CancellableProviderRetryDelay,
+    ProviderRetryDelayError,
+)
 from app.services.harness.providers.retry_planner import plan_provider_retry
 from app.services.harness.providers.route_inventory import (
     ConfiguredRouteInventory,
@@ -110,6 +125,7 @@ __all__ = (
     "CredentialLease",
     "CredentialSecretBackend",
     "CredentialSecretMaterial",
+    "CancellableProviderRetryDelay",
     "EnvironmentCredentialBackend",
     "EnvironmentCredentialError",
     "EnvironmentCredentialErrorCode",
@@ -132,6 +148,12 @@ __all__ = (
     "ProviderCredentialHeaderEncoder",
     "ProviderDnsError",
     "ProviderDnsErrorCode",
+    "ProviderAttemptExecutor",
+    "ProviderAttemptSuccess",
+    "ProviderDispatchCoordinator",
+    "ProviderDispatchError",
+    "ProviderDispatchErrorCode",
+    "ProviderDispatchRequest",
     "PinnedProviderNetworkBackend",
     "ProviderEgressPolicy",
     "ProviderEgressPolicyError",
@@ -152,6 +174,8 @@ __all__ = (
     "ProviderRouteConfiguration",
     "ProviderPayloadInspector",
     "ProviderPayloadInspectionPolicy",
+    "ProviderRetryDelay",
+    "ProviderRetryDelayError",
     "SafeEgressHeader",
     "SystemProviderAddressResolver",
     "authorize_egress_target",
