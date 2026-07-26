@@ -75,5 +75,7 @@ def test_journal_health_blocks_writes_until_operator_recovery(monkeypatch) -> No
     assert "CREATE TRIGGER harness_journal_health_transition" in sql
     assert "CREATE TRIGGER harness_journal_events_require_health" in sql
     assert "journal_status = 'needs_operator'" in sql
+    assert "IF NOT EXISTS" in sql
+    assert "journal_status = 'healthy'" in sql
     assert "OLD.journal_status = 'needs_operator'" in sql
     assert "NEW.generation = OLD.generation + 1" in sql

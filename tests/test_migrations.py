@@ -18,7 +18,10 @@ def test_migration_graph_has_one_head_and_reversible_chain() -> None:
     config = Config(PROJECT_ROOT / "alembic.ini")
     migrations = ScriptDirectory.from_config(config)
 
-    assert migrations.get_heads() == ["20260727_08"]
+    assert migrations.get_heads() == ["20260727_09"]
+    health_guard = migrations.get_revision("20260727_09")
+    assert health_guard is not None
+    assert health_guard.down_revision == "20260727_08"
     health = migrations.get_revision("20260727_08")
     assert health is not None
     assert health.down_revision == "20260726_07"
@@ -77,7 +80,7 @@ def test_clean_postgres_migrates_forward_and_rolls_back(monkeypatch) -> None:
             revision = connection.execute(
                 text("SELECT version_num FROM alembic_version")
             ).scalar_one()
-        assert revision == "20260727_08"
+        assert revision == "20260727_09"
 
         command.downgrade(config, "base")
         with engine.connect() as connection:
