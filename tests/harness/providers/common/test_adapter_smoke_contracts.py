@@ -19,6 +19,7 @@ def test_vertex_requires_disposable_project_and_positive_cap(
             provider="vertex",
             disposable_project_id="atlas-smoke-12345",
             cost_cap_microusd=10_000,
+            capability_evidence_path=None,
         )
     )
 
@@ -145,6 +146,7 @@ def _request(
         "configuration_path": tmp_path / "providers.json",
         "route_policy_path": tmp_path / "route.json",
         "identity_path": tmp_path / "identity.json",
+        "capability_evidence_path": tmp_path / "capabilities.json",
         "database_path": tmp_path / "smoke.sqlite3",
         "result_path": tmp_path / "result.json",
     }

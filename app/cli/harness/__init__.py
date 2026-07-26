@@ -7,6 +7,11 @@ from app.cli.harness.adapter_smoke_contracts import (
     AuthorizedAdapterSmoke,
     authorize_adapter_smoke,
 )
+from app.cli.harness.adapter_smoke_io import (
+    AdapterSmokeResult,
+    build_adapter_smoke_result,
+    write_adapter_smoke_result,
+)
 from app.cli.harness.app_server import (
     AtlasLocalAppServer,
     HarnessConnectionFactory,
@@ -43,6 +48,7 @@ __all__ = (
     "AdapterSmokeGateError",
     "AdapterSmokeGateErrorCode",
     "AdapterSmokeLaunchRequest",
+    "AdapterSmokeResult",
     "AtlasLocalAppServer",
     "AuthorizedAdapterSmoke",
     "AuthorizedProviderSmoke",
@@ -62,10 +68,12 @@ __all__ = (
     "SignedBedrockSmokeGrant",
     "admit_bedrock_smoke",
     "authorize_adapter_smoke",
+    "build_adapter_smoke_result",
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
     "run_provider_smoke",
     "run_bedrock_smoke",
     "sign_bedrock_smoke_grant",
     "verify_bedrock_smoke_grant",
+    "write_adapter_smoke_result",
 )
