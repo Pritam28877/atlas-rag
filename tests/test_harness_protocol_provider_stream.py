@@ -70,9 +70,9 @@ def test_tool_call_requires_canonical_hashed_object_arguments() -> None:
 
 
 def test_provider_call_id_preserves_safe_opaque_vendor_value() -> None:
-    provider_call = tool_call(call_id="call_Az-09_vendor")
+    provider_call = tool_call(call_id="tooluse_Az.09:vendor")
 
-    assert provider_call.call_id == "call_Az-09_vendor"
+    assert provider_call.call_id == "tooluse_Az.09:vendor"
     with pytest.raises(ValueError):
         tool_call(call_id="call_contains/slash")
     with pytest.raises(ValueError):

@@ -19,9 +19,9 @@ from app.services.harness.protocol.execution import ToolName
 type ProviderCallId = Annotated[
     str,
     StringConstraints(
-        min_length=8,
+        min_length=1,
         max_length=128,
-        pattern=r"^call_[A-Za-z0-9_-]{3,123}$",
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
     ),
 ]
 type ProviderDeltaText = Annotated[

@@ -7,6 +7,32 @@ from app.services.harness.protocol import (
 from app.services.harness.providers.bearer_authorization import (
     BearerProviderCredentialEncoder,
 )
+from app.services.harness.providers.bedrock_compiler import (
+    BedrockCompileError,
+    BedrockCompileErrorCode,
+    BedrockConverseStreamCompiler,
+)
+from app.services.harness.providers.bedrock_contracts import (
+    BedrockInferenceConfiguration,
+    BedrockMessage,
+    BedrockStreamMetadata,
+    BedrockSystemContent,
+    BedrockTextContent,
+    BedrockToolResultContent,
+    BedrockToolSpecification,
+    CompiledBedrockConverseStreamRequest,
+)
+from app.services.harness.providers.bedrock_decode_support import (
+    MAXIMUM_BEDROCK_BLOCKS,
+    MAXIMUM_BEDROCK_EVENT_BYTES,
+    MAXIMUM_BEDROCK_EVENTS,
+    MAXIMUM_BEDROCK_TOOL_ARGUMENT_BYTES,
+    BedrockDecodeError,
+    BedrockDecodeErrorCode,
+)
+from app.services.harness.providers.bedrock_decoder import (
+    BedrockConverseStreamDecoder,
+)
 from app.services.harness.providers.config_contracts import (
     LoadedProviderConfiguration,
     ProviderConfiguration,
@@ -185,8 +211,26 @@ __all__ = (
     "PayloadInspection",
     "AuthorizedEgressTarget",
     "BearerProviderCredentialEncoder",
+    "BedrockCompileError",
+    "BedrockCompileErrorCode",
+    "BedrockConverseStreamCompiler",
+    "BedrockConverseStreamDecoder",
+    "BedrockDecodeError",
+    "BedrockDecodeErrorCode",
+    "BedrockInferenceConfiguration",
+    "BedrockMessage",
+    "BedrockStreamMetadata",
+    "BedrockSystemContent",
+    "BedrockTextContent",
+    "BedrockToolResultContent",
+    "BedrockToolSpecification",
+    "CompiledBedrockConverseStreamRequest",
     "LoadedProviderConfiguration",
     "MAXIMUM_OPENAI_FUNCTION_CALLS",
+    "MAXIMUM_BEDROCK_BLOCKS",
+    "MAXIMUM_BEDROCK_EVENT_BYTES",
+    "MAXIMUM_BEDROCK_EVENTS",
+    "MAXIMUM_BEDROCK_TOOL_ARGUMENT_BYTES",
     "MAXIMUM_OPENAI_WIRE_EVENT_BYTES",
     "MAXIMUM_OPENAI_WIRE_EVENTS",
     "OpenAICompileError",
