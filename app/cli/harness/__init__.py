@@ -12,6 +12,8 @@ from app.cli.harness.provider_smoke_contracts import (
     ProviderSmokeLaunchRequest,
     authorize_provider_smoke,
 )
+from app.cli.harness.provider_smoke_io import ProviderSmokeResult
+from app.cli.harness.provider_smoke_runner import run_provider_smoke
 
 __all__ = (
     "AtlasLocalAppServer",
@@ -21,5 +23,7 @@ __all__ = (
     "ProviderSmokeGateError",
     "ProviderSmokeGateErrorCode",
     "ProviderSmokeLaunchRequest",
+    "ProviderSmokeResult",
     "authorize_provider_smoke",
+    "run_provider_smoke",
 )

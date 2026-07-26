@@ -4,6 +4,9 @@ from app.services.harness.protocol import (
     EgressAuditOutcome,
     ProviderEgressAuditRecord,
 )
+from app.services.harness.providers.bearer_authorization import (
+    BearerProviderCredentialEncoder,
+)
 from app.services.harness.providers.config_contracts import (
     LoadedProviderConfiguration,
     ProviderConfiguration,
@@ -181,6 +184,7 @@ __all__ = (
     "EgressAuditOutcome",
     "PayloadInspection",
     "AuthorizedEgressTarget",
+    "BearerProviderCredentialEncoder",
     "LoadedProviderConfiguration",
     "MAXIMUM_OPENAI_FUNCTION_CALLS",
     "MAXIMUM_OPENAI_WIRE_EVENT_BYTES",
