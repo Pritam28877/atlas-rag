@@ -100,8 +100,19 @@ def corrupt_projection(connection: sqlite3.Connection) -> None:
 
 
 def corrupt_sequence(connection: sqlite3.Connection) -> None:
+    connection.execute("DROP TRIGGER harness_aggregates_monotonic")
     connection.execute(
         "UPDATE harness_aggregates SET current_sequence = current_sequence + 1"
+    )
+
+
+def corrupt_position(connection: sqlite3.Connection) -> None:
+    connection.execute("DROP TRIGGER harness_journal_positions_monotonic")
+    connection.execute(
+        """
+        UPDATE harness_journal_positions
+        SET current_sequence = current_sequence + 1
+        """
     )
 
 
@@ -174,6 +185,7 @@ def test_verification_is_bounded_then_persists_complete_health(
         ),
         (corrupt_projection, JournalCorruptionCode.PROJECTION_CORRUPT),
         (corrupt_sequence, JournalCorruptionCode.SEQUENCE_CORRUPT),
+        (corrupt_position, JournalCorruptionCode.SEQUENCE_CORRUPT),
     ),
 )
 def test_logical_corruption_persists_fail_closed_operator_state(

@@ -1,6 +1,6 @@
 """Explicit local SQLite schema for immutable journal facts."""
 
-SQLITE_SCHEMA_VERSION = 1
+SQLITE_SCHEMA_VERSION = 2
 
 SQLITE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS harness_journal_schema (
@@ -9,7 +9,13 @@ CREATE TABLE IF NOT EXISTS harness_journal_schema (
 );
 
 INSERT OR IGNORE INTO harness_journal_schema (singleton, schema_version)
-VALUES (1, 1);
+VALUES (1, 2);
+
+CREATE TABLE IF NOT EXISTS harness_journal_positions (
+    workspace_id TEXT PRIMARY KEY,
+    current_sequence INTEGER NOT NULL
+        CHECK (current_sequence >= 0 AND current_sequence <= 9223372036854775807)
+);
 
 CREATE TABLE IF NOT EXISTS harness_aggregates (
     workspace_id TEXT NOT NULL,
@@ -20,7 +26,7 @@ CREATE TABLE IF NOT EXISTS harness_aggregates (
 );
 
 CREATE TABLE IF NOT EXISTS harness_events (
-    journal_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+    journal_sequence INTEGER NOT NULL CHECK (journal_sequence >= 1),
     event_id TEXT NOT NULL,
     workspace_id TEXT NOT NULL,
     aggregate_id TEXT NOT NULL,
@@ -32,6 +38,7 @@ CREATE TABLE IF NOT EXISTS harness_events (
     committed_at TEXT NOT NULL,
     FOREIGN KEY (workspace_id, aggregate_id)
         REFERENCES harness_aggregates(workspace_id, aggregate_id),
+    PRIMARY KEY (workspace_id, journal_sequence),
     UNIQUE (workspace_id, event_id),
     UNIQUE (workspace_id, aggregate_id, aggregate_sequence)
 );
@@ -154,6 +161,35 @@ CREATE TRIGGER IF NOT EXISTS harness_idempotency_no_delete
 BEFORE DELETE ON harness_idempotency
 BEGIN
     SELECT RAISE(ABORT, 'harness idempotency receipts are immutable');
+END;
+
+CREATE TRIGGER IF NOT EXISTS harness_aggregates_monotonic
+BEFORE UPDATE ON harness_aggregates
+WHEN NEW.workspace_id <> OLD.workspace_id
+    OR NEW.aggregate_id <> OLD.aggregate_id
+    OR NEW.current_sequence < OLD.current_sequence
+BEGIN
+    SELECT RAISE(ABORT, 'journal aggregate is monotonic');
+END;
+
+CREATE TRIGGER IF NOT EXISTS harness_aggregates_no_delete
+BEFORE DELETE ON harness_aggregates
+BEGIN
+    SELECT RAISE(ABORT, 'journal aggregate is monotonic');
+END;
+
+CREATE TRIGGER IF NOT EXISTS harness_journal_positions_monotonic
+BEFORE UPDATE ON harness_journal_positions
+WHEN NEW.workspace_id <> OLD.workspace_id
+    OR NEW.current_sequence < OLD.current_sequence
+BEGIN
+    SELECT RAISE(ABORT, 'journal position is monotonic');
+END;
+
+CREATE TRIGGER IF NOT EXISTS harness_journal_positions_no_delete
+BEFORE DELETE ON harness_journal_positions
+BEGIN
+    SELECT RAISE(ABORT, 'journal position is monotonic');
 END;
 
 CREATE TRIGGER IF NOT EXISTS harness_projection_transition

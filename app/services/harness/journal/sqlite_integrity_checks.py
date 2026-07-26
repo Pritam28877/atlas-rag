@@ -146,10 +146,11 @@ class SQLiteIntegrityScanner:
             SELECT journal_sequence, event_id, workspace_id, aggregate_id,
                    aggregate_sequence, request_sha256, durability
             FROM harness_events
-            WHERE journal_sequence IN ({placeholders})
+            WHERE workspace_id = ?
+              AND journal_sequence IN ({placeholders})
             ORDER BY journal_sequence
             """,
-            result.journal_sequences,
+            (result.workspace_id, *result.journal_sequences),
         ).fetchall()
         if len(rows) != len(result.journal_sequences):
             return False
@@ -215,6 +216,32 @@ class SQLiteIntegrityScanner:
         ).fetchone()
         if mismatch is not None:
             raise DetectedSQLiteCorruption(JournalCorruptionCode.SEQUENCE_CORRUPT)
+        position_mismatch = connection.execute(
+            """
+            WITH event_positions AS (
+                SELECT workspace_id, MAX(journal_sequence) AS maximum_sequence
+                FROM harness_events
+                GROUP BY workspace_id
+            )
+            SELECT 1
+            FROM harness_journal_positions AS position
+            LEFT JOIN event_positions AS events
+              ON events.workspace_id = position.workspace_id
+            WHERE position.current_sequence
+                    <> COALESCE(events.maximum_sequence, 0)
+            UNION ALL
+            SELECT 1
+            FROM event_positions AS events
+            LEFT JOIN harness_journal_positions AS position
+              ON position.workspace_id = events.workspace_id
+            WHERE position.workspace_id IS NULL
+            LIMIT 1
+            """
+        ).fetchone()
+        if position_mismatch is not None:
+            raise DetectedSQLiteCorruption(
+                JournalCorruptionCode.SEQUENCE_CORRUPT
+            )
 
     @staticmethod
     def _rows(cursor: sqlite3.Cursor) -> Iterator[sqlite3.Row]:

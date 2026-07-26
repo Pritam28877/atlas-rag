@@ -234,13 +234,13 @@ def test_identifiers_and_sequences_are_isolated_by_workspace(
 
         assert first_result.last_sequence == 1
         assert second_result.last_sequence == 1
+        assert first_result.journal_sequences == (1,)
+        assert second_result.journal_sequences == (1,)
         assert len(first_page.events) == 1
         assert len(second_page.events) == 1
         assert first_page.events[0].event == second_page.events[0].event
-        assert (
-            first_page.events[0].journal_sequence
-            < second_page.events[0].journal_sequence
-        )
+        assert first_page.events[0].journal_sequence == 1
+        assert second_page.events[0].journal_sequence == 1
 
     asyncio.run(scenario())
 

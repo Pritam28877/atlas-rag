@@ -157,7 +157,7 @@ def test_runner_persists_resumes_and_rebuilds_sqlite_projection(
     asyncio.run(scenario())
 
 
-def test_sqlite_append_updates_projections_atomically_with_workspace_gaps(
+def test_sqlite_append_updates_projections_with_workspace_local_positions(
     tmp_path: Path,
 ) -> None:
     async def scenario() -> None:
@@ -192,10 +192,10 @@ def test_sqlite_append_updates_projections_atomically_with_workspace_gaps(
         assert first_projection is not None
         assert first_projection.checkpoint.state_json == '{"count":2}'
         assert first_projection.checkpoint.last_journal_sequence == 2
-        assert other.journal_sequences == (3,)
+        assert other.journal_sequences == (1,)
         assert other_projection is not None
         assert other_projection.checkpoint.state_json == '{"count":1}'
-        assert other_projection.checkpoint.last_journal_sequence == 3
+        assert other_projection.checkpoint.last_journal_sequence == 1
 
     asyncio.run(scenario())
 

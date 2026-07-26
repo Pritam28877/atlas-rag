@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from app.services.harness.journal.contracts import (
+    MAXIMUM_SEQUENCE,
     AppendRequest,
     AppendResult,
     AppendStatus,
@@ -34,7 +35,12 @@ from app.services.harness.journal.sqlite_connection import (
 from app.services.harness.journal.sqlite_projection_apply import (
     apply_online_projections,
 )
-from app.services.harness.protocol import EventRecord
+from app.services.harness.journal.sqlite_queries import (
+    current_sequence,
+    journal_position,
+    read_aggregate,
+    read_global,
+)
 
 
 class SQLiteEventJournal:
@@ -84,7 +90,7 @@ class SQLiteEventJournal:
 
     async def read_aggregate(self, request: JournalReadRequest) -> JournalPage:
         return await self._connection_owner.execute(
-            lambda connection: self._read_aggregate(connection, request)
+            lambda connection: read_aggregate(connection, request)
         )
 
     async def read_global(
@@ -92,7 +98,7 @@ class SQLiteEventJournal:
         request: GlobalJournalReadRequest,
     ) -> GlobalJournalPage:
         return await self._connection_owner.execute(
-            lambda connection: self._read_global(connection, request)
+            lambda connection: read_global(connection, request)
         )
 
     async def close(self) -> None:
@@ -105,7 +111,7 @@ class SQLiteEventJournal:
     ) -> AppendResult:
         connection.execute("BEGIN IMMEDIATE")
         try:
-            current_sequence = self._current_sequence(
+            aggregate_sequence = current_sequence(
                 connection,
                 request.workspace_id,
                 request.aggregate_id,
@@ -113,20 +119,14 @@ class SQLiteEventJournal:
             replay = self._idempotent_replay(
                 connection,
                 request,
-                current_sequence,
+                aggregate_sequence,
             )
             if replay is not None:
                 connection.commit()
                 return replay
-            if current_sequence != request.expected_sequence:
-                raise_expected_sequence_conflict(current_sequence)
+            if aggregate_sequence != request.expected_sequence:
+                raise_expected_sequence_conflict(aggregate_sequence)
 
-            prior_journal_sequence = 0
-            if self._projections:
-                prior_journal_sequence = self._last_workspace_journal_sequence(
-                    connection,
-                    request.workspace_id,
-                )
             connection.execute(
                 """
                 INSERT OR IGNORE INTO harness_aggregates
@@ -135,19 +135,35 @@ class SQLiteEventJournal:
                 """,
                 (request.aggregate_id, request.workspace_id),
             )
+            workspace_position = journal_position(
+                connection,
+                request.workspace_id,
+            )
+            last_journal_sequence = workspace_position + len(request.events)
+            if last_journal_sequence > MAXIMUM_SEQUENCE:
+                raise JournalStorageError(
+                    "journal position capacity is exhausted"
+                )
+            journal_sequences = tuple(
+                range(workspace_position + 1, last_journal_sequence + 1)
+            )
             committed_at = self._utc_now()
-            journal_sequences: list[int] = []
-            for event in request.events:
+            for event, journal_sequence in zip(
+                request.events,
+                journal_sequences,
+                strict=True,
+            ):
                 event_json = event.model_dump_json()
-                inserted = connection.execute(
+                connection.execute(
                     """
                     INSERT INTO harness_events (
-                        event_id, workspace_id, aggregate_id, aggregate_sequence,
-                        event_json, event_sha256, request_sha256, durability,
-                        committed_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        journal_sequence, event_id, workspace_id, aggregate_id,
+                        aggregate_sequence, event_json, event_sha256,
+                        request_sha256, durability, committed_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
+                        journal_sequence,
                         event.event_id,
                         request.workspace_id,
                         event.aggregate_id,
@@ -159,11 +175,6 @@ class SQLiteEventJournal:
                         committed_at.isoformat(),
                     ),
                 )
-                if inserted.lastrowid is None:
-                    raise JournalStorageError(
-                        "journal storage omitted global sequence"
-                    )
-                journal_sequences.append(int(inserted.lastrowid))
             self._inject_fault(JournalFaultPoint.AFTER_EVENTS_INSERTED)
             last_sequence = request.events[-1].aggregate_sequence
             updated = connection.execute(
@@ -181,17 +192,31 @@ class SQLiteEventJournal:
                 ),
             )
             if updated.rowcount != 1:
-                latest_sequence = self._current_sequence(
+                latest_sequence = current_sequence(
                     connection,
                     request.workspace_id,
                     request.aggregate_id,
                 )
                 raise_expected_sequence_conflict(latest_sequence)
+            position_updated = connection.execute(
+                """
+                UPDATE harness_journal_positions
+                SET current_sequence = ?
+                WHERE workspace_id = ? AND current_sequence = ?
+                """,
+                (
+                    last_journal_sequence,
+                    request.workspace_id,
+                    workspace_position,
+                ),
+            )
+            if position_updated.rowcount != 1:
+                raise JournalStorageError("journal position update failed")
             self._inject_fault(JournalFaultPoint.AFTER_AGGREGATE_UPDATED)
             result = build_append_result(
                 request,
                 committed_at,
-                tuple(journal_sequences),
+                journal_sequences,
             )
             journal_events = tuple(
                 JournalEvent(journal_sequence=journal_sequence, event=event)
@@ -206,7 +231,7 @@ class SQLiteEventJournal:
                 self._projections,
                 request.workspace_id,
                 journal_events,
-                prior_journal_sequence=prior_journal_sequence,
+                prior_journal_sequence=workspace_position,
                 updated_at=committed_at,
             )
             self._inject_fault(JournalFaultPoint.AFTER_PROJECTIONS_APPLIED)
@@ -232,105 +257,6 @@ class SQLiteEventJournal:
         except BaseException:
             connection.rollback()
             raise
-
-    def _read_aggregate(
-        self,
-        connection: sqlite3.Connection,
-        request: JournalReadRequest,
-    ) -> JournalPage:
-        rows = connection.execute(
-            """
-            SELECT event_json
-            FROM harness_events
-            WHERE workspace_id = ? AND aggregate_id = ?
-                AND aggregate_sequence > ?
-            ORDER BY aggregate_sequence
-            LIMIT ?
-            """,
-            (
-                request.workspace_id,
-                request.aggregate_id,
-                request.after_sequence,
-                request.limit + 1,
-            ),
-        ).fetchall()
-        has_more = len(rows) > request.limit
-        events = tuple(
-            EventRecord.model_validate_json(row[0])
-            for row in rows[: request.limit]
-        )
-        return JournalPage(
-            workspace_id=request.workspace_id,
-            aggregate_id=request.aggregate_id,
-            after_sequence=request.after_sequence,
-            events=events,
-            has_more=has_more,
-        )
-
-    def _read_global(
-        self,
-        connection: sqlite3.Connection,
-        request: GlobalJournalReadRequest,
-    ) -> GlobalJournalPage:
-        rows = connection.execute(
-            """
-            SELECT journal_sequence, event_json
-            FROM harness_events
-            WHERE workspace_id = ? AND journal_sequence > ?
-            ORDER BY journal_sequence
-            LIMIT ?
-            """,
-            (
-                request.workspace_id,
-                request.after_journal_sequence,
-                request.limit + 1,
-            ),
-        ).fetchall()
-        has_more = len(rows) > request.limit
-        events = tuple(
-            JournalEvent(
-                journal_sequence=int(row[0]),
-                event=EventRecord.model_validate_json(row[1]),
-            )
-            for row in rows[: request.limit]
-        )
-        return GlobalJournalPage(
-            workspace_id=request.workspace_id,
-            after_journal_sequence=request.after_journal_sequence,
-            events=events,
-            has_more=has_more,
-        )
-
-    @staticmethod
-    def _last_workspace_journal_sequence(
-        connection: sqlite3.Connection,
-        workspace_id: str,
-    ) -> int:
-        value = connection.execute(
-            """
-            SELECT MAX(journal_sequence)
-            FROM harness_events
-            WHERE workspace_id = ?
-            """,
-            (workspace_id,),
-        ).fetchone()[0]
-        return 0 if value is None else int(value)
-
-    @staticmethod
-    def _current_sequence(
-        connection: sqlite3.Connection,
-        workspace_id: str,
-        aggregate_id: str,
-    ) -> int:
-        row = connection.execute(
-            """
-            SELECT current_sequence
-            FROM harness_aggregates
-            WHERE workspace_id = ? AND aggregate_id = ?
-            """,
-            (workspace_id, aggregate_id),
-        ).fetchone()
-        return 0 if row is None else int(row[0])
 
     def _idempotent_replay(
         self,
