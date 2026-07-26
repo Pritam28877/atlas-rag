@@ -74,6 +74,14 @@ def duplicate_route(payload: dict[str, Any]) -> None:
     payload["routes"].append(dict(payload["routes"][0]))
 
 
+def mixed_catalog_snapshots(payload: dict[str, Any]) -> None:
+    second_model = dict(payload["models"][0])
+    second_model["model"] = "configured-model-v2"
+    second_model["model_revision_sha256"] = "a" * 64
+    second_model["catalog_snapshot_sha256"] = "b" * 64
+    payload["models"].append(second_model)
+
+
 def disable_every_route(payload: dict[str, Any]) -> None:
     payload["routes"][0]["enabled"] = False
 
@@ -110,6 +118,7 @@ def test_loader_returns_strict_configuration_and_raw_digest(
         (unknown_policy, "unknown data policy"),
         (policy_region_mismatch, "violates policy region"),
         (duplicate_route, "provider routes must be unique and sorted"),
+        (mixed_catalog_snapshots, "mixed catalog snapshots"),
         (disable_every_route, "requires an enabled route"),
     ],
 )

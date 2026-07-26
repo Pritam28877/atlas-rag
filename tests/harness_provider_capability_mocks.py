@@ -12,6 +12,7 @@ from app.services.harness.protocol import (
     CanonicalProviderRequest,
     ProviderCatalogPage,
     ProviderCatalogPageRequest,
+    ProviderCatalogSummary,
     ProviderCompleted,
     ProviderContextFeature,
     ProviderContextPlan,
@@ -19,6 +20,8 @@ from app.services.harness.protocol import (
     ProviderDataPolicy,
     ProviderDataPolicyDecision,
     ProviderFinishReason,
+    ProviderListPage,
+    ProviderListPageRequest,
     ProviderModelCapabilities,
     ProviderPriceRecord,
     ProviderStreamBatch,
@@ -29,6 +32,29 @@ from tests.harness_provider_capability_fixtures import NOW, model
 
 
 class StaticCatalog:
+    async def list_providers(
+        self,
+        request: ProviderListPageRequest,
+        *,
+        cancellation: asyncio.Event,
+        deadline_at: datetime,
+    ) -> ProviderListPage:
+        if cancellation.is_set():
+            raise asyncio.CancelledError
+        return ProviderListPage(
+            providers=(
+                ProviderCatalogSummary(
+                    provider=model().provider,
+                    catalog_snapshot_sha256=(
+                        model().catalog_snapshot_sha256
+                    ),
+                    model_count=1,
+                    observed_at=deadline_at - timedelta(seconds=1),
+                ),
+            ),
+            has_more=False,
+        )
+
     async def page(
         self,
         request: ProviderCatalogPageRequest,

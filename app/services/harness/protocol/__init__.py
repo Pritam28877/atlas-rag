@@ -143,6 +143,13 @@ from app.services.harness.protocol.provider_capabilities import (
     ProviderUsageMetadata,
     price_is_active,
 )
+from app.services.harness.protocol.provider_catalog import (
+    ProviderCatalogPage,
+    ProviderCatalogPageRequest,
+    ProviderCatalogSummary,
+    ProviderListPage,
+    ProviderListPageRequest,
+)
 from app.services.harness.protocol.provider_health import (
     ProviderHealthStatus,
     ProviderRouteHealthSnapshot,
@@ -178,8 +185,6 @@ from app.services.harness.protocol.provider_traits import (
     DataPolicy,
     InferenceTransport,
     ModelCatalog,
-    ProviderCatalogPage,
-    ProviderCatalogPageRequest,
     ProviderContextPlan,
     ProviderDataPolicyDecision,
     ProviderTransportError,
@@ -317,6 +322,7 @@ __all__ = (
     "ProviderCancelled",
     "ProviderCatalogPage",
     "ProviderCatalogPageRequest",
+    "ProviderCatalogSummary",
     "ProviderCompleted",
     "ProviderContentPart",
     "ProviderContextFeature",
@@ -334,6 +340,8 @@ __all__ = (
     "ProviderModality",
     "ProviderModelCapabilities",
     "ProviderName",
+    "ProviderListPage",
+    "ProviderListPageRequest",
     "ProviderPriceRecord",
     "ProviderReasoningDelta",
     "ProviderRequirements",
