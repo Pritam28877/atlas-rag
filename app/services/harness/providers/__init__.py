@@ -65,6 +65,12 @@ from app.services.harness.providers.health_registry import (
     ProviderHealthRegistryError,
     ProviderHealthRegistryErrorCode,
 )
+from app.services.harness.providers.httpcore_connector import (
+    HttpCoreConnectorError,
+    HttpCoreConnectorErrorCode,
+    HttpCoreEgressConnector,
+    ProviderCredentialHeaderEncoder,
+)
 from app.services.harness.providers.pinned_network import (
     PinnedProviderNetworkBackend,
 )
@@ -96,6 +102,9 @@ __all__ = (
     "EnvironmentCredentialError",
     "EnvironmentCredentialErrorCode",
     "EnvironmentCredentialReference",
+    "HttpCoreConnectorError",
+    "HttpCoreConnectorErrorCode",
+    "HttpCoreEgressConnector",
     "EgressAuditOutcome",
     "PayloadInspection",
     "AuthorizedEgressTarget",
@@ -107,6 +116,7 @@ __all__ = (
     "ProviderHealthRegistry",
     "ProviderHealthRegistryError",
     "ProviderHealthRegistryErrorCode",
+    "ProviderCredentialHeaderEncoder",
     "PinnedProviderNetworkBackend",
     "ProviderEgressPolicy",
     "ProviderEgressPolicyError",
