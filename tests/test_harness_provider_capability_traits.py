@@ -12,6 +12,8 @@ from app.services.harness.protocol import (
     ProviderContextFeature,
     ProviderContextPlan,
     ProviderDataPolicyDecision,
+    ProviderListPage,
+    ProviderListPageRequest,
     ProviderStreamBatch,
     ProviderTokenUsage,
     ProviderUsageMetadata,
@@ -44,6 +46,14 @@ from tests.harness_provider_capability_mocks import (
 async def catalog_page(capability: ModelCatalog) -> ProviderCatalogPage:
     return await capability.page(
         ProviderCatalogPageRequest(provider="configured-provider"),
+        cancellation=asyncio.Event(),
+        deadline_at=NOW + timedelta(seconds=5),
+    )
+
+
+async def provider_page(capability: ModelCatalog) -> ProviderListPage:
+    return await capability.list_providers(
+        ProviderListPageRequest(),
         cancellation=asyncio.Event(),
         deadline_at=NOW + timedelta(seconds=5),
     )
@@ -145,6 +155,7 @@ def usage_metadata(
 def test_capabilities_are_independently_substitutable() -> None:
     async def scenario() -> None:
         catalog = await catalog_page(StaticCatalog())
+        providers = await provider_page(StaticCatalog())
         credential_source = EphemeralCredentialSource()
         acquired, refreshed = await credential_lifecycle(credential_source)
         context = context_plan(PromptCacheContext())
@@ -159,6 +170,7 @@ def test_capabilities_are_independently_substitutable() -> None:
         usage = usage_metadata(FixedUsageAndPrice(), compiled)
 
         assert catalog.models == (model(),)
+        assert providers.providers[0].provider == model().provider
         assert refreshed.generation == acquired.generation + 1
         assert credential_source.released == [refreshed]
         assert context.applied_features == (

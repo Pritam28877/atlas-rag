@@ -11,6 +11,11 @@ from app.services.harness.providers.config_loader import (
     ProviderConfigLoadErrorCode,
     load_provider_configuration,
 )
+from app.services.harness.providers.configured_catalog import (
+    ConfiguredCatalogError,
+    ConfiguredCatalogErrorCode,
+    ConfiguredModelCatalog,
+)
 from app.services.harness.providers.health_registry import (
     ProviderHealthRegistry,
     ProviderHealthRegistryError,
@@ -23,6 +28,9 @@ from app.services.harness.providers.recorded import (
 )
 
 __all__ = (
+    "ConfiguredCatalogError",
+    "ConfiguredCatalogErrorCode",
+    "ConfiguredModelCatalog",
     "LoadedProviderConfiguration",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",

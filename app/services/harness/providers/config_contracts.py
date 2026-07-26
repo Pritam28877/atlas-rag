@@ -143,6 +143,7 @@ class ProviderConfiguration(StrictProtocolModel):
         self,
     ) -> dict[tuple[str, str, str], ProviderModelCapabilities]:
         models: dict[tuple[str, str, str], ProviderModelCapabilities] = {}
+        provider_snapshots: dict[str, str] = {}
         keys: list[tuple[str, str, str]] = []
         for model in self.models:
             key = (
@@ -152,6 +153,17 @@ class ProviderConfiguration(StrictProtocolModel):
             )
             keys.append(key)
             models[key] = model
+            provider_snapshot = provider_snapshots.get(model.provider)
+            if (
+                provider_snapshot is not None
+                and provider_snapshot != model.catalog_snapshot_sha256
+            ):
+                raise ValueError(
+                    f"provider {model.provider} has mixed catalog snapshots"
+                )
+            provider_snapshots[model.provider] = (
+                model.catalog_snapshot_sha256
+            )
         self._require_unique_sorted(tuple(keys), "configured models")
         return models
 
