@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-07-26",
+  "upstream": {
+    "repository": "https://github.com/openai/codex",
+    "commit": "4c43465133428898aa84f0bfc02c306ed65fb66a",
+    "rust_toolchain": "1.95.0",
+    "source_metrics": {
+      "app_server_rust_lines": 44281,
+      "app_server_direct_dependencies": 72,
+      "app_server_protocol_rust_lines": 29400,
+      "execpolicy_rust_lines": 1974,
+      "linux_sandbox_rust_lines": 6860
+    }
+  },
+  "default_disposition": "deny",
+  "allowed_dispositions": [
+    "deny",
+    "reimplement_behind_atlas_gate"
+  ],
+  "required_gates": [
+    "authenticated_principal",
+    "workspace_authorization",
+    "schema_and_size_validation",
+    "idempotency_and_expected_sequence",
+    "policy_and_budget",
+    "sandbox_or_egress",
+    "result_validation_and_redaction",
+    "durable_audit"
+  ],
+  "groups": [
+    {
+      "id": "host-shell-escape",
+      "disposition": "deny",
+      "methods": [
+        "thread/shellCommand"
+      ],
+      "evidence": [
+        "codex-rs/app-server/src/request_processors/thread_processor.rs:1921",
+        "codex-rs/core/src/tasks/user_shell.rs:206",
+        "codex-rs/core/src/tasks/user_shell.rs:220"
+      ],
+      "reason": "The handler calls itself a local-host shell escape hatch and executes with disabled permission profile and no sandbox.",
+      "atlas_replacement": "A typed tool operation may execute only after durable prepare/dispatch, structured policy, hard limits, and sandbox supervision."
+    },
+    {
+      "id": "standalone-process",
+      "disposition": "deny",
+      "methods": [
+        "process/spawn",
+        "process/writeStdin",
+        "process/kill",
+        "process/resizePty"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1114",
+        "codex-rs/app-server/src/request_processors/process_exec_processor.rs:97"
+      ],
+      "reason": "The protocol documents unsandboxed spawn and the processor begins from the complete daemon environment.",
+      "atlas_replacement": "The sandbox supervisor owns a filtered per-operation process tree, stdin, PTY, output cap, deadline, cancellation, and cleanup."
+    },
+    {
+      "id": "one-off-command",
+      "disposition": "deny",
+      "methods": [
+        "command/exec",
+        "command/exec/write",
+        "command/exec/terminate",
+        "command/exec/resize"
+      ],
+      "evidence": [
+        "codex-rs/app-server/src/request_processors/command_exec_processor.rs:118",
+        "codex-rs/app-server/src/request_processors/command_exec_processor.rs:178"
+      ],
+      "reason": "The raw client method accepts permission overrides and flags that remove timeout and output bounds.",
+      "atlas_replacement": "Atlas exposes bounded operation commands whose clients cannot raise hard limits or choose broader sandbox profiles."
+    },
+    {
+      "id": "direct-filesystem",
+      "disposition": "deny",
+      "methods": [
+        "fs/readFile",
+        "fs/writeFile",
+        "fs/createDirectory",
+        "fs/getMetadata",
+        "fs/readDirectory",
+        "fs/remove",
+        "fs/copy",
+        "fs/watch",
+        "fs/unwatch"
+      ],
+      "evidence": [
+        "codex-rs/app-server/src/request_processors/fs_processor.rs:61",
+        "codex-rs/app-server/src/request_processors/fs_processor.rs:80",
+        "codex-rs/app-server/src/request_processors/fs_processor.rs:101"
+      ],
+      "reason": "The raw methods accept absolute paths and invoke the executor filesystem with sandbox None.",
+      "atlas_replacement": "Descriptor-relative workspace tools enforce tenant root, structured read/write capability, symlink defenses, byte limits, audit, and sandbox."
+    },
+    {
+      "id": "configuration-and-import",
+      "disposition": "deny",
+      "methods": [
+        "config/value/write",
+        "config/batchWrite",
+        "config/mcpServer/reload",
+        "skills/config/write",
+        "skills/extraRoots/set",
+        "externalAgentConfig/detect",
+        "externalAgentConfig/import",
+        "externalAgentConfig/import/recordHistory",
+        "experimentalFeature/enablement/set"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:684",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1148",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1168"
+      ],
+      "reason": "These methods mutate host configuration, roots, imports, or enabled behavior outside an Atlas versioned policy transaction.",
+      "atlas_replacement": "Versioned configuration proposals require authorization, validation, durable audit, rollback, and policy-lint evidence."
+    },
+    {
+      "id": "extension-install-and-sharing",
+      "disposition": "deny",
+      "methods": [
+        "marketplace/add",
+        "marketplace/remove",
+        "marketplace/upgrade",
+        "plugin/install",
+        "plugin/uninstall",
+        "plugin/share/save",
+        "plugin/share/updateTargets",
+        "plugin/share/checkout",
+        "plugin/share/delete"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:694",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:729",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:821"
+      ],
+      "reason": "Installation, checkout, upgrade, sharing, and deletion combine network, filesystem, code, and configuration side effects.",
+      "atlas_replacement": "Release one uses explicit user-approved package operations through provenance, egress, policy, isolated host, and audit gates."
+    },
+    {
+      "id": "mcp-network-and-secret",
+      "disposition": "deny",
+      "methods": [
+        "mcpServer/oauth/login",
+        "mcpServer/resource/read",
+        "mcpServer/tool/call"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:993",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1011"
+      ],
+      "reason": "OAuth, remote resources, and tool calls cross credential, network, extension, and output trust boundaries.",
+      "atlas_replacement": "Per-workspace isolated MCP hosts use opaque credentials, bounded pending calls, egress policy, result validation, and cleanup."
+    },
+    {
+      "id": "account-and-feedback-egress",
+      "disposition": "deny",
+      "methods": [
+        "account/login/start",
+        "account/login/cancel",
+        "account/logout",
+        "account/rateLimitResetCredit/consume",
+        "account/sendAddCreditsNudgeEmail",
+        "account/chatgptAuthTokens/refresh",
+        "feedback/upload"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1034",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1077",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1083"
+      ],
+      "reason": "These operations mutate authentication, credits, messages, or upload data to an external service.",
+      "atlas_replacement": "Provider credentials and all outbound data use configured credential handles and the Atlas egress/cost/audit gateway."
+    },
+    {
+      "id": "remote-control-and-environment",
+      "disposition": "deny",
+      "methods": [
+        "remoteControl/enable",
+        "remoteControl/disable",
+        "remoteControl/pairing/start",
+        "remoteControl/client/revoke",
+        "environment/add"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:916",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:973"
+      ],
+      "reason": "Remote control changes the control-plane trust boundary and environment creation can trigger external account or compute effects.",
+      "atlas_replacement": "Release one is local-only; remote mutual TLS and environment provisioning remain non-goals until separately approved."
+    },
+    {
+      "id": "realtime-provider-egress",
+      "disposition": "deny",
+      "methods": [
+        "thread/realtime/start",
+        "thread/realtime/appendAudio",
+        "thread/realtime/appendText",
+        "thread/realtime/appendSpeech",
+        "thread/realtime/stop",
+        "thread/realtime/listVoices"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:849"
+      ],
+      "reason": "Realtime sessions add continuous provider egress, audio privacy, streaming, and cost surfaces outside release-one requirements.",
+      "atlas_replacement": "No realtime RPC is registered in release one."
+    },
+    {
+      "id": "thread-and-turn-control",
+      "disposition": "reimplement_behind_atlas_gate",
+      "methods": [
+        "thread/start",
+        "thread/resume",
+        "thread/fork",
+        "thread/archive",
+        "thread/delete",
+        "thread/unarchive",
+        "thread/compact/start",
+        "thread/list",
+        "thread/read",
+        "thread/turns/list",
+        "thread/items/list",
+        "turn/start",
+        "turn/steer",
+        "turn/interrupt"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:491",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:831"
+      ],
+      "reason": "The lifecycle semantics are useful, but Atlas requires authenticated grants, idempotency, append-before-project state, pagination, and reconnect sequences.",
+      "atlas_replacement": "Atlas-owned versioned protocol and journal implement compatible concepts without exposing the upstream handlers."
+    },
+    {
+      "id": "approval-control",
+      "disposition": "reimplement_behind_atlas_gate",
+      "methods": [
+        "thread/approveGuardianDeniedAction"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:602"
+      ],
+      "reason": "Approval UX is reusable as a concept, but an Atlas receipt must bind authenticated actor, exact request hash, scope, expiry, and policy version.",
+      "atlas_replacement": "Durable allow/ask/deny policy and scoped approval receipts."
+    },
+    {
+      "id": "provider-catalog-control",
+      "disposition": "reimplement_behind_atlas_gate",
+      "methods": [
+        "model/list",
+        "modelProvider/capabilities/read",
+        "account/rateLimits/read",
+        "account/usage/read"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:890",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1053"
+      ],
+      "reason": "Atlas needs provider-neutral capability, health, region, data policy, usage, and price revisions without exposing provider credentials.",
+      "atlas_replacement": "Bounded paginated Atlas catalog and explainable router projections."
+    },
+    {
+      "id": "host-read-discovery",
+      "disposition": "deny",
+      "methods": [
+        "config/read",
+        "hooks/list",
+        "skills/list",
+        "plugin/read",
+        "plugin/skill/read",
+        "app/read",
+        "app/list",
+        "app/installed",
+        "gitDiffToRemote",
+        "fuzzyFileSearch",
+        "fuzzyFileSearch/sessionStart",
+        "fuzzyFileSearch/sessionUpdate",
+        "fuzzyFileSearch/sessionStop"
+      ],
+      "evidence": [
+        "codex-rs/app-server-protocol/src/protocol/common.rs:679",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:709",
+        "codex-rs/app-server-protocol/src/protocol/common.rs:1199"
+      ],
+      "reason": "Read-only methods still expose host paths, configuration, extensions, repository content, or remote comparison state.",
+      "atlas_replacement": "Narrow paginated discovery and repository tools require current workspace authorization, byte limits, provenance labels, and audit."
+    }
+  ],
+  "registration_rule": "Atlas registers only Atlas-owned methods. Any compatibility alias must name one reimplemented method, satisfy every required gate, and must not intersect a deny group. Unlisted upstream methods inherit default deny."
+}
