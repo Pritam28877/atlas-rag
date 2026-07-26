@@ -1014,7 +1014,7 @@
     },
     "EvaluationRunRecord": {
       "additionalProperties": false,
-      "description": "Pinned evaluation evidence without floating-point scores or unbounded traces.",
+      "description": "Pinned evaluation evidence without floating-point scores.",
       "properties": {
         "completed_at": {
           "anyOf": [
@@ -2435,6 +2435,42 @@
           "title": "Required Capabilities",
           "type": "array"
         },
+        "required_context_features": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Required Context Features",
+          "type": "array"
+        },
+        "required_input_modalities": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Required Input Modalities",
+          "type": "array"
+        },
+        "required_output_modalities": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Required Output Modalities",
+          "type": "array"
+        },
         "reserved_output_tokens": {
           "maximum": 512000,
           "minimum": 1,
@@ -2478,6 +2514,18 @@
           "title": "Capabilities",
           "type": "array"
         },
+        "context_features": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Context Features",
+          "type": "array"
+        },
         "context_window_tokens": {
           "maximum": 2000000,
           "minimum": 1,
@@ -2503,6 +2551,18 @@
           "title": "Health Snapshot Sha256",
           "type": "string"
         },
+        "input_modalities": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Input Modalities",
+          "type": "array"
+        },
         "max_output_tokens": {
           "maximum": 512000,
           "minimum": 1,
@@ -2517,10 +2577,29 @@
           "title": "Model Revision Sha256",
           "type": "string"
         },
+        "output_modalities": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Output Modalities",
+          "type": "array"
+        },
         "price_version_sha256": {
           "pattern": "^[0-9a-f]{64}$",
           "title": "Price Version Sha256",
           "type": "string"
+        },
+        "priority": {
+          "default": 0,
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
         },
         "provider": {
           "$ref": "#/$defs/ProviderName"
@@ -2627,6 +2706,24 @@
       ],
       "title": "ProviderRouteDecisionRecord",
       "type": "object"
+    },
+    "ProviderRouteRejectionCode": {
+      "enum": [
+        "capability",
+        "context_feature",
+        "context_window",
+        "cost",
+        "data_classification",
+        "health",
+        "input_modality",
+        "output_limit",
+        "output_modality",
+        "region",
+        "retention",
+        "training"
+      ],
+      "title": "ProviderRouteRejectionCode",
+      "type": "string"
     },
     "ProviderStreamBatch": {
       "additionalProperties": false,
@@ -2832,12 +2929,93 @@
     "RejectedProviderRoute": {
       "additionalProperties": false,
       "properties": {
+        "health": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RouteHealth"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "health_snapshot_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Health Snapshot Sha256"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "model_revision_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Revision Sha256"
+        },
+        "price_version_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Price Version Sha256"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProviderName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "reason": {
           "maxLength": 2048,
           "minLength": 1,
           "pattern": "^[^\\x00]+$",
           "title": "Reason",
           "type": "string"
+        },
+        "rejection_codes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ProviderRouteRejectionCode"
+          },
+          "maxItems": 16,
+          "title": "Rejection Codes",
+          "type": "array"
         },
         "route_id": {
           "$ref": "#/$defs/RouteId"
@@ -2937,8 +3115,11 @@
     },
     "RouteHealth": {
       "enum": [
+        "unknown",
         "healthy",
-        "degraded"
+        "degraded",
+        "unavailable",
+        "stale"
       ],
       "title": "RouteHealth",
       "type": "string"

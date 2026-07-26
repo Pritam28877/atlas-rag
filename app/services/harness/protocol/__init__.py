@@ -108,6 +108,11 @@ from app.services.harness.protocol.conversation import (
     ThreadRecord,
     TurnRecord,
 )
+from app.services.harness.protocol.evaluation import (
+    EvaluationFailure,
+    EvaluationMetric,
+    EvaluationRunRecord,
+)
 from app.services.harness.protocol.event_vocabulary import CanonicalEventType
 from app.services.harness.protocol.execution import (
     ApprovalRecord,
@@ -199,14 +204,12 @@ from app.services.harness.protocol.resume import (
     command_result_sha256,
 )
 from app.services.harness.protocol.routing import (
-    EvaluationFailure,
-    EvaluationMetric,
-    EvaluationRunRecord,
     ModelName,
     ProviderName,
     ProviderRequirements,
     ProviderRoute,
     ProviderRouteDecisionRecord,
+    ProviderRouteRejectionCode,
     Region,
     RejectedProviderRoute,
     RouteHealth,
@@ -348,6 +351,7 @@ __all__ = (
     "ProviderRetryDisposition",
     "ProviderRoute",
     "ProviderRouteDecisionRecord",
+    "ProviderRouteRejectionCode",
     "ProviderRouteHealthSnapshot",
     "ProviderStreamBatch",
     "ProviderStreamEvent",
