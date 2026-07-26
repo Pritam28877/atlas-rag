@@ -121,6 +121,10 @@ def _rejection_codes(
             ProviderRouteRejectionCode.COST,
         ),
         (
+            not route.price_active,
+            ProviderRouteRejectionCode.PRICE,
+        ),
+        (
             not _contains_all(
                 route.capabilities,
                 requirements.required_capabilities,

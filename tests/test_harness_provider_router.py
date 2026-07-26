@@ -140,6 +140,11 @@ def decide(
             ProviderRouteRejectionCode.OUTPUT_MODALITY,
         ),
         (
+            {"price_active": False},
+            {},
+            ProviderRouteRejectionCode.PRICE,
+        ),
+        (
             {"region": "eu-west-1"},
             {},
             ProviderRouteRejectionCode.REGION,
