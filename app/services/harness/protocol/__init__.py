@@ -41,6 +41,16 @@ from app.services.harness.protocol.base import (
     WorkspaceId,
 )
 from app.services.harness.protocol.command_base import MutatingCommand, QueryCommand
+from app.services.harness.protocol.command_contracts import (
+    COMMAND_CONTRACT_BY_KIND,
+    COMMAND_CONTRACTS,
+    CommandContract,
+    CommandKind,
+    CommandResponseKind,
+    IdempotencyRequirement,
+    SequencePrecondition,
+    command_contract,
+)
 from app.services.harness.protocol.commands import Command, CommandEnvelope
 from app.services.harness.protocol.commands_operations import (
     ArtifactFetchCommand,
@@ -86,6 +96,7 @@ from app.services.harness.protocol.conversation import (
     ThreadRecord,
     TurnRecord,
 )
+from app.services.harness.protocol.event_vocabulary import CanonicalEventType
 from app.services.harness.protocol.execution import (
     ApprovalRecord,
     ApprovalScope,
@@ -161,9 +172,15 @@ __all__ = (
     "Capability",
     "CapabilityCatalog",
     "CapabilityListCommand",
+    "CanonicalEventType",
     "ClientId",
     "Command",
+    "CommandContract",
+    "CommandKind",
+    "CommandResponseKind",
     "CommandEnvelope",
+    "COMMAND_CONTRACTS",
+    "COMMAND_CONTRACT_BY_KIND",
     "ContextId",
     "ContextManifest",
     "ContextOmission",
@@ -193,6 +210,7 @@ __all__ = (
     "GrantState",
     "IdempotencyKey",
     "IdempotencyClass",
+    "IdempotencyRequirement",
     "InlinePayload",
     "InvalidTransitionError",
     "Issuer",
@@ -229,6 +247,7 @@ __all__ = (
     "RouteHealth",
     "RouteId",
     "SchemaVersion",
+    "SequencePrecondition",
     "SessionCommand",
     "Sha256",
     "StrictProtocolModel",
@@ -267,6 +286,7 @@ __all__ = (
     "WorkspaceCloseCommand",
     "WorkspaceOpenCommand",
     "WorkspaceRecord",
+    "command_contract",
     "require_approval_transition",
     "require_artifact_transition",
     "require_evaluation_transition",
