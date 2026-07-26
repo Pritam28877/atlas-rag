@@ -5,3 +5,4 @@
 - `test_compiler.py`: capability-gated mapping.
 - `test_identity_policy.py`: auth and SSRF policy.
 - `test_probe.py`: bounded behavioral probing.
+- `test_stream_transport.py`: SSE and cancellation bounds.

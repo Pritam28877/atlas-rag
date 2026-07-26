@@ -11,6 +11,7 @@ from app.services.harness.providers import (
 from app.services.harness.providers.local_compatible_capabilities import (
     LocalCompatibleFeature,
     LocalCompatibleProbe,
+    decide_local_compatible_request,
 )
 from app.services.harness.providers.local_compatible_identity import (
     LocalAuthenticationMode,
@@ -185,4 +186,14 @@ def authorized_route():
         route,
         route_policy(),
         identity(),
+    )
+
+
+def accepted_decision():
+    return decide_local_compatible_request(
+        local_request(),
+        context(),
+        authorized_route(),
+        probe(),
+        decided_at=NOW + timedelta(minutes=1),
     )

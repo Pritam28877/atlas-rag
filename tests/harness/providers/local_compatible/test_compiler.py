@@ -14,22 +14,13 @@ from app.services.harness.providers.local_compatible_compiler import (
 from tests.harness.providers.local_compatible.fixtures import (
     BASE_FEATURES,
     NOW,
+    accepted_decision,
     authorized_route,
     context,
     local_model,
     local_request,
     probe,
 )
-
-
-def accepted_decision():
-    return decide_local_compatible_request(
-        local_request(),
-        context(),
-        authorized_route(),
-        probe(),
-        decided_at=NOW + timedelta(minutes=1),
-    )
 
 
 def test_accepted_probe_compiles_exact_responses_contract() -> None:
