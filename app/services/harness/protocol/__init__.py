@@ -146,6 +146,12 @@ from app.services.harness.protocol.provider_stream import (
     ProviderToolCall,
     ProviderUsage,
 )
+from app.services.harness.protocol.resume import (
+    CommandReplayReceipt,
+    SubscriptionCursorRecord,
+    command_request_sha256,
+    command_result_sha256,
+)
 from app.services.harness.protocol.routing import (
     EvaluationFailure,
     EvaluationMetric,
@@ -205,6 +211,7 @@ __all__ = (
     "CommandContract",
     "CommandKind",
     "CommandResponseKind",
+    "CommandReplayReceipt",
     "CommandEnvelope",
     "COMMAND_CONTRACTS",
     "COMMAND_CONTRACT_BY_KIND",
@@ -294,6 +301,7 @@ __all__ = (
     "Sha256",
     "StrictProtocolModel",
     "SubscriptionId",
+    "SubscriptionCursorRecord",
     "SourceId",
     "TaskGraphId",
     "TaskCancelCommand",
@@ -334,6 +342,8 @@ __all__ = (
     "CompatibleRecordType",
     "PreservedUnknownRecord",
     "command_contract",
+    "command_request_sha256",
+    "command_result_sha256",
     "compatibility_action",
     "preserve_unknown_record",
     "require_approval_transition",
