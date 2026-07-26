@@ -7,6 +7,7 @@ from typing import Annotated, Literal, Self
 from pydantic import Field, StringConstraints, model_validator
 
 from app.services.harness.protocol import StrictProtocolModel
+from app.services.harness.protocol.base import Sha256
 from app.services.harness.providers.vertex_policy import VertexModelId
 
 VertexFunctionName = Annotated[
@@ -145,3 +146,13 @@ class CompiledVertexGenerateContentRequest(StrictProtocolModel):
         if self.tool_config is not None:
             request["toolConfig"] = self.tool_config.to_wire()
         return request
+
+
+class VertexStreamMetadata(StrictProtocolModel):
+    finish_reason: str = Field(min_length=1, max_length=128)
+    response_id_sha256: Sha256 | None = None
+    model_version_sha256: Sha256 | None = None
+    thought_signature_sha256: Sha256 | None = None
+    safety_metadata_sha256: Sha256 | None = None
+    total_tokens: int = Field(ge=0, le=2_000_000)
+    tool_use_prompt_tokens: int = Field(ge=0, le=2_000_000)
