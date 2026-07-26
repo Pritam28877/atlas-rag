@@ -2,4 +2,5 @@
 
 - `fixtures.py`: shared endpoint contracts.
 - `test_capability_decision.py`: fresh probe decisions.
+- `test_compiler.py`: capability-gated mapping.
 - `test_identity_policy.py`: auth and SSRF policy.

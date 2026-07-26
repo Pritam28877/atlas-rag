@@ -72,6 +72,7 @@ class LocalCompatibleCapabilityDecision(StrictProtocolModel):
     accepted: bool
     reason: str = Field(min_length=1, max_length=512)
     decided_at: UtcTimestamp
+    valid_until: UtcTimestamp
 
     @model_validator(mode="after")
     def validate_decision(self) -> Self:
@@ -85,6 +86,8 @@ class LocalCompatibleCapabilityDecision(StrictProtocolModel):
             raise ValueError("missing local features were not required")
         if self.accepted == bool(self.missing_features):
             raise ValueError("local capability decision is inconsistent")
+        if self.valid_until <= self.decided_at:
+            raise ValueError("local capability decision must expire later")
         return self
 
 
@@ -141,6 +144,7 @@ def decide_local_compatible_request(
             else "Fresh probe is missing required local-compatible features."
         ),
         decided_at=decided_at,
+        valid_until=probe.expires_at,
     )
 
 
