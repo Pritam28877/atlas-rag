@@ -35,6 +35,7 @@ type EventId = Annotated[str, _identifier_constraints("evt")]
 type OperationId = Annotated[str, _identifier_constraints("opn")]
 type ApprovalId = Annotated[str, _identifier_constraints("apr")]
 type TaskId = Annotated[str, _identifier_constraints("tsk")]
+type TaskGraphId = Annotated[str, _identifier_constraints("tgr")]
 type ArtifactId = Annotated[str, _identifier_constraints("art")]
 type ContextId = Annotated[str, _identifier_constraints("ctx")]
 type ProviderDecisionId = Annotated[
@@ -45,6 +46,15 @@ type EvaluationId = Annotated[str, _identifier_constraints("evl")]
 type DecisionId = Annotated[str, _identifier_constraints("dcs")]
 type RequestId = Annotated[str, _identifier_constraints("req")]
 type ClientId = Annotated[str, _identifier_constraints("cli")]
+type AggregateId = Annotated[
+    str,
+    StringConstraints(
+        pattern=(
+            r"^(?:wsp|thr|trn|opn|apr|tsk|art|pvd|evl)_"
+            r"[0-9a-f]{32}$"
+        )
+    ),
+]
 
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 SchemaVersion = Annotated[

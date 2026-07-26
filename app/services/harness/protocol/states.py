@@ -58,6 +58,21 @@ class TaskState(StrEnum):
     CANCELLED = "cancelled"
 
 
+class EvaluationState(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class ArtifactState(StrEnum):
+    STAGED = "staged"
+    DURABLE = "durable"
+    QUARANTINED = "quarantined"
+    DELETED = "deleted"
+
+
 class DecisionOutcome(StrEnum):
     ALLOW = "allow"
     DENY = "deny"
@@ -166,6 +181,33 @@ _TASK_TRANSITIONS: Mapping[TaskState, frozenset[TaskState]] = {
     TaskState.FAILED: frozenset(),
     TaskState.CANCELLED: frozenset(),
 }
+_EVALUATION_TRANSITIONS: Mapping[EvaluationState, frozenset[EvaluationState]] = {
+    EvaluationState.PENDING: frozenset(
+        {EvaluationState.RUNNING, EvaluationState.CANCELLED}
+    ),
+    EvaluationState.RUNNING: frozenset(
+        {
+            EvaluationState.COMPLETED,
+            EvaluationState.FAILED,
+            EvaluationState.CANCELLED,
+        }
+    ),
+    EvaluationState.COMPLETED: frozenset(),
+    EvaluationState.FAILED: frozenset(),
+    EvaluationState.CANCELLED: frozenset(),
+}
+_ARTIFACT_TRANSITIONS: Mapping[ArtifactState, frozenset[ArtifactState]] = {
+    ArtifactState.STAGED: frozenset(
+        {
+            ArtifactState.DURABLE,
+            ArtifactState.QUARANTINED,
+            ArtifactState.DELETED,
+        }
+    ),
+    ArtifactState.DURABLE: frozenset({ArtifactState.DELETED}),
+    ArtifactState.QUARANTINED: frozenset({ArtifactState.DELETED}),
+    ArtifactState.DELETED: frozenset(),
+}
 
 
 def _require_transition[State: StrEnum](
@@ -207,3 +249,17 @@ def require_approval_transition(
 
 def require_task_transition(current: TaskState, target: TaskState) -> None:
     _require_transition(_TASK_TRANSITIONS, current, target)
+
+
+def require_evaluation_transition(
+    current: EvaluationState,
+    target: EvaluationState,
+) -> None:
+    _require_transition(_EVALUATION_TRANSITIONS, current, target)
+
+
+def require_artifact_transition(
+    current: ArtifactState,
+    target: ArtifactState,
+) -> None:
+    _require_transition(_ARTIFACT_TRANSITIONS, current, target)
