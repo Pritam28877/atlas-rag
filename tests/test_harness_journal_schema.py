@@ -66,3 +66,14 @@ def test_projection_schema_is_rebuildable_and_fail_closed(monkeypatch) -> None:
     assert "CREATE TRIGGER harness_projection_transition" in sql
     assert "NEW.generation = OLD.generation + 1" in sql
     assert "NEW.last_journal_sequence < OLD.last_journal_sequence" in sql
+
+
+def test_journal_health_blocks_writes_until_operator_recovery(monkeypatch) -> None:
+    sql = render_upgrade_sql(monkeypatch)
+
+    assert "CREATE TABLE harness_journal_health" in sql
+    assert "CREATE TRIGGER harness_journal_health_transition" in sql
+    assert "CREATE TRIGGER harness_journal_events_require_health" in sql
+    assert "journal_status = 'needs_operator'" in sql
+    assert "OLD.journal_status = 'needs_operator'" in sql
+    assert "NEW.generation = OLD.generation + 1" in sql
