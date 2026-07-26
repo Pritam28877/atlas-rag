@@ -1,5 +1,11 @@
 """Owned Atlas Harness session and subscriber lifecycles."""
 
+from app.services.harness.sessions.replay_dispatcher import (
+    CommandReplayRepository,
+    ReplayDispatcherError,
+    ReplayDispatcherErrorCode,
+    ReplaySafeCommandDispatcher,
+)
 from app.services.harness.sessions.single_turn_contracts import (
     ProviderAttemptSource,
     SingleTurnOutcome,
@@ -42,7 +48,11 @@ from app.services.harness.sessions.writer_coordinator import (
 
 __all__ = (
     "ProviderAttemptSource",
+    "CommandReplayRepository",
     "RepeatedCallCounter",
+    "ReplayDispatcherError",
+    "ReplayDispatcherErrorCode",
+    "ReplaySafeCommandDispatcher",
     "SessionWriterCoordinator",
     "SessionWriterLease",
     "SingleTurnEngine",
