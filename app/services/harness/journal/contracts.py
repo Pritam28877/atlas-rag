@@ -15,6 +15,7 @@ from app.services.harness.protocol import (
     Sha256,
     StrictProtocolModel,
     UtcTimestamp,
+    WorkspaceId,
 )
 
 MAXIMUM_APPEND_EVENTS = 256
@@ -52,6 +53,7 @@ class JournalConflictError(RuntimeError):
 
 
 class AppendRequest(StrictProtocolModel):
+    workspace_id: WorkspaceId
     aggregate_id: AggregateId
     expected_sequence: int = Field(ge=0, le=MAXIMUM_SEQUENCE)
     idempotency_key: IdempotencyKey
@@ -88,12 +90,17 @@ class AppendRequest(StrictProtocolModel):
 
 
 class AppendResult(StrictProtocolModel):
+    workspace_id: WorkspaceId
     aggregate_id: AggregateId
     status: AppendStatus
     durability: JournalDurability
     first_sequence: int = Field(ge=1, le=MAXIMUM_SEQUENCE)
     last_sequence: int = Field(ge=1, le=MAXIMUM_SEQUENCE)
     event_ids: tuple[EventId, ...] = Field(
+        min_length=1,
+        max_length=MAXIMUM_APPEND_EVENTS,
+    )
+    journal_sequences: tuple[int, ...] = Field(
         min_length=1,
         max_length=MAXIMUM_APPEND_EVENTS,
     )
@@ -108,10 +115,20 @@ class AppendResult(StrictProtocolModel):
             raise ValueError("append result sequence span must match event IDs")
         if len(set(self.event_ids)) != len(self.event_ids):
             raise ValueError("append result event IDs must be unique")
+        if len(self.journal_sequences) != len(self.event_ids):
+            raise ValueError("journal sequences must match append event IDs")
+        previous_sequence = 0
+        for journal_sequence in self.journal_sequences:
+            if not 1 <= journal_sequence <= MAXIMUM_SEQUENCE:
+                raise ValueError("journal sequence exceeds signed 64-bit range")
+            if journal_sequence <= previous_sequence:
+                raise ValueError("journal sequences must be strictly increasing")
+            previous_sequence = journal_sequence
         return self
 
 
 class JournalPage(StrictProtocolModel):
+    workspace_id: WorkspaceId
     aggregate_id: AggregateId
     after_sequence: int = Field(ge=0, le=MAXIMUM_SEQUENCE)
     events: tuple[EventRecord, ...] = Field(max_length=MAXIMUM_APPEND_EVENTS)
@@ -132,9 +149,39 @@ class JournalPage(StrictProtocolModel):
 
 
 class JournalReadRequest(StrictProtocolModel):
+    workspace_id: WorkspaceId
     aggregate_id: AggregateId
     after_sequence: int = Field(ge=0, le=MAXIMUM_SEQUENCE)
     limit: int = Field(default=256, ge=1, le=MAXIMUM_APPEND_EVENTS)
+
+
+class JournalEvent(StrictProtocolModel):
+    journal_sequence: int = Field(ge=1, le=MAXIMUM_SEQUENCE)
+    event: EventRecord
+
+
+class GlobalJournalReadRequest(StrictProtocolModel):
+    workspace_id: WorkspaceId
+    after_journal_sequence: int = Field(ge=0, le=MAXIMUM_SEQUENCE)
+    limit: int = Field(default=256, ge=1, le=MAXIMUM_APPEND_EVENTS)
+
+
+class GlobalJournalPage(StrictProtocolModel):
+    workspace_id: WorkspaceId
+    after_journal_sequence: int = Field(ge=0, le=MAXIMUM_SEQUENCE)
+    events: tuple[JournalEvent, ...] = Field(max_length=MAXIMUM_APPEND_EVENTS)
+    has_more: bool
+
+    @model_validator(mode="after")
+    def validate_global_order(self) -> Self:
+        previous_sequence = self.after_journal_sequence
+        for journal_event in self.events:
+            if journal_event.journal_sequence <= previous_sequence:
+                raise ValueError("global journal sequences must be increasing")
+            previous_sequence = journal_event.journal_sequence
+        if self.has_more and not self.events:
+            raise ValueError("global journal page with more data cannot be empty")
+        return self
 
 
 class EventJournal(Protocol):
@@ -144,6 +191,11 @@ class EventJournal(Protocol):
         self,
         request: JournalReadRequest,
     ) -> JournalPage: ...
+
+    async def read_global(
+        self,
+        request: GlobalJournalReadRequest,
+    ) -> GlobalJournalPage: ...
 
 
 def raise_expected_sequence_conflict(current_sequence: int) -> Never:
