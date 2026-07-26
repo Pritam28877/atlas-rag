@@ -47,15 +47,28 @@ class ProviderSmokeResult(StrictProtocolModel):
 async def load_openrouter_smoke_policy(
     path: Path,
 ) -> OpenRouterProviderPolicy:
-    content = await asyncio.to_thread(
-        _read_private_file,
+    content = await read_private_smoke_input(
         path,
-        MAXIMUM_SMOKE_POLICY_BYTES,
+        maximum_bytes=MAXIMUM_SMOKE_POLICY_BYTES,
     )
     try:
         return OpenRouterProviderPolicy.model_validate_json(content)
     except ValidationError:
         raise ValueError("OpenRouter smoke policy is invalid") from None
+
+
+async def read_private_smoke_input(
+    path: Path,
+    *,
+    maximum_bytes: int,
+) -> bytes:
+    if not 1 <= maximum_bytes <= MAXIMUM_SMOKE_POLICY_BYTES:
+        raise ValueError("private provider smoke size limit is invalid")
+    return await asyncio.to_thread(
+        _read_private_file,
+        path,
+        maximum_bytes,
+    )
 
 
 def sse_data_records(body: bytes) -> tuple[bytes, ...]:
@@ -84,6 +97,15 @@ async def write_provider_smoke_result(
     result: ProviderSmokeResult,
 ) -> None:
     content = result.model_dump_json().encode()
+    await write_private_smoke_output(path, content)
+
+
+async def write_private_smoke_output(
+    path: Path,
+    content: bytes,
+) -> None:
+    if not isinstance(content, bytes) or not content:
+        raise ValueError("private provider smoke output is invalid")
     await asyncio.to_thread(_write_private_new_file, path, content)
 
 

@@ -65,6 +65,7 @@ class BedrockSmokeGrantPayload(StrictProtocolModel):
     )
     binding: BedrockSmokeBinding
     maximum_provider_calls: Literal[2] = 2
+    timeout_seconds: int = Field(ge=1, le=60)
     text_max_output_tokens: int = Field(ge=1, le=4_096)
     tool_max_output_tokens: int = Field(ge=1, le=4_096)
     text_cost_cap_microusd: int = Field(ge=1, le=10_000_000_000)
@@ -207,6 +208,9 @@ def verify_bedrock_smoke_grant(
         or not signed_grant.payload.issued_at
         <= observed_at
         < signed_grant.payload.expires_at
+        or observed_at
+        + timedelta(seconds=signed_grant.payload.timeout_seconds)
+        > signed_grant.payload.expires_at
     ):
         _reject(BedrockSmokeGateErrorCode.EXPIRY)
     if signed_grant.payload.binding != expected_binding:
