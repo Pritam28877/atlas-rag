@@ -25,6 +25,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "benchmarks" / "fixtures"
 VERSION_ID = UUID("1dd21a4f-c0dc-45b4-8e36-5b9c9a7012a9")
 
 
+@pytest.mark.ocr_integration
 def test_tesseract_enriches_only_selected_scan_page(tmp_path: Path) -> None:
     provider = TesseractOcrProvider()
 
@@ -44,6 +45,7 @@ def test_tesseract_enriches_only_selected_scan_page(tmp_path: Path) -> None:
     assert list(tmp_path.iterdir()) == []
 
 
+@pytest.mark.ocr_integration
 def test_ocr_merge_preserves_native_and_ocr_page_provenance(
     tmp_path: Path,
 ) -> None:
@@ -123,6 +125,7 @@ def test_ocr_quality_failures_are_explicit(
     assert captured.value.reason_code == reason_code
 
 
+@pytest.mark.ocr_integration
 def test_unsupported_ocr_language_has_safe_terminal_outcome(tmp_path: Path) -> None:
     provider = TesseractOcrProvider()
 

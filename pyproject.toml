@@ -34,6 +34,7 @@ packages = ["app"]
 [dependency-groups]
 dev = [
     "jsonschema>=4.23,<5.0",
+    "mypy==2.3.0",
     "pytest>=9.0.3,<10",
     "reportlab>=4.2,<5.0",
     "ruff>=0.8,<1.0",
@@ -69,3 +70,15 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+files = [
+    "app/api/v1/harness",
+    "app/cli/harness",
+    "app/core/config.py",
+    "app/core/harness_config.py",
+    "app/services/harness",
+]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
