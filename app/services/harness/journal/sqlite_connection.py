@@ -119,6 +119,7 @@ class SQLiteConnectionOwner:
             isolation_level=None,
         )
         try:
+            connection.row_factory = sqlite3.Row
             connection.execute("PRAGMA foreign_keys = ON")
             connection.execute(f"PRAGMA busy_timeout = {self._busy_timeout_ms}")
             connection.execute("PRAGMA journal_mode = WAL")
@@ -127,7 +128,10 @@ class SQLiteConnectionOwner:
             schema_version = connection.execute(
                 "SELECT schema_version FROM harness_journal_schema WHERE singleton = 1"
             ).fetchone()
-            if schema_version != (SQLITE_SCHEMA_VERSION,):
+            if (
+                schema_version is None
+                or schema_version["schema_version"] != SQLITE_SCHEMA_VERSION
+            ):
                 raise JournalStorageError("unsupported SQLite journal schema")
             os.chmod(self._database_path, 0o600)
             self._connection = connection
