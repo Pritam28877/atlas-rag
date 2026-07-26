@@ -11,6 +11,7 @@ from app.services.harness.journal.sqlite_retention_rows import (
     load_retention_evidence,
 )
 from app.services.harness.journal.sqlite_retention_writes import (
+    authorize_collection,
     insert_blob,
     insert_hold,
     insert_reference,
@@ -155,6 +156,25 @@ class SQLiteRetentionStore:
         return await self._connection_owner.execute(
             lambda connection: load_retention_evidence(connection, workspace_id)
         )
+
+    async def authorize_collection(
+        self,
+        workspace_id: WorkspaceId,
+        content_sha256: Sha256,
+        *,
+        collected_at: datetime,
+    ) -> RetainedBlob:
+        self._require_utc(collected_at)
+        await self._connection_owner.execute(
+            lambda connection: authorize_collection(
+                connection,
+                workspace_id,
+                content_sha256,
+                collected_at,
+            )
+        )
+        evidence = await self.load(workspace_id)
+        return self._find_blob(evidence, content_sha256)
 
     @staticmethod
     def _find_blob(evidence: RetentionEvidence, digest: str) -> RetainedBlob:

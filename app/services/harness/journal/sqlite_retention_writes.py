@@ -123,6 +123,46 @@ def release_hold(
     )
 
 
+def authorize_collection(
+    connection: sqlite3.Connection,
+    workspace_id: str,
+    content_sha256: str,
+    collected_at: datetime,
+) -> None:
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        row = connection.execute(
+            """
+            SELECT garbage_collected_at FROM harness_retained_blobs
+            WHERE workspace_id = ? AND content_sha256 = ?
+            """,
+            (workspace_id, content_sha256),
+        ).fetchone()
+        if row is None:
+            raise RetentionStoreConflict("retained blob does not exist")
+        if row["garbage_collected_at"] is not None:
+            if row["garbage_collected_at"] == collected_at.isoformat():
+                connection.commit()
+                return
+            raise RetentionStoreConflict(
+                "blob collection was already authorized at another time"
+            )
+        connection.execute(
+            """
+            UPDATE harness_retained_blobs SET garbage_collected_at = ?
+            WHERE workspace_id = ? AND content_sha256 = ?
+            """,
+            (collected_at.isoformat(), workspace_id, content_sha256),
+        )
+        connection.commit()
+    except sqlite3.IntegrityError as error:
+        connection.rollback()
+        raise RetentionStoreConflict("blob is not collectable") from error
+    except BaseException:
+        connection.rollback()
+        raise
+
+
 def _insert_idempotent(
     connection: sqlite3.Connection,
     statement: str,
