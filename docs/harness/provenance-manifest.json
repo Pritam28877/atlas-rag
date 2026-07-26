@@ -167,6 +167,34 @@
           "Record a new immutable revision and license grant before changing this treatment."
         ]
       }
+    },
+    {
+      "id": "openai-responses-documentation",
+      "name": "OpenAI Responses API official documentation",
+      "kind": "documentation",
+      "location": "https://developers.openai.com/api/docs",
+      "revision": "2026-07-27",
+      "revision_kind": "documentation_snapshot_date",
+      "reviewed_at": "2026-07-27",
+      "owner": "Atlas provider adapter maintainers",
+      "license": {
+        "spdx": null,
+        "status": "restricted",
+        "evidence": [
+          "https://developers.openai.com/api/docs/guides/streaming-responses",
+          "https://developers.openai.com/api/docs/guides/function-calling",
+          "https://platform.openai.com/docs/api-reference/responses-streaming/response/incomplete"
+        ]
+      },
+      "usage": {
+        "treatment": "behavior_spec_only",
+        "copy_allowed": false,
+        "conditions": [
+          "Use current public request and event behavior as neutral interoperability evidence only.",
+          "Copy no OpenAI implementation or documentation prose.",
+          "Re-review the official schema before expanding the supported event or request surface."
+        ]
+      }
     }
   ],
   "adapted_files": []
