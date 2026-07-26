@@ -18,6 +18,8 @@ from app.services.harness.protocol.base import (
 )
 from app.services.harness.protocol.conversation import DataClassification
 
+MAXIMUM_PROVIDER_ROUTE_COST_MICROUSD = 25_120_000_000
+
 type RouteId = Annotated[
     str,
     StringConstraints(
@@ -138,7 +140,10 @@ class ProviderRoute(StrictProtocolModel):
     destination_sha256: Sha256
     context_window_tokens: int = Field(ge=1, le=2_000_000)
     max_output_tokens: int = Field(ge=1, le=512_000)
-    estimated_cost_microusd: int = Field(ge=0, le=10_000_000_000)
+    estimated_cost_microusd: int = Field(
+        ge=0,
+        le=MAXIMUM_PROVIDER_ROUTE_COST_MICROUSD,
+    )
     health_snapshot_sha256: Sha256
     price_version_sha256: Sha256
     price_active: bool = True

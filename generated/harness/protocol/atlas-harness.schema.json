@@ -2538,7 +2538,7 @@
           "type": "string"
         },
         "estimated_cost_microusd": {
-          "maximum": 10000000000,
+          "maximum": 25120000000,
           "minimum": 0,
           "title": "Estimated Cost Microusd",
           "type": "integer"
