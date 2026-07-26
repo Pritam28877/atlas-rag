@@ -19,6 +19,7 @@ from app.services.harness.journal.contracts import (
 from app.services.harness.journal.errors import (
     JournalBusyError,
     JournalStorageError,
+    RecoveryStoreConflict,
     RetentionStoreConflict,
 )
 from app.services.harness.journal.health import (
@@ -32,6 +33,7 @@ from app.services.harness.journal.sqlite import SQLiteEventJournal
 from app.services.harness.journal.sqlite_integrity import (
     SQLiteJournalIntegrityVerifier,
 )
+from app.services.harness.journal.sqlite_recovery_store import SQLiteRecoveryStore
 from app.services.harness.journal.sqlite_retention_store import (
     SQLiteRetentionStore,
 )
@@ -61,8 +63,10 @@ __all__ = (
     "JournalBusyError",
     "JournalStorageError",
     "JournalVerificationResult",
+    "RecoveryStoreConflict",
     "SQLiteEventJournal",
     "SQLiteJournalIntegrityVerifier",
+    "SQLiteRecoveryStore",
     "SQLiteRetentionStore",
     "SQLiteSnapshotStore",
     "SQLiteStorageStore",

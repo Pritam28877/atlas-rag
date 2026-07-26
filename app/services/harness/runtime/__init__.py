@@ -1,5 +1,11 @@
 """Owned deterministic runtime primitives for the Atlas Harness."""
 
+from app.services.harness.protocol.recovery import (
+    LeaseRecoveryState,
+    OperationRecoveryAction,
+    OperationRecoveryDecision,
+    RecoveryLease,
+)
 from app.services.harness.runtime.admission import (
     AdmissionError,
     AdmissionErrorCode,
@@ -47,10 +53,6 @@ from app.services.harness.runtime.peer_auth import (
     VerifiedPeerSession,
 )
 from app.services.harness.runtime.recovery_classification import (
-    LeaseRecoveryState,
-    OperationRecoveryAction,
-    OperationRecoveryDecision,
-    RecoveryLease,
     classify_operation_recovery,
     expire_recovery_lease,
 )

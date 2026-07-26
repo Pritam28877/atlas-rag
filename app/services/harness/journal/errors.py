@@ -11,3 +11,7 @@ class JournalStorageError(RuntimeError):
 
 class RetentionStoreConflict(RuntimeError):
     """Requested immutable retention evidence conflicts with durable state."""
+
+
+class RecoveryStoreConflict(RuntimeError):
+    """Requested recovery fact conflicts with durable recovery evidence."""
