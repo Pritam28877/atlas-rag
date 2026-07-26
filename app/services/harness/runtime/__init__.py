@@ -52,6 +52,12 @@ from app.services.harness.runtime.peer_auth import (
     PeerSessionTokenManager,
     VerifiedPeerSession,
 )
+from app.services.harness.runtime.provider_router import (
+    MAXIMUM_PROVIDER_CANDIDATES,
+    ProviderRoutingError,
+    ProviderRoutingErrorCode,
+    select_provider_route,
+)
 from app.services.harness.runtime.recovery_classification import (
     classify_operation_recovery,
     expire_recovery_lease,
@@ -116,6 +122,7 @@ __all__ = (
     "LocalConnectionFactory",
     "LocalStreamRunner",
     "LeaseRecoveryState",
+    "MAXIMUM_PROVIDER_CANDIDATES",
     "OperationRecoveryAction",
     "OperationRecoveryDecision",
     "PeerAuthenticationError",
@@ -123,6 +130,8 @@ __all__ = (
     "PeerCredentials",
     "PeerCredentialSource",
     "PeerSessionTokenManager",
+    "ProviderRoutingError",
+    "ProviderRoutingErrorCode",
     "PublishDisposition",
     "RequestAdmission",
     "RecoveryLease",
@@ -148,4 +157,5 @@ __all__ = (
     "encode_frame",
     "classify_operation_recovery",
     "expire_recovery_lease",
+    "select_provider_route",
 )
