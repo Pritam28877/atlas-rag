@@ -11,6 +11,11 @@ from app.services.harness.providers.config_loader import (
     ProviderConfigLoadErrorCode,
     load_provider_configuration,
 )
+from app.services.harness.providers.health_registry import (
+    ProviderHealthRegistry,
+    ProviderHealthRegistryError,
+    ProviderHealthRegistryErrorCode,
+)
 from app.services.harness.providers.recorded import (
     RecordedProviderError,
     RecordedProviderErrorCode,
@@ -23,6 +28,9 @@ __all__ = (
     "ProviderConfigLoadErrorCode",
     "ProviderConfiguration",
     "ProviderCredentialBinding",
+    "ProviderHealthRegistry",
+    "ProviderHealthRegistryError",
+    "ProviderHealthRegistryErrorCode",
     "RecordedProviderError",
     "RecordedProviderErrorCode",
     "RecordedProviderStream",

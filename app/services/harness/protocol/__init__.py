@@ -143,6 +143,12 @@ from app.services.harness.protocol.provider_capabilities import (
     ProviderUsageMetadata,
     price_is_active,
 )
+from app.services.harness.protocol.provider_health import (
+    ProviderHealthStatus,
+    ProviderRouteHealthSnapshot,
+    build_provider_health_snapshot,
+    provider_health_snapshot_sha256,
+)
 from app.services.harness.protocol.provider_request import (
     CanonicalProviderRequest,
     ProviderContentPart,
@@ -322,6 +328,7 @@ __all__ = (
     "ProviderErrorCode",
     "ProviderFailureClass",
     "ProviderFinishReason",
+    "ProviderHealthStatus",
     "ProviderMessage",
     "ProviderMessageRole",
     "ProviderModality",
@@ -333,6 +340,7 @@ __all__ = (
     "ProviderRetryDisposition",
     "ProviderRoute",
     "ProviderRouteDecisionRecord",
+    "ProviderRouteHealthSnapshot",
     "ProviderStreamBatch",
     "ProviderStreamEvent",
     "ProviderStreamKind",
@@ -407,9 +415,11 @@ __all__ = (
     "command_contract",
     "command_request_sha256",
     "command_result_sha256",
+    "build_provider_health_snapshot",
     "compatibility_action",
     "preserve_unknown_record",
     "price_is_active",
+    "provider_health_snapshot_sha256",
     "require_approval_transition",
     "require_artifact_transition",
     "require_evaluation_transition",
