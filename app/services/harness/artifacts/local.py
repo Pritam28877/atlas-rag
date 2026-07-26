@@ -116,6 +116,16 @@ class LocalBlobStore:
         )
         return self._metadata(request.content_sha256, size_bytes)
 
+    async def delete(self, content_sha256: str) -> bool:
+        request = BlobRangeRequest(
+            content_sha256=content_sha256,
+            offset_bytes=0,
+            length_bytes=1,
+        )
+        return await self._io_owner.execute(
+            lambda: self._io_owner.files.delete(request.content_sha256)
+        )
+
     async def read_range(
         self,
         request: BlobRangeRequest,

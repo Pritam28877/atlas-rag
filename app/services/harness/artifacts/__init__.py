@@ -9,6 +9,7 @@ from app.services.harness.artifacts.contracts import (
     BlobWriteResult,
 )
 from app.services.harness.artifacts.local import LocalBlobStore
+from app.services.harness.artifacts.local_collector import LocalGarbageCollector
 from app.services.harness.artifacts.retention_planner import (
     admit_blob_write,
     plan_garbage_collection,
@@ -41,6 +42,7 @@ __all__ = (
     "ArtifactTombstone",
     "GarbageCollectionPlan",
     "LocalBlobStore",
+    "LocalGarbageCollector",
     "RetainedBlob",
     "RetentionEvidence",
     "RetentionPolicy",

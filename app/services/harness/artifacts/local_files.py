@@ -178,6 +178,36 @@ class LocalBlobFiles:
         finally:
             os.close(shard_descriptor)
 
+    def delete(self, content_sha256: str) -> bool:
+        try:
+            shard_descriptor = self._shard_descriptor(
+                content_sha256,
+                create=False,
+            )
+        except BlobStoreError as error:
+            if error.code is BlobErrorCode.NOT_FOUND:
+                return False
+            raise
+        try:
+            try:
+                try:
+                    verify_blob(
+                        shard_descriptor,
+                        content_sha256,
+                        expected_size=None,
+                    )
+                except BlobStoreError as error:
+                    if error.code is BlobErrorCode.NOT_FOUND:
+                        return False
+                    raise
+                os.unlink(content_sha256, dir_fd=shard_descriptor)
+                os.fsync(shard_descriptor)
+                return True
+            except FileNotFoundError:
+                return False
+        finally:
+            os.close(shard_descriptor)
+
     def open_range(
         self,
         content_sha256: str,
