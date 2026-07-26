@@ -9,9 +9,12 @@ from app.services.harness.journal import (
     AppendRequest,
     AppendResult,
     AppendStatus,
+    GlobalJournalPage,
+    GlobalJournalReadRequest,
     JournalConflictCode,
     JournalConflictError,
     JournalDurability,
+    JournalEvent,
     JournalPage,
     JournalReadRequest,
     raise_expected_sequence_conflict,
@@ -29,6 +32,9 @@ NOW = datetime(2026, 7, 26, 18, 0, tzinfo=UTC)
 
 def identifier(prefix: str, number: int = 0) -> str:
     return f"{prefix}_{number:032x}"
+
+
+WORKSPACE_ID = identifier("wsp")
 
 
 def event(sequence: int, *, aggregate_number: int = 0) -> EventRecord:
@@ -57,6 +63,7 @@ def event(sequence: int, *, aggregate_number: int = 0) -> EventRecord:
 
 def request(*events: EventRecord, expected_sequence: int = 0) -> AppendRequest:
     return AppendRequest(
+        workspace_id=WORKSPACE_ID,
         aggregate_id=identifier("trn"),
         expected_sequence=expected_sequence,
         idempotency_key="journal-command-0001",
@@ -117,12 +124,14 @@ def test_append_batch_serialized_size_is_hard_bounded() -> None:
 
 def test_append_result_span_and_page_order_are_exact() -> None:
     result = AppendResult(
+        workspace_id=WORKSPACE_ID,
         aggregate_id=identifier("trn"),
         status=AppendStatus.APPENDED,
         durability=JournalDurability.SYNCHRONOUS,
         first_sequence=1,
         last_sequence=2,
         event_ids=(identifier("evt", 1), identifier("evt", 2)),
+        journal_sequences=(10, 11),
         request_sha256="1" * 64,
         receipt_sha256="2" * 64,
         committed_at=NOW,
@@ -130,6 +139,7 @@ def test_append_result_span_and_page_order_are_exact() -> None:
     assert result.last_sequence == 2
 
     page = JournalPage(
+        workspace_id=WORKSPACE_ID,
         aggregate_id=identifier("trn"),
         after_sequence=0,
         events=(event(1), event(2)),
@@ -146,6 +156,7 @@ def test_append_result_span_and_page_order_are_exact() -> None:
         )
     with pytest.raises(ValidationError, match="contiguous"):
         JournalPage(
+            workspace_id=WORKSPACE_ID,
             aggregate_id=identifier("trn"),
             after_sequence=0,
             events=(event(2),),
@@ -153,6 +164,7 @@ def test_append_result_span_and_page_order_are_exact() -> None:
         )
     with pytest.raises(ValidationError, match="cannot be empty"):
         JournalPage(
+            workspace_id=WORKSPACE_ID,
             aggregate_id=identifier("trn"),
             after_sequence=0,
             events=(),
@@ -164,9 +176,40 @@ def test_append_result_span_and_page_order_are_exact() -> None:
 def test_read_request_is_bounded(limit: int) -> None:
     with pytest.raises(ValidationError):
         JournalReadRequest(
+            workspace_id=WORKSPACE_ID,
             aggregate_id=identifier("trn"),
             after_sequence=0,
             limit=limit,
+        )
+
+
+def test_global_journal_page_is_workspace_scoped_and_strictly_ordered() -> None:
+    page = GlobalJournalPage(
+        workspace_id=WORKSPACE_ID,
+        after_journal_sequence=5,
+        events=(
+            JournalEvent(journal_sequence=7, event=event(1)),
+            JournalEvent(journal_sequence=9, event=event(2)),
+        ),
+        has_more=False,
+    )
+    assert tuple(item.journal_sequence for item in page.events) == (7, 9)
+
+    with pytest.raises(ValidationError, match="increasing"):
+        GlobalJournalPage(
+            workspace_id=WORKSPACE_ID,
+            after_journal_sequence=5,
+            events=(
+                JournalEvent(journal_sequence=7, event=event(1)),
+                JournalEvent(journal_sequence=6, event=event(2)),
+            ),
+            has_more=False,
+        )
+    with pytest.raises(ValidationError):
+        GlobalJournalReadRequest(
+            workspace_id=WORKSPACE_ID,
+            after_journal_sequence=0,
+            limit=257,
         )
 
 
