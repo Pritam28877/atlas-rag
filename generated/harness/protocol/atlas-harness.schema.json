@@ -2232,8 +2232,8 @@
     },
     "ProviderCallId": {
       "maxLength": 128,
-      "minLength": 8,
-      "pattern": "^call_[A-Za-z0-9_-]{3,123}$",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
       "type": "string"
     },
     "ProviderCancelled": {

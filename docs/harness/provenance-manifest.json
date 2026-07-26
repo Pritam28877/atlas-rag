@@ -223,6 +223,34 @@
           "Re-review the beta Responses contract before expanding or releasing this adapter."
         ]
       }
+    },
+    {
+      "id": "aws-bedrock-converse-documentation",
+      "name": "Amazon Bedrock ConverseStream official documentation",
+      "kind": "documentation",
+      "location": "https://docs.aws.amazon.com/bedrock/",
+      "revision": "2026-07-27",
+      "revision_kind": "documentation_snapshot_date",
+      "reviewed_at": "2026-07-27",
+      "owner": "Atlas provider adapter maintainers",
+      "license": {
+        "spdx": null,
+        "status": "restricted",
+        "evidence": [
+          "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html",
+          "https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html",
+          "https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use.html"
+        ]
+      },
+      "usage": {
+        "treatment": "behavior_spec_only",
+        "copy_allowed": false,
+        "conditions": [
+          "Use current public request, event, and endpoint behavior as neutral interoperability evidence only.",
+          "Copy no AWS SDK or documentation implementation source.",
+          "Re-review the official API and locked Botocore schema before expanding the adapter."
+        ]
+      }
     }
   ],
   "adapted_files": []
