@@ -110,7 +110,10 @@ class BotocoreStaticCredentialBackend:
 def _read_private_profiles(
     path: Path,
 ) -> dict[str, dict[str, str]]:
-    content = _read_private_file(path)
+    content = read_private_credential_file(
+        path,
+        maximum_bytes=MAXIMUM_SHARED_CREDENTIAL_BYTES,
+    )
     parser = configparser.RawConfigParser(
         interpolation=None,
         strict=True,
@@ -129,7 +132,13 @@ def _read_private_profiles(
     return {section: dict(parser.items(section, raw=True)) for section in sections}
 
 
-def _read_private_file(path: Path) -> bytes:
+def read_private_credential_file(
+    path: Path,
+    *,
+    maximum_bytes: int,
+) -> bytes:
+    if not 1 <= maximum_bytes <= MAXIMUM_SHARED_CREDENTIAL_BYTES:
+        _reject_file()
     if not path.is_absolute():
         _reject_file()
     try:
@@ -140,7 +149,7 @@ def _read_private_file(path: Path) -> bytes:
         not stat.S_ISREG(status.st_mode)
         or status.st_uid != os.getuid()
         or stat.S_IMODE(status.st_mode) & 0o077
-        or not 1 <= status.st_size <= MAXIMUM_SHARED_CREDENTIAL_BYTES
+        or not 1 <= status.st_size <= maximum_bytes
     ):
         _reject_file()
     flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
@@ -155,12 +164,12 @@ def _read_private_file(path: Path) -> bytes:
             _reject_file()
         content = bytearray()
         while True:
-            remaining = MAXIMUM_SHARED_CREDENTIAL_BYTES + 1 - len(content)
+            remaining = maximum_bytes + 1 - len(content)
             chunk = os.read(descriptor, min(64 * 1024, remaining))
             if not chunk:
                 break
             content.extend(chunk)
-            if len(content) > MAXIMUM_SHARED_CREDENTIAL_BYTES:
+            if len(content) > maximum_bytes:
                 _reject_file()
         if not content:
             _reject_file()

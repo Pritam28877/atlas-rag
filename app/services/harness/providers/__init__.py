@@ -48,6 +48,12 @@ from app.services.harness.providers.bedrock_identity import (
     BedrockIdentityReference,
     BedrockIdentityReferenceId,
 )
+from app.services.harness.providers.bedrock_network_credentials import (
+    INSTANCE_METADATA_URL,
+    MAXIMUM_WEB_IDENTITY_TOKEN_BYTES,
+    BotocoreNetworkCredentialBackend,
+    NetworkSourceLoader,
+)
 from app.services.harness.providers.bedrock_policy import (
     AuthorizedBedrockRoute,
     BedrockRoutePolicy,
@@ -243,6 +249,7 @@ __all__ = (
     "BedrockDecodeErrorCode",
     "BedrockCredentialSourceKind",
     "BotocoreStaticCredentialBackend",
+    "BotocoreNetworkCredentialBackend",
     "BedrockIdentityReference",
     "BedrockIdentityReferenceId",
     "BedrockInferenceConfiguration",
@@ -262,6 +269,8 @@ __all__ = (
     "MAXIMUM_BEDROCK_EVENT_BYTES",
     "MAXIMUM_BEDROCK_EVENTS",
     "MAXIMUM_BEDROCK_TOOL_ARGUMENT_BYTES",
+    "MAXIMUM_WEB_IDENTITY_TOKEN_BYTES",
+    "INSTANCE_METADATA_URL",
     "MAXIMUM_OPENAI_WIRE_EVENT_BYTES",
     "MAXIMUM_OPENAI_WIRE_EVENTS",
     "OpenAICompileError",
@@ -283,6 +292,7 @@ __all__ = (
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",
     "ProviderConfiguration",
+    "NetworkSourceLoader",
     "ProviderCredentialBinding",
     "ProviderHealthRegistry",
     "ProviderHealthRegistryError",
