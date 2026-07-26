@@ -22,6 +22,8 @@ require capability evidence.
 - client-side tools use `toolConfig.tools[].toolSpec`, including name,
   description, JSON input schema, and the current optional strict-schema flag.
 - tool results return the provider `toolUseId`.
+- an optional specific `toolChoice` forces the named tool for models that
+  support it; Atlas uses this only for the opt-in tool smoke.
 
 Atlas therefore rejects unsupported modalities, non-AWS-compatible tool names,
 and system/developer messages that appear after conversation content.
@@ -44,11 +46,42 @@ The event stream can also contain modeled validation, throttling, service
 unavailable, internal-server, and model-stream errors. Atlas maps these to
 redacted canonical error classes and never emits the provider message.
 
+## Opt-in live smoke
+
+No live AWS call runs in tests or by default. The operator must provide
+owner-only configuration, route-policy, web-identity, and signed-grant files;
+an owner-only output directory; a grant-verification key in one explicitly
+named environment variable; and `--acknowledge-live-costs`.
+
+```bash
+uv run --locked python scripts/run_harness_bedrock_smoke.py \
+  --acknowledge-live-costs \
+  --grant-path /private/bedrock-grant.json \
+  --configuration-path /private/providers.json \
+  --route-policy-path /private/bedrock-route.json \
+  --identity-path /private/bedrock-identity.json \
+  --database-path /private/bedrock-smoke.sqlite3 \
+  --result-path /private/bedrock-smoke-result.json \
+  --signing-key-environment-variable ATLAS_BEDROCK_GRANT_KEY
+```
+
+The organization-issued HMAC grant binds the exact configuration, route
+policy, web identity, AWS account, model, region, destination, expiry,
+deadline, output ceilings, and separate text/tool cost caps. The runner rejects
+an undersized worst-case cap before credential resolution, makes exactly two
+provider calls with no retries, and performs a no-call cancellation probe.
+Persisted evidence contains hashes, usage counts, settled cost, verification
+flags, and no prompt, output, response ID, signing key, or AWS credential.
+
+The live smoke has not been executed in this repository. Running the command is
+an explicit later operator action in a disposable AWS account.
+
 ## Sources
 
 - https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html
 - https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
 - https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use.html
+- https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ToolChoice.html
 - https://docs.aws.amazon.com/bedrock/latest/userguide/endpoints.html
 - locally installed locked Botocore `bedrock-runtime` service model, version
   `1.43.46`, inspected only as an official SDK schema
