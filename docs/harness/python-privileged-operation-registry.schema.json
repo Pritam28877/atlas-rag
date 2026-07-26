@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atlas.local/schemas/python-privileged-operation-registry-v1.json",
+  "title": "Atlas Python privileged-operation registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "default_disposition",
+    "reviewed_at",
+    "required_operation_kinds",
+    "gate_catalog",
+    "operations"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "default_disposition": {"const": "deny"},
+    "reviewed_at": {"type": "string", "format": "date"},
+    "required_operation_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/operationKind"}
+    },
+    "gate_catalog": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/gate"}
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/operation"}
+    }
+  },
+  "$defs": {
+    "operationKind": {
+      "enum": [
+        "api_mutation",
+        "worker_task",
+        "tool",
+        "provider_egress",
+        "telemetry_egress",
+        "persistence",
+        "artifact_io",
+        "extension_process",
+        "parser_process",
+        "secret_resolution",
+        "subprocess"
+      ]
+    },
+    "gate": {
+      "enum": [
+        "authentication",
+        "authorization",
+        "schema_validation",
+        "idempotency",
+        "policy",
+        "budget",
+        "egress",
+        "sandbox",
+        "result_filter",
+        "audit",
+        "cancellation"
+      ]
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "owner",
+        "description",
+        "side_effect",
+        "required_gates",
+        "failure_mode",
+        "registration_state",
+        "implementation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^harness\\.[a-z0-9_.-]+$",
+          "maxLength": 128
+        },
+        "kind": {"$ref": "#/$defs/operationKind"},
+        "owner": {"type": "string", "minLength": 1, "maxLength": 128},
+        "description": {"type": "string", "minLength": 1, "maxLength": 512},
+        "side_effect": {
+          "enum": ["none", "idempotent", "reconcilable", "non_idempotent"]
+        },
+        "required_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/gate"}
+        },
+        "failure_mode": {"const": "fail_closed"},
+        "registration_state": {"enum": ["planned_disabled", "registered"]},
+        "implementation": {
+          "type": ["string", "null"],
+          "pattern": "^(app|scripts)/[A-Za-z0-9_./-]+\\.py$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "default_disposition": "deny",
+  "reviewed_at": "2026-07-26",
+  "required_operation_kinds": [
+    "api_mutation",
+    "worker_task",
+    "tool",
+    "provider_egress",
+    "telemetry_egress",
+    "persistence",
+    "artifact_io",
+    "extension_process",
+    "parser_process",
+    "secret_resolution",
+    "subprocess"
+  ],
+  "gate_catalog": [
+    "authentication",
+    "authorization",
+    "schema_validation",
+    "idempotency",
+    "policy",
+    "budget",
+    "egress",
+    "sandbox",
+    "result_filter",
+    "audit",
+    "cancellation"
+  ],
+  "operations": [
+    {
+      "id": "harness.api.workspace.mutate",
+      "kind": "api_mutation",
+      "owner": "Harness API owner",
+      "description": "Open, close, or update a workspace through the authenticated API.",
+      "side_effect": "idempotent",
+      "required_gates": ["authentication", "authorization", "schema_validation", "idempotency", "policy", "budget", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.api.thread.mutate",
+      "kind": "api_mutation",
+      "owner": "Harness API owner",
+      "description": "Create, resume, fork, archive, or compact a thread.",
+      "side_effect": "idempotent",
+      "required_gates": ["authentication", "authorization", "schema_validation", "idempotency", "policy", "budget", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.api.turn.mutate",
+      "kind": "api_mutation",
+      "owner": "Harness runtime owner",
+      "description": "Start, steer, cancel, or retry a bounded turn.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authentication", "authorization", "schema_validation", "idempotency", "policy", "budget", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.api.approval.respond",
+      "kind": "api_mutation",
+      "owner": "Harness policy owner",
+      "description": "Respond to a hash-bound durable approval request.",
+      "side_effect": "non_idempotent",
+      "required_gates": ["authentication", "authorization", "schema_validation", "idempotency", "policy", "budget", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.worker.task.execute",
+      "kind": "worker_task",
+      "owner": "Harness scheduler owner",
+      "description": "Execute one leased and fenced task node in an isolated worker scope.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authentication", "authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.tool.file.read",
+      "kind": "tool",
+      "owner": "Harness tool owner",
+      "description": "Read bounded content from an authorized canonical workspace path.",
+      "side_effect": "none",
+      "required_gates": ["authorization", "schema_validation", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.tool.file.write",
+      "kind": "tool",
+      "owner": "Harness tool owner",
+      "description": "Write or patch an authorized workspace path through an isolated operation.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.tool.process.spawn",
+      "kind": "tool",
+      "owner": "Harness sandbox owner",
+      "description": "Execute a structured command inside an approved OS sandbox profile.",
+      "side_effect": "non_idempotent",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.provider.request",
+      "kind": "provider_egress",
+      "owner": "Harness provider owner",
+      "description": "Send one canonical bounded model request through approved provider egress.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "egress", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.telemetry.export",
+      "kind": "telemetry_egress",
+      "owner": "Harness observability owner",
+      "description": "Export redacted bounded telemetry to an approved destination.",
+      "side_effect": "idempotent",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "egress", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.journal.append",
+      "kind": "persistence",
+      "owner": "Harness journal owner",
+      "description": "Append canonical events and update deterministic projections transactionally.",
+      "side_effect": "idempotent",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.artifact.write",
+      "kind": "artifact_io",
+      "owner": "Harness artifact owner",
+      "description": "Publish a bounded digest-verified immutable artifact to local or approved S3 storage.",
+      "side_effect": "idempotent",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "egress", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.extension.mcp.start",
+      "kind": "extension_process",
+      "owner": "Harness extension owner",
+      "description": "Start an approved MCP server with filtered environment and bounded transport.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.extension.plugin.start",
+      "kind": "extension_process",
+      "owner": "Harness extension owner",
+      "description": "Start an approved out-of-process plugin with narrow capabilities.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.extension.mcp.remote.invoke",
+      "kind": "extension_process",
+      "owner": "Harness extension owner",
+      "description": "Call an approved remote MCP endpoint through bounded authenticated egress.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "egress", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.hook.security.invoke",
+      "kind": "extension_process",
+      "owner": "Harness hook owner",
+      "description": "Invoke a typed fail-closed security hook outside the trusted process.",
+      "side_effect": "reconcilable",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.document.parse",
+      "kind": "parser_process",
+      "owner": "Harness document owner",
+      "description": "Parse a bounded authorized artifact in an isolated parser worker.",
+      "side_effect": "idempotent",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.secret.resolve",
+      "kind": "secret_resolution",
+      "owner": "Harness secret owner",
+      "description": "Resolve an opaque destination-bound secret only at an approved boundary.",
+      "side_effect": "none",
+      "required_gates": ["authorization", "schema_validation", "policy", "budget", "egress", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    },
+    {
+      "id": "harness.sandbox.subprocess.start",
+      "kind": "subprocess",
+      "owner": "Harness sandbox owner",
+      "description": "Create the only allowed harness-owned tool or extension process.",
+      "side_effect": "non_idempotent",
+      "required_gates": ["authorization", "schema_validation", "idempotency", "policy", "budget", "sandbox", "result_filter", "audit", "cancellation"],
+      "failure_mode": "fail_closed",
+      "registration_state": "planned_disabled",
+      "implementation": null
+    }
+  ]
+}
