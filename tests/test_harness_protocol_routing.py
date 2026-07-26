@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.services.harness.protocol import (
+    MAXIMUM_PROVIDER_ROUTE_COST_MICROUSD,
     DataClassification,
     ProviderRequirements,
     ProviderRoute,
@@ -109,6 +110,11 @@ def test_eligible_provider_route_must_satisfy_every_requirement() -> None:
         decision(eligible_routes=(route(estimated_cost_microusd=100_001),))
     with pytest.raises(ValidationError, match="violates requirements"):
         decision(eligible_routes=(route(price_active=False),))
+    over_budget = route(
+        estimated_cost_microusd=MAXIMUM_PROVIDER_ROUTE_COST_MICROUSD
+    )
+    with pytest.raises(ValidationError, match="violates requirements"):
+        decision(eligible_routes=(over_budget,))
     with pytest.raises(ValidationError, match="violates requirements"):
         decision(eligible_routes=(route(capabilities=("reasoning",)),))
     with pytest.raises(ValidationError, match="violates requirements"):
