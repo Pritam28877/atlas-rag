@@ -2866,6 +2866,84 @@
       "title": "ProviderRequirements",
       "type": "object"
     },
+    "ProviderRetryDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ProviderRetryDecisionCode"
+        },
+        "current_attempt": {
+          "maximum": 64,
+          "minimum": 1,
+          "title": "Current Attempt",
+          "type": "integer"
+        },
+        "decided_at": {
+          "format": "date-time",
+          "title": "Decided At",
+          "type": "string"
+        },
+        "delay_ms": {
+          "anyOf": [
+            {
+              "maximum": 3600000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Delay Ms"
+        },
+        "next_attempt": {
+          "anyOf": [
+            {
+              "maximum": 64,
+              "minimum": 2,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Attempt"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "pattern": "^[^\\x00]+$",
+          "title": "Reason",
+          "type": "string"
+        },
+        "retry": {
+          "title": "Retry",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "retry",
+        "code",
+        "reason",
+        "current_attempt",
+        "decided_at"
+      ],
+      "title": "ProviderRetryDecision",
+      "type": "object"
+    },
+    "ProviderRetryDecisionCode": {
+      "enum": [
+        "ambiguous",
+        "attempts_exhausted",
+        "retry",
+        "retry_prohibited",
+        "wall_time_exhausted"
+      ],
+      "title": "ProviderRetryDecisionCode",
+      "type": "string"
+    },
     "ProviderRoute": {
       "additionalProperties": false,
       "properties": {
@@ -4904,6 +4982,9 @@
     },
     "ProviderEgressAuditRecord": {
       "$ref": "#/$defs/ProviderEgressAuditRecord"
+    },
+    "ProviderRetryDecision": {
+      "$ref": "#/$defs/ProviderRetryDecision"
     },
     "ProviderRouteDecisionRecord": {
       "$ref": "#/$defs/ProviderRouteDecisionRecord"
