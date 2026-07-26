@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from app.services.harness.journal.contracts import (
     AppendRequest,
@@ -21,9 +22,16 @@ from app.services.harness.journal.contracts import (
     raise_idempotency_conflict,
 )
 from app.services.harness.journal.errors import JournalStorageError
+from app.services.harness.journal.projection_contracts import ProjectionDefinition
+from app.services.harness.journal.projection_online import (
+    prepare_online_projections,
+)
 from app.services.harness.journal.receipts import build_append_result
 from app.services.harness.journal.sqlite_connection import (
     SQLiteConnectionOwner,
+)
+from app.services.harness.journal.sqlite_projection_apply import (
+    apply_online_projections,
 )
 from app.services.harness.protocol import EventRecord
 
@@ -36,9 +44,11 @@ class SQLiteEventJournal:
         connection_owner: SQLiteConnectionOwner,
         *,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        projections: Sequence[ProjectionDefinition[Any]] = (),
     ) -> None:
         self._connection_owner = connection_owner
         self._clock = clock
+        self._projections = prepare_online_projections(projections)
 
     @classmethod
     async def open(
@@ -48,6 +58,7 @@ class SQLiteEventJournal:
         busy_timeout_ms: int = 5_000,
         maximum_pending_operations: int = 64,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        projections: Sequence[ProjectionDefinition[Any]] = (),
     ) -> SQLiteEventJournal:
         connection_owner = SQLiteConnectionOwner(
             database_path,
@@ -55,7 +66,11 @@ class SQLiteEventJournal:
             maximum_pending_operations=maximum_pending_operations,
         )
         await connection_owner.initialize()
-        return cls(connection_owner, clock=clock)
+        return cls(
+            connection_owner,
+            clock=clock,
+            projections=projections,
+        )
 
     async def append(self, request: AppendRequest) -> AppendResult:
         return await self._connection_owner.execute(
@@ -101,6 +116,12 @@ class SQLiteEventJournal:
             if current_sequence != request.expected_sequence:
                 raise_expected_sequence_conflict(current_sequence)
 
+            prior_journal_sequence = 0
+            if self._projections:
+                prior_journal_sequence = self._last_workspace_journal_sequence(
+                    connection,
+                    request.workspace_id,
+                )
             connection.execute(
                 """
                 INSERT OR IGNORE INTO harness_aggregates
@@ -164,6 +185,22 @@ class SQLiteEventJournal:
                 request,
                 committed_at,
                 tuple(journal_sequences),
+            )
+            journal_events = tuple(
+                JournalEvent(journal_sequence=journal_sequence, event=event)
+                for journal_sequence, event in zip(
+                    journal_sequences,
+                    request.events,
+                    strict=True,
+                )
+            )
+            apply_online_projections(
+                connection,
+                self._projections,
+                request.workspace_id,
+                journal_events,
+                prior_journal_sequence=prior_journal_sequence,
+                updated_at=committed_at,
             )
             connection.execute(
                 """
@@ -253,6 +290,21 @@ class SQLiteEventJournal:
             events=events,
             has_more=has_more,
         )
+
+    @staticmethod
+    def _last_workspace_journal_sequence(
+        connection: sqlite3.Connection,
+        workspace_id: str,
+    ) -> int:
+        value = connection.execute(
+            """
+            SELECT MAX(journal_sequence)
+            FROM harness_events
+            WHERE workspace_id = ?
+            """,
+            (workspace_id,),
+        ).fetchone()[0]
+        return 0 if value is None else int(value)
 
     @staticmethod
     def _current_sequence(

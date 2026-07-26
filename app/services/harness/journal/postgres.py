@@ -31,7 +31,6 @@ from app.services.harness.journal.errors import JournalStorageError
 from app.services.harness.journal.postgres_batch import insert_event_batch
 from app.services.harness.journal.postgres_projection_apply import (
     apply_online_projections,
-    prepare_online_projections,
 )
 from app.services.harness.journal.postgres_sql import (
     BUFFERED_COMMIT,
@@ -49,13 +48,13 @@ from app.services.harness.journal.postgres_sql import (
     UPDATE_POSITION,
 )
 from app.services.harness.journal.projection_contracts import ProjectionDefinition
+from app.services.harness.journal.projection_online import (
+    prepare_online_projections,
+)
 from app.services.harness.journal.receipts import build_append_result
 from app.services.harness.protocol import EventRecord
 
-type TransactionFactory = Callable[
-    [],
-    AbstractAsyncContextManager[AsyncSession],
-]
+type TransactionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 
 
 class PostgresEventJournal:
