@@ -96,8 +96,14 @@ jobs:
       - name: Verify dependency sources, licenses, and vulnerabilities
         run: uv run --locked python scripts/verify_harness_supply_chain.py
 
+      - name: Verify generated artifacts
+        run: uv run --locked python scripts/verify_harness_generated_artifacts.py
+
+      - name: Verify reproducible SBOM
+        run: uv run --locked python scripts/verify_harness_sbom.py
+
       - name: Run non-live test suite
         run: uv run --locked pytest -q -m "not ocr_integration"
 
-      - name: Build source and wheel distributions
-        run: uv build
+      - name: Verify reproducible source and wheel distributions
+        run: uv run --locked python scripts/verify_harness_packages.py

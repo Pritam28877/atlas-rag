@@ -109,6 +109,23 @@ whether separation, additional records, patent review, or non-use is required.
 
 ## Dependency and release gates
 
+Run the current non-live engineering gates from a locked checkout:
+
+```bash
+uv run python scripts/verify_harness_supply_chain.py
+uv run python scripts/verify_harness_generated_artifacts.py
+uv run python scripts/verify_harness_sbom.py
+uv run python scripts/verify_harness_packages.py
+```
+
+The supply-chain policy pins the future TypeScript generation boundary to Node
+22.22.0 and npm 10.9.4; it does not add Node to the Python runtime. The package
+gate bundles the release-blocking engineering notice and rejects unsafe archive
+paths, secret-bearing files, oversized output, and non-reproducible archives.
+The configured container budget becomes enforceable when P15 creates a runtime
+container. These automated checks preserve—not resolve—the outbound-license and
+third-party-license blockers recorded in the policy.
+
 Every release candidate must provide:
 
 - locked Python and TypeScript dependency graphs;
