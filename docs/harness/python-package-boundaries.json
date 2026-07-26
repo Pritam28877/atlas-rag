@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "service_root": "app/services/harness",
+  "client_packages": [
+    "app/api/v1/harness",
+    "app/cli/harness"
+  ],
+  "max_python_file_lines": 500,
+  "forbidden_service_imports": [
+    "app.api",
+    "app.cli",
+    "app.workers"
+  ],
+  "forbidden_core_imports": [
+    "boto3",
+    "celery",
+    "fastapi",
+    "httpx",
+    "sqlalchemy"
+  ],
+  "side_effect_import_owners": {
+    "boto3": ["artifacts", "providers"],
+    "celery": [],
+    "fastapi": [],
+    "httpx": ["extensions", "observability", "providers"],
+    "sqlalchemy": ["journal"],
+    "subprocess": ["sandbox"]
+  },
+  "packages": [
+    {
+      "name": "protocol",
+      "layer": "domain",
+      "allowed_harness_dependencies": []
+    },
+    {
+      "name": "events",
+      "layer": "domain",
+      "allowed_harness_dependencies": ["protocol"]
+    },
+    {
+      "name": "context",
+      "layer": "core",
+      "allowed_harness_dependencies": ["events", "protocol"]
+    },
+    {
+      "name": "policy",
+      "layer": "core",
+      "allowed_harness_dependencies": ["events", "protocol"]
+    },
+    {
+      "name": "memory",
+      "layer": "core",
+      "allowed_harness_dependencies": ["events", "protocol"]
+    },
+    {
+      "name": "evaluation",
+      "layer": "core",
+      "allowed_harness_dependencies": ["events", "protocol"]
+    },
+    {
+      "name": "runtime",
+      "layer": "core",
+      "allowed_harness_dependencies": [
+        "context",
+        "events",
+        "policy",
+        "protocol"
+      ]
+    },
+    {
+      "name": "sessions",
+      "layer": "core",
+      "allowed_harness_dependencies": ["events", "protocol", "runtime"]
+    },
+    {
+      "name": "scheduler",
+      "layer": "core",
+      "allowed_harness_dependencies": ["events", "policy", "protocol"]
+    },
+    {
+      "name": "journal",
+      "layer": "adapter",
+      "allowed_harness_dependencies": ["events", "protocol"]
+    },
+    {
+      "name": "artifacts",
+      "layer": "adapter",
+      "allowed_harness_dependencies": ["protocol"]
+    },
+    {
+      "name": "providers",
+      "layer": "adapter",
+      "allowed_harness_dependencies": ["protocol"]
+    },
+    {
+      "name": "sandbox",
+      "layer": "adapter",
+      "allowed_harness_dependencies": ["policy", "protocol"]
+    },
+    {
+      "name": "tools",
+      "layer": "adapter",
+      "allowed_harness_dependencies": [
+        "artifacts",
+        "policy",
+        "protocol",
+        "sandbox"
+      ]
+    },
+    {
+      "name": "extensions",
+      "layer": "adapter",
+      "allowed_harness_dependencies": [
+        "policy",
+        "protocol",
+        "sandbox",
+        "tools"
+      ]
+    },
+    {
+      "name": "documents",
+      "layer": "adapter",
+      "allowed_harness_dependencies": ["artifacts", "protocol", "tools"]
+    },
+    {
+      "name": "observability",
+      "layer": "adapter",
+      "allowed_harness_dependencies": ["events", "protocol"]
+    }
+  ]
+}
