@@ -26,6 +26,12 @@ from app.services.harness.providers.credential_material import (
     CredentialSecretBackend,
     CredentialSecretMaterial,
 )
+from app.services.harness.providers.environment_credentials import (
+    EnvironmentCredentialBackend,
+    EnvironmentCredentialError,
+    EnvironmentCredentialErrorCode,
+    EnvironmentCredentialReference,
+)
 from app.services.harness.providers.health_registry import (
     ProviderHealthRegistry,
     ProviderHealthRegistryError,
@@ -55,6 +61,10 @@ __all__ = (
     "CredentialLease",
     "CredentialSecretBackend",
     "CredentialSecretMaterial",
+    "EnvironmentCredentialBackend",
+    "EnvironmentCredentialError",
+    "EnvironmentCredentialErrorCode",
+    "EnvironmentCredentialReference",
     "LoadedProviderConfiguration",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",
