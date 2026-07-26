@@ -46,6 +46,14 @@ from app.services.harness.runtime.peer_auth import (
     PeerSessionTokenManager,
     VerifiedPeerSession,
 )
+from app.services.harness.runtime.recovery_classification import (
+    LeaseRecoveryState,
+    OperationRecoveryAction,
+    OperationRecoveryDecision,
+    RecoveryLease,
+    classify_operation_recovery,
+    expire_recovery_lease,
+)
 from app.services.harness.runtime.stdio_auth import (
     StdioParentCredentialReader,
     StdioParentIdentityError,
@@ -105,6 +113,9 @@ __all__ = (
     "LocalConnection",
     "LocalConnectionFactory",
     "LocalStreamRunner",
+    "LeaseRecoveryState",
+    "OperationRecoveryAction",
+    "OperationRecoveryDecision",
     "PeerAuthenticationError",
     "PeerAuthenticationErrorCode",
     "PeerCredentials",
@@ -112,6 +123,7 @@ __all__ = (
     "PeerSessionTokenManager",
     "PublishDisposition",
     "RequestAdmission",
+    "RecoveryLease",
     "ResyncRequired",
     "SequencedEvent",
     "SubscriptionDelivery",
@@ -132,4 +144,6 @@ __all__ = (
     "VerifiedPeerSession",
     "decode_command",
     "encode_frame",
+    "classify_operation_recovery",
+    "expire_recovery_lease",
 )
