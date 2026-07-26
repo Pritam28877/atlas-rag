@@ -959,6 +959,15 @@
       "title": "DecisionOutcome",
       "type": "string"
     },
+    "EgressAuditOutcome": {
+      "enum": [
+        "authorized",
+        "failed",
+        "succeeded"
+      ],
+      "title": "EgressAuditOutcome",
+      "type": "string"
+    },
     "EvaluationFailure": {
       "additionalProperties": false,
       "properties": {
@@ -2293,6 +2302,118 @@
       "maxLength": 32768,
       "minLength": 1,
       "type": "string"
+    },
+    "ProviderEgressAuditRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt": {
+          "maximum": 64,
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "body_bytes": {
+          "maximum": 16777216,
+          "minimum": 1,
+          "title": "Body Bytes",
+          "type": "integer"
+        },
+        "body_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Body Sha256",
+          "type": "string"
+        },
+        "classification": {
+          "$ref": "#/$defs/DataClassification"
+        },
+        "destination_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Destination Sha256",
+          "type": "string"
+        },
+        "inspection_policy_revision_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Inspection Policy Revision Sha256",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/EgressAuditOutcome"
+        },
+        "provider": {
+          "$ref": "#/$defs/ProviderName"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "pattern": "^[^\\x00]+$",
+          "title": "Reason",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "redirect_count": {
+          "maximum": 5,
+          "minimum": 0,
+          "title": "Redirect Count",
+          "type": "integer"
+        },
+        "request_id": {
+          "$ref": "#/$defs/RequestId"
+        },
+        "response_bytes": {
+          "anyOf": [
+            {
+              "maximum": 16777216,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Response Bytes"
+        },
+        "response_status": {
+          "anyOf": [
+            {
+              "maximum": 599,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Response Status"
+        },
+        "target_url_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Target Url Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "provider",
+        "destination_sha256",
+        "target_url_sha256",
+        "classification",
+        "body_sha256",
+        "inspection_policy_revision_sha256",
+        "body_bytes",
+        "attempt",
+        "redirect_count",
+        "outcome",
+        "reason",
+        "recorded_at"
+      ],
+      "title": "ProviderEgressAuditRecord",
+      "type": "object"
     },
     "ProviderError": {
       "additionalProperties": false,
@@ -4517,6 +4638,9 @@
     },
     "PrincipalRecord": {
       "$ref": "#/$defs/PrincipalRecord"
+    },
+    "ProviderEgressAuditRecord": {
+      "$ref": "#/$defs/ProviderEgressAuditRecord"
     },
     "ProviderRouteDecisionRecord": {
       "$ref": "#/$defs/ProviderRouteDecisionRecord"

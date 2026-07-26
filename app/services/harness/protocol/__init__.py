@@ -155,6 +155,10 @@ from app.services.harness.protocol.provider_catalog import (
     ProviderListPage,
     ProviderListPageRequest,
 )
+from app.services.harness.protocol.provider_egress import (
+    EgressAuditOutcome,
+    ProviderEgressAuditRecord,
+)
 from app.services.harness.protocol.provider_health import (
     ProviderHealthStatus,
     ProviderRouteHealthSnapshot,
@@ -288,6 +292,7 @@ __all__ = (
     "EvaluationStartCommand",
     "EvaluationState",
     "EvaluationStatusCommand",
+    "EgressAuditOutcome",
     "EventActorKind",
     "EventAcknowledgeCommand",
     "EventId",
@@ -339,6 +344,7 @@ __all__ = (
     "ProviderDataPolicyDecision",
     "ProviderError",
     "ProviderErrorCode",
+    "ProviderEgressAuditRecord",
     "ProviderFailureClass",
     "ProviderFinishReason",
     "ProviderHealthStatus",

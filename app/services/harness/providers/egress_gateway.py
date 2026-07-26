@@ -9,12 +9,14 @@ from datetime import datetime, timedelta
 from enum import StrEnum
 from urllib.parse import urlsplit
 
-from app.services.harness.protocol import CredentialSource
+from app.services.harness.protocol import (
+    CredentialSource,
+    EgressAuditOutcome,
+    ProviderEgressAuditRecord,
+)
 from app.services.harness.providers.credential_material import CredentialLease
 from app.services.harness.providers.egress_contracts import (
-    EgressAuditOutcome,
     ProviderAddressResolver,
-    ProviderEgressAuditRecord,
     ProviderEgressAuditSink,
     ProviderEgressConnector,
     ProviderEgressRequest,

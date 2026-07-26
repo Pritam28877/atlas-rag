@@ -642,6 +642,11 @@ export type DecisionId = string;
  * via the `definition` "DecisionOutcome".
  */
 export type DecisionOutcome = "allow" | "deny" | "require_approval";
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "EgressAuditOutcome".
+ */
+export type EgressAuditOutcome = "authorized" | "failed" | "succeeded";
 export type FixtureSha256 = string;
 export type Reason9 = string;
 export type Name = string;
@@ -882,6 +887,22 @@ export type ProviderDecisionId = string;
  * via the `definition` "ProviderDeltaText".
  */
 export type ProviderDeltaText = string;
+export type Attempt1 = number;
+export type BodyBytes = number;
+export type BodySha256 = string;
+export type DestinationSha256 = string;
+export type InspectionPolicyRevisionSha256 = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderName".
+ */
+export type ProviderName = string;
+export type Reason12 = string;
+export type RecordedAt = string;
+export type RedirectCount = number;
+export type ResponseBytes = number | null;
+export type ResponseStatus = number | null;
+export type TargetUrlSha256 = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderFailureClass".
@@ -895,14 +916,9 @@ export type ProviderFailureClass =
   | "malformed"
   | "internal";
 export type Kind25 = "error";
-export type Reason12 = string;
+export type Reason13 = string;
 export type RetryAllowed = boolean;
 export type Sequence2 = number;
-/**
- * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "ProviderName".
- */
-export type ProviderName = string;
 export type Kind26 = "reasoning_delta";
 export type Sequence3 = number;
 export type AllowTraining = boolean;
@@ -1370,7 +1386,7 @@ export type ContextFeatures =
       string,
     ];
 export type ContextWindowTokens1 = number;
-export type DestinationSha256 = string;
+export type DestinationSha2561 = string;
 export type EstimatedCostMicrousd = number;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -1614,7 +1630,7 @@ export type EligibleRoutes = ProviderRoute[];
 export type HealthSnapshotSha2561 = string | null;
 export type ModelRevisionSha2562 = string | null;
 export type PriceVersionSha2561 = string | null;
-export type Reason13 = string;
+export type Reason14 = string;
 /**
  * @maxItems 16
  */
@@ -1842,7 +1858,7 @@ export type RootUri = string;
  * via the `definition` "TaskGraphId".
  */
 export type TaskGraphId = string;
-export type Attempt1 = number;
+export type Attempt2 = number;
 export type CompletedAt1 = string | null;
 export type CreatedAt3 = string;
 /**
@@ -2520,12 +2536,33 @@ export interface ProviderCompleted {
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderEgressAuditRecord".
+ */
+export interface ProviderEgressAuditRecord {
+  attempt: Attempt1;
+  body_bytes: BodyBytes;
+  body_sha256: BodySha256;
+  classification: DataClassification;
+  destination_sha256: DestinationSha256;
+  inspection_policy_revision_sha256: InspectionPolicyRevisionSha256;
+  outcome: EgressAuditOutcome;
+  provider: ProviderName;
+  reason: Reason12;
+  recorded_at: RecordedAt;
+  redirect_count: RedirectCount;
+  request_id: RequestId;
+  response_bytes?: ResponseBytes;
+  response_status?: ResponseStatus;
+  target_url_sha256: TargetUrlSha256;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderError".
  */
 export interface ProviderError {
   failure_class: ProviderFailureClass;
   kind?: Kind25;
-  reason: Reason12;
+  reason: Reason13;
   retry_allowed: RetryAllowed;
   sequence: Sequence2;
 }
@@ -2564,7 +2601,7 @@ export interface ProviderRoute {
   capabilities: Capabilities1;
   context_features?: ContextFeatures;
   context_window_tokens: ContextWindowTokens1;
-  destination_sha256: DestinationSha256;
+  destination_sha256: DestinationSha2561;
   estimated_cost_microusd: EstimatedCostMicrousd;
   health: RouteHealth;
   health_snapshot_sha256: HealthSnapshotSha256;
@@ -2609,7 +2646,7 @@ export interface RejectedProviderRoute {
   model_revision_sha256?: ModelRevisionSha2562;
   price_version_sha256?: PriceVersionSha2561;
   provider?: ProviderName | null;
-  reason: Reason13;
+  reason: Reason14;
   rejection_codes?: RejectionCodes;
   route_id: RouteId;
 }
@@ -2668,7 +2705,7 @@ export interface ProviderTokenUsage {
  * via the `definition` "TaskNodeRecord".
  */
 export interface TaskNodeRecord {
-  attempt: Attempt1;
+  attempt: Attempt2;
   budget: ExecutionBudget;
   completed_at?: CompletedAt1;
   created_at: CreatedAt3;

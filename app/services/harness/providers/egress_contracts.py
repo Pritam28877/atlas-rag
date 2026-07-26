@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from datetime import datetime
-from enum import StrEnum
 from typing import Protocol, Self
 
 from pydantic import Field, model_validator
@@ -13,11 +12,11 @@ from pydantic import Field, model_validator
 from app.services.harness.protocol import (
     DataClassification,
     ProviderCredentialHandle,
+    ProviderEgressAuditRecord,
     ProviderName,
     RequestId,
     Sha256,
     StrictProtocolModel,
-    UtcTimestamp,
 )
 from app.services.harness.protocol.base import BoundedReason
 from app.services.harness.providers.credential_material import CredentialLease
@@ -153,34 +152,6 @@ class ProviderEgressResponse:
             f"redirect={'<present>' if self.redirect_url else None}, "
             "body=<redacted>)"
         )
-
-
-class EgressAuditOutcome(StrEnum):
-    AUTHORIZED = "authorized"
-    FAILED = "failed"
-    SUCCEEDED = "succeeded"
-
-
-class ProviderEgressAuditRecord(StrictProtocolModel):
-    request_id: RequestId
-    provider: ProviderName
-    destination_sha256: Sha256
-    target_url_sha256: Sha256
-    classification: DataClassification
-    body_sha256: Sha256
-    inspection_policy_revision_sha256: Sha256
-    body_bytes: int = Field(ge=1, le=16 * 1024 * 1024)
-    attempt: int = Field(ge=1, le=64)
-    redirect_count: int = Field(ge=0, le=5)
-    outcome: EgressAuditOutcome
-    response_status: int | None = Field(default=None, ge=100, le=599)
-    response_bytes: int | None = Field(
-        default=None,
-        ge=0,
-        le=16 * 1024 * 1024,
-    )
-    reason: BoundedReason
-    recorded_at: UtcTimestamp
 
 
 class PayloadInspection(StrictProtocolModel):
