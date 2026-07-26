@@ -14,6 +14,7 @@ class HarnessSettings(ImmutableSettingsModel):
     workspace_root: Path | None = None
     state_directory: Path | None = None
     isolation_executable: Path | None = None
+    provider_config_path: Path | None = None
     local_transport: Literal["stdio", "unix"] = "stdio"
     unix_socket_path: Path | None = None
     loopback_http_enabled: Literal[False] = False
@@ -62,6 +63,7 @@ class HarnessSettings(ImmutableSettingsModel):
             "workspace_root": self.workspace_root,
             "state_directory": self.state_directory,
             "isolation_executable": self.isolation_executable,
+            "provider_config_path": self.provider_config_path,
         }
         missing_paths = [
             name for name, path in required_paths.items() if path is None
@@ -82,12 +84,14 @@ class HarnessSettings(ImmutableSettingsModel):
             self.workspace_root is None
             or self.state_directory is None
             or self.isolation_executable is None
+            or self.provider_config_path is None
         ):
             raise ValueError("enabled harness path validation failed")
 
         workspace_root = self.workspace_root.resolve(strict=False)
         state_directory = self.state_directory.resolve(strict=False)
         isolation_executable = self.isolation_executable.resolve(strict=False)
+        provider_config_path = self.provider_config_path.resolve(strict=False)
         if (
             workspace_root == state_directory
             or workspace_root.is_relative_to(state_directory)
@@ -101,6 +105,12 @@ class HarnessSettings(ImmutableSettingsModel):
         ):
             raise ValueError(
                 "harness isolation_executable must be outside writable roots"
+            )
+        if provider_config_path.is_relative_to(workspace_root) or (
+            provider_config_path.is_relative_to(state_directory)
+        ):
+            raise ValueError(
+                "harness provider_config_path must be outside writable roots"
             )
         self._validate_transport(state_directory)
         return self
