@@ -33,6 +33,16 @@ from app.services.harness.providers.bedrock_decode_support import (
 from app.services.harness.providers.bedrock_decoder import (
     BedrockConverseStreamDecoder,
 )
+from app.services.harness.providers.bedrock_identity import (
+    BedrockCredentialSourceKind,
+    BedrockIdentityReference,
+    BedrockIdentityReferenceId,
+)
+from app.services.harness.providers.bedrock_policy import (
+    AuthorizedBedrockRoute,
+    BedrockRoutePolicy,
+    authorize_bedrock_route,
+)
 from app.services.harness.providers.config_contracts import (
     LoadedProviderConfiguration,
     ProviderConfiguration,
@@ -217,6 +227,9 @@ __all__ = (
     "BedrockConverseStreamDecoder",
     "BedrockDecodeError",
     "BedrockDecodeErrorCode",
+    "BedrockCredentialSourceKind",
+    "BedrockIdentityReference",
+    "BedrockIdentityReferenceId",
     "BedrockInferenceConfiguration",
     "BedrockMessage",
     "BedrockStreamMetadata",
@@ -224,6 +237,8 @@ __all__ = (
     "BedrockTextContent",
     "BedrockToolResultContent",
     "BedrockToolSpecification",
+    "BedrockRoutePolicy",
+    "AuthorizedBedrockRoute",
     "CompiledBedrockConverseStreamRequest",
     "LoadedProviderConfiguration",
     "MAXIMUM_OPENAI_FUNCTION_CALLS",
@@ -291,6 +306,7 @@ __all__ = (
     "SafeEgressHeader",
     "SystemProviderAddressResolver",
     "authorize_egress_target",
+    "authorize_bedrock_route",
     "canonical_provider_origin",
     "canonical_provider_url",
     "compile_routing_metadata",
