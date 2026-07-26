@@ -16,11 +16,11 @@ from app.services.harness.journal.contracts import (
     raise_expected_sequence_conflict,
     raise_idempotency_conflict,
 )
-from app.services.harness.journal.sqlite import SQLiteEventJournal
-from app.services.harness.journal.sqlite_connection import (
+from app.services.harness.journal.errors import (
     JournalBusyError,
     JournalStorageError,
 )
+from app.services.harness.journal.sqlite import SQLiteEventJournal
 
 __all__ = (
     "AppendRequest",
