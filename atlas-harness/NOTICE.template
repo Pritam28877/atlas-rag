@@ -1,0 +1,14 @@
+Atlas Harness
+Copyright [YEAR] [APPROVED OWNER]
+
+Distribution is not approved while this template is present.
+
+Before release, generate this file from:
+- docs/harness/provenance-manifest.json
+- Cargo.lock and the release SBOM
+- every adapted_files entry
+- required Apache-2.0 NOTICE content
+- retained MIT copyright and license notices
+
+The generated NOTICE must name immutable upstream revisions and material local
+changes. Documentation links do not replace required license text.

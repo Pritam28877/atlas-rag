@@ -30,6 +30,9 @@ dist/
 *.egg
 pip-wheel-metadata/
 
+# Atlas Harness Rust build artifacts
+atlas-harness/target/
+
 # Local runtime data and logs
 *.log
 *.sqlite

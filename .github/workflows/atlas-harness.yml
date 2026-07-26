@@ -1,0 +1,86 @@
+name: Atlas Harness
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/atlas-harness.yml"
+      - "atlas-harness/**"
+      - "docs/harness/**"
+      - "scripts/verify_codex_rpc_inventory.py"
+      - "scripts/verify_harness_provenance.py"
+      - "tests/test_codex_rpc_inventory.py"
+      - "tests/test_harness_provenance.py"
+  push:
+    branches: [develop]
+    paths:
+      - ".github/workflows/atlas-harness.yml"
+      - "atlas-harness/**"
+      - "docs/harness/**"
+      - "scripts/verify_codex_rpc_inventory.py"
+      - "scripts/verify_harness_provenance.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-harness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: atlas-harness
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal \
+            --component clippy --component rustfmt --component rust-src
+          rustup override set 1.95.0
+
+      - name: Verify source provenance gates
+        working-directory: .
+        run: |
+          python3 scripts/verify_harness_provenance.py
+          python3 scripts/verify_codex_rpc_inventory.py
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Check lints
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Verify workspace boundaries
+        working-directory: .
+        run: python3 scripts/verify_atlas_workspace.py
+
+      - name: Run tests
+        run: cargo test --workspace --all-targets --locked
+
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps --locked
+
+      - name: Install pinned audit tools
+        run: |
+          cargo install cargo-deny --version 0.20.2 --locked
+          cargo install cargo-audit --version 0.22.2 --locked
+
+      - name: Check licenses and sources
+        run: cargo deny check
+
+      - name: Check advisories
+        run: cargo audit
+
+      - name: Build bounded release binaries
+        run: cargo build --workspace --release --locked
+
+      - name: Check release binary budgets
+        working-directory: .
+        run: python3 scripts/verify_atlas_workspace.py --check-release-binaries

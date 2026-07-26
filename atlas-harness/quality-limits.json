@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "required_packages": [
+    "atlas-app-server",
+    "atlas-cli",
+    "atlas-context",
+    "atlas-core",
+    "atlas-documents",
+    "atlas-eval",
+    "atlas-events",
+    "atlas-extensions",
+    "atlas-memory",
+    "atlas-observe",
+    "atlas-policy",
+    "atlas-protocol",
+    "atlas-provider",
+    "atlas-sandbox",
+    "atlas-scheduler",
+    "atlas-tools"
+  ],
+  "trusted_kernel_packages": [
+    "atlas-context",
+    "atlas-core",
+    "atlas-documents",
+    "atlas-events",
+    "atlas-extensions",
+    "atlas-memory",
+    "atlas-observe",
+    "atlas-policy",
+    "atlas-protocol",
+    "atlas-provider",
+    "atlas-sandbox",
+    "atlas-scheduler",
+    "atlas-tools"
+  ],
+  "client_packages": [
+    "atlas-app-server",
+    "atlas-cli"
+  ],
+  "maximum_rust_file_lines": 500,
+  "maximum_release_binary_bytes": {
+    "atlas-app-server": 20971520,
+    "atlas-cli": 20971520
+  }
+}

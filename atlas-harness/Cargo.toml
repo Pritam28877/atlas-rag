@@ -1,0 +1,35 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/atlas-app-server",
+    "crates/atlas-cli",
+    "crates/atlas-context",
+    "crates/atlas-core",
+    "crates/atlas-documents",
+    "crates/atlas-eval",
+    "crates/atlas-events",
+    "crates/atlas-extensions",
+    "crates/atlas-memory",
+    "crates/atlas-observe",
+    "crates/atlas-policy",
+    "crates/atlas-protocol",
+    "crates/atlas-provider",
+    "crates/atlas-sandbox",
+    "crates/atlas-scheduler",
+    "crates/atlas-tools",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95.0"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "deny"
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
