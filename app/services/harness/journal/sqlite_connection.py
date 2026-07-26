@@ -15,6 +15,9 @@ from app.services.harness.journal.errors import (
     JournalBusyError,
     JournalStorageError,
 )
+from app.services.harness.journal.sqlite_migrations import (
+    SQLITE_MIGRATE_V1_TO_V2,
+)
 from app.services.harness.journal.sqlite_schema import (
     SQLITE_SCHEMA,
     SQLITE_SCHEMA_VERSION,
@@ -124,20 +127,55 @@ class SQLiteConnectionOwner:
             connection.execute(f"PRAGMA busy_timeout = {self._busy_timeout_ms}")
             connection.execute("PRAGMA journal_mode = WAL")
             connection.execute("PRAGMA synchronous = FULL")
-            connection.executescript(SQLITE_SCHEMA)
-            schema_version = connection.execute(
-                "SELECT schema_version FROM harness_journal_schema WHERE singleton = 1"
-            ).fetchone()
+            schema_version = self._schema_version(connection)
+            if schema_version is None:
+                connection.executescript(SQLITE_SCHEMA)
+            elif schema_version["schema_version"] == 1:
+                connection.executescript(SQLITE_MIGRATE_V1_TO_V2)
+                connection.executescript(SQLITE_SCHEMA)
+            elif schema_version["schema_version"] == SQLITE_SCHEMA_VERSION:
+                connection.executescript(SQLITE_SCHEMA)
+            else:
+                raise JournalStorageError("unsupported SQLite journal schema")
+            connection.execute("PRAGMA foreign_keys = ON")
+            migrated_version = self._schema_version(connection)
             if (
-                schema_version is None
-                or schema_version["schema_version"] != SQLITE_SCHEMA_VERSION
+                migrated_version is None
+                or migrated_version["schema_version"] != SQLITE_SCHEMA_VERSION
             ):
                 raise JournalStorageError("unsupported SQLite journal schema")
+            if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                raise JournalStorageError(
+                    "SQLite journal foreign keys are invalid"
+                )
             os.chmod(self._database_path, 0o600)
             self._connection = connection
         except BaseException:
             connection.close()
             raise
+
+    @staticmethod
+    def _schema_version(connection: sqlite3.Connection) -> sqlite3.Row | None:
+        schema_table = connection.execute(
+            """
+            SELECT 1 FROM sqlite_master
+            WHERE type = 'table' AND name = 'harness_journal_schema'
+            """
+        ).fetchone()
+        if schema_table is None:
+            return None
+        schema_version = connection.execute(
+            """
+            SELECT schema_version
+            FROM harness_journal_schema
+            WHERE singleton = 1
+            """
+        ).fetchone()
+        if schema_version is None:
+            raise JournalStorageError("SQLite journal schema version is missing")
+        if not isinstance(schema_version, sqlite3.Row):
+            raise JournalStorageError("SQLite journal schema version is invalid")
+        return schema_version
 
     def _validate_location(self) -> None:
         parent = self._database_path.parent
