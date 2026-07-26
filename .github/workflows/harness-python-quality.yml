@@ -83,7 +83,7 @@ jobs:
         run: uv run --locked python scripts/verify_harness_python_boundaries.py
 
       - name: Run non-live test suite
-        run: uv run --locked pytest -q
+        run: uv run --locked pytest -q -m "not ocr_integration"
 
       - name: Build source and wheel distributions
         run: uv build
