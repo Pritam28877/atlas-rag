@@ -1,0 +1,1 @@
+"""Local-compatible provider tests."""
