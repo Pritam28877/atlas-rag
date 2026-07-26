@@ -13,6 +13,13 @@ from app.services.harness.runtime.framing import (
     FrameErrorCode,
     encode_frame,
 )
+from app.services.harness.runtime.peer_auth import (
+    PeerAuthenticationError,
+    PeerAuthenticationErrorCode,
+    PeerCredentials,
+    PeerSessionTokenManager,
+    VerifiedPeerSession,
+)
 
 __all__ = (
     "AdmissionError",
@@ -21,7 +28,12 @@ __all__ = (
     "FrameDecoder",
     "FrameError",
     "FrameErrorCode",
+    "PeerAuthenticationError",
+    "PeerAuthenticationErrorCode",
+    "PeerCredentials",
+    "PeerSessionTokenManager",
     "RequestAdmission",
+    "VerifiedPeerSession",
     "decode_command",
     "encode_frame",
 )
