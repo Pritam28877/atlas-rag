@@ -83,6 +83,11 @@
       "allowed_harness_dependencies": ["events", "protocol"]
     },
     {
+      "name": "recovery",
+      "layer": "adapter",
+      "allowed_harness_dependencies": ["journal", "protocol", "runtime"]
+    },
+    {
       "name": "artifacts",
       "layer": "adapter",
       "allowed_harness_dependencies": ["protocol"]
