@@ -6,6 +6,7 @@ from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.config_base import MEBIBYTE, ImmutableSettingsModel
+from app.core.harness_config import HarnessSettings
 from app.core.pipeline_config import (
     EmbeddingSettings,
     IngestionPolicySettings,
@@ -212,6 +213,7 @@ class Settings(BaseSettings):
     telemetry: TelemetrySettings = Field(default_factory=TelemetrySettings)
     lifecycle: LifecycleSettings = Field(default_factory=LifecycleSettings)
     readiness: ReadinessSettings = Field(default_factory=ReadinessSettings)
+    harness: HarnessSettings = Field(default_factory=HarnessSettings)
     provider_timeouts: ProviderTimeoutSettings = Field(
         default_factory=ProviderTimeoutSettings
     )
