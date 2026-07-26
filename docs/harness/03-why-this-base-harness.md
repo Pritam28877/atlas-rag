@@ -1,24 +1,20 @@
-# Why Codex is the best base for Atlas Harness
+# Why Python is the best current base for Atlas Harness
 
-Status: proposed architecture decision, researched on 2026-07-25.
+Status: Python-first architecture decision, revised on 2026-07-26.
 
 ## Decision
 
-Use the Apache-2.0
-[OpenAI Codex repository](https://github.com/openai/codex/tree/4c43465133428898aa84f0bfc02c306ed65fb66a)
-as the base kernel. Extend it through a small set of upstream-compatible Rust
-crates and adapters. Selectively adapt MIT-licensed patterns from OpenCode and
-Jcode. Independently implement selected Claude Code behavior. The locally
-audited Orqen and documentIntelligence trees provide concrete architectural
-evidence, but neither exposes a license grant; copy none of their source until
-ownership and permission are recorded. Calling work “clean room” does not by
-itself settle legal obligations.
+Use this repository's Python 3.12, uv, FastAPI, Pydantic, SQLAlchemy,
+PostgreSQL, Celery, S3-compatible storage, and OpenTelemetry foundations as the
+current Atlas Harness base. Implement one Atlas-owned protocol and state
+machine. Keep untrusted tools, MCP servers, plugins, hooks, and parsers outside
+the FastAPI process behind OS isolation and resource controls.
 
-This is the best **base**, not a claim that Codex already has every desired
-feature. Its advantage is that the hardest-to-retrofit foundations—typed agent
-state, a structured app-server protocol, OS-level sandboxing, executable policy,
-session recovery, multi-agent support, and an actively tested Rust core—are
-available under a permissive license.
+Codex, OpenCode, Jcode, Claude Code, Orqen, and documentIntelligence remain
+pinned design evidence. Current production code is independently implemented
+in Python unless a later provenance record explicitly permits file-level reuse.
+Rust is deferred, not rejected: it has a separate activation-gated migration
+plan after Python contracts and bottlenecks are measured.
 
 See the [Mermaid architecture](01-best-of-breed-architecture.md) and the
 [implementation plan](02-end-to-end-implementation-plan.md).
@@ -39,8 +35,8 @@ A base is eligible only if it passes every hard gate:
    and retention can be capped.
 6. **Verification path:** the source exposes seams for deterministic tests,
    replay, telemetry, and failure injection.
-7. **Maintainability:** the fork surface can stay small enough to receive
-   upstream security and compatibility fixes.
+7. **Maintainability:** the implementation fits the current repository,
+   operations, dependency workflow, and engineering ownership.
 
 After hard gates, compare provider portability, context quality, multi-agent
 coordination, client experience, performance, and operational maturity. A
@@ -51,7 +47,8 @@ gate.
 
 | Candidate | Reusable source/license | OS execution boundary | Durable typed control protocol | Direct-base result |
 | --- | --- | --- | --- | --- |
-| Codex | Yes, Apache-2.0 | Linux sandbox and executable policy are source-visible, but privileged app-server bypasses must be removed | App server models Thread, Turn, Item, streaming events, resume/fork/compact | **Conditional pass; selected kernel after hardening** |
+| Current Python repository | Existing project source; outbound license still needs approval | Must add a fail-closed out-of-process supervisor; Python itself is not a sandbox | FastAPI/Pydantic/SQLAlchemy provide typed boundaries and durable integration seams | **Selected current base; lowest integration risk, hardening required** |
+| Codex | Yes, Apache-2.0 | Linux sandbox and executable policy are source-visible, but privileged app-server bypasses must be removed | App server models Thread, Turn, Item, streaming events, resume/fork/compact | Behavior/security evidence now; possible future Rust input only |
 | OpenCode | Yes, MIT | Its own security policy says it is not a sandbox; host tools and in-process plugins remain trusted | Strong server/SDK and new event journal, but legacy and new stacks coexist | Conditional; adapt modules, not whole base |
 | Jcode | Yes, MIT | Normal shell/tool paths do not provide a general OS sandbox; some hook failures are fail-open | Strong daemon/session design; stable API bridge is incomplete | Conditional; adapt daemon, DAG, and compaction patterns |
 | Claude Code | Public behavior docs; repository license is all-rights-reserved | Documented Seatbelt/bubblewrap sandbox and permissions | Documented sessions, hooks, agents, teams, worktrees, checkpoints | Fail legal-source gate; independent behavior specification only |
@@ -61,82 +58,61 @@ gate.
 The public repositories are pinned; the two local working trees were reviewed
 read-only on 2026-07-25 and are not treated as redistributable source.
 
-## 3. Why Codex wins the base decision
+## 3. Why Python wins the current delivery decision
 
-### Security is already architectural
+### It integrates with the system that already exists
 
-Codex separates user policy from OS enforcement. Its Linux sandbox uses
-bubblewrap and seccomp-related isolation, while executable policy can classify
-command prefixes as allowed, prompt-required, or forbidden. That is a much
-stronger starting point than adding a permission dialog around unrestricted
-host execution.
+The repository already has typed settings, authentication, FastAPI lifecycle
+ownership, SQLAlchemy repositories, Alembic migrations, PostgreSQL integration
+tests, S3-compatible artifact storage, bounded Celery workers, OpenTelemetry,
+and uv-locked dependencies. A Python harness can reuse those operational
+boundaries without a second daemon, build system, configuration stack, storage
+client, deployment image, or incident model.
 
-The proposed harness still tightens the base: isolation must fail closed when
-required controls are unavailable; network and secrets need capability
-brokering; all extension processes need the same boundary; and macOS/Windows
-must pass equivalent escape suites.
+This is a delivery advantage, not a claim that Python is inherently safer.
+Security-critical code remains small and explicit, and untrusted execution is
+never allowed inside the API process.
 
-Codex is not safe to fork unchanged. The pinned app server documents
-`thread/shellCommand` and `process/spawn` as unsandboxed and exposes direct host
-filesystem RPCs. Atlas disables those methods until each path passes actor
-authorization, policy, sandbox, output filtering, and audit. A release gate
-inventories all privileged RPCs and rejects newly reachable bypasses.
+### Isolation comes from the OS boundary, not the language
 
-Sources:
-[Linux sandbox](https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/codex-rs/linux-sandbox/README.md),
-[executable policy](https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/codex-rs/execpolicy/README.md),
-[app-server privileged methods](https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/codex-rs/app-server/README.md),
-and [Codex security documentation](https://developers.openai.com/codex/security/).
+Python cannot sandbox arbitrary Python, shell, plugin, MCP, or parser code in
+process. Atlas therefore treats each as an untrusted owned process. Policy,
+approval, destination, environment, mounts, resource limits, output filtering,
+audit, deadline, cancellation, and process-tree cleanup are applied before and
+after spawn. Required controls fail closed when unavailable.
 
-### The protocol is a real product boundary
+Codex's sandbox and privileged-RPC findings remain useful negative and positive
+security evidence. Atlas independently implements those requirements rather
+than importing the Rust app server now.
 
-The Codex app server exposes machine-readable Thread, Turn, and Item state with
-streamed notifications and schema generation. It supports durable lifecycle
-operations such as resume, fork, and compact, plus approvals, tools, plans,
-goals, and multi-agent events. Bounded queues and backpressure are considered in
-the server design.
+### Pydantic is the protocol source of truth
 
-That boundary lets a CLI, TUI, IDE, desktop app, automation client, and future
-remote control plane share one semantic model. Atlas can add event sourcing and
-provider abstraction underneath without making UI state authoritative.
+Strict Pydantic v2 models define Principal, Grant, Workspace, Thread, Turn,
+Item, Event, Operation, Approval, Task, Artifact, Context, Provider, and
+Evaluation records. They deterministically generate JSON Schema and strict
+TypeScript declarations. FastAPI is an adapter around that domain; it does not
+own the turn state machine or authorize from payload identifiers.
 
-Source:
-[Codex app-server README](https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/codex-rs/app-server/README.md).
+The protocol lets API, CLI, TUI, IDE, SDK, and future Rust components share one
+semantic model. Version gates, unknown-field retention, bounded cursors,
+idempotency, and durable sequence resume are language-independent.
 
-### Rust fits the trusted kernel
+### Async ownership is explicit and testable
 
-The policy engine, protocol parser, session state machine, sandbox supervisor,
-streaming adapters, and scheduler form a security- and concurrency-sensitive
-kernel. Rust provides memory safety without a garbage collector, explicit
-ownership for subprocess and cancellation lifecycles, and a mature async stack.
-This does not guarantee correctness, but it reduces the classes of failure in
-the most trusted code.
+Every `asyncio` task, queue, semaphore, subprocess, provider request, database
+transaction, stream, and subscriber has an owner, bound, deadline,
+cancellation path, and shutdown behavior. CPU-heavy or blocking SDK work runs
+in bounded workers rather than the event loop. Crash and cancellation tests
+verify the resource model instead of assuming it from language choice.
 
-TypeScript remains appropriate for generated SDKs and clients. Untrusted
-JavaScript plugins move out of process instead of expanding the kernel’s trusted
-computing base.
+### The future Rust path remains clean
 
-### The extension model is broad without forcing one UI
-
-Codex already has instruction discovery, skills, plugins, MCP, hooks,
-customizable agents, provider configuration, and multi-agent operation. The
-proposed design preserves those concepts while routing every extension through
-one capability and budget gateway.
-
-Sources:
-[multi-agent documentation](https://developers.openai.com/codex/multi-agent/),
-[AGENTS.md guidance](https://developers.openai.com/codex/guides/agents-md/),
-[skills](https://developers.openai.com/codex/skills/), and
-[MCP](https://developers.openai.com/codex/mcp/).
-
-### A measured derivative can stay maintainable
-
-Codex is actively developed. A wholesale merge of several fast-moving
-repositories would create permanent conflict, duplicated state machines,
-incompatible event vocabularies, and an unreviewable security boundary. The
-target is a thin derivative, but P0 must prove it by mapping mutation points,
-privileged RPCs, and a maintained upstream-merge budget. Compatibility adapters
-then isolate borrowed ideas from the kernel.
+The current interfaces deliberately separate domain, adapters, and process
+supervision. The [deferred Rust plan](07-rust-deferred-implementation-plan.md)
+starts only after a Python protocol freeze and benchmark baseline. It requires
+cross-language golden fixtures, shadow execution without duplicate effects,
+staged ownership, and a tested Python rollback. This avoids paying migration
+cost before evidence shows where Rust materially improves the product.
 
 ## 4. What each other harness contributes
 
@@ -290,7 +266,7 @@ and [finish validation](../../../documentIntelligence/server/app/services/agents
 
 | Atlas decision | Base or inspiration | Why it survives synthesis |
 | --- | --- | --- |
-| Rust trusted kernel and app-server semantics | Codex | Strongest licensable security/protocol foundation |
+| Python control plane and Pydantic protocol | Existing repository plus Codex behavior evidence | Fastest integrated path while preserving strict process boundaries |
 | OS sandbox plus allow/ask/deny policy | Codex, tightened | Permissions alone are not containment |
 | Event journal with atomic projections | OpenCode | Makes state replay deterministic and external ambiguity explicit |
 | Persistent local daemon | Jcode plus Codex app server | Decouples client and agent lifetimes |
@@ -306,7 +282,7 @@ and [finish validation](../../../documentIntelligence/server/app/services/agents
 
 | Source | Snapshot license evidence | Allowed treatment in Atlas |
 | --- | --- | --- |
-| Codex | [Apache-2.0](https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/LICENSE) | Fork/adapt with notices, license, and change records |
+| Codex | [Apache-2.0](https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/LICENSE) | Behavior/security evidence now; future adaptation only through the deferred Rust activation and file-level review |
 | OpenCode | [MIT](https://github.com/anomalyco/opencode/blob/7534d23551f665e65080809975b4ca5c7d63807b/LICENSE) | Adapt selected code with copyright/license retention |
 | Jcode | [MIT](https://github.com/1jehuang/jcode/blob/11cda7dcbc4d685589d96a0af26af963be751352/LICENSE) | Adapt selected code with copyright/license retention |
 | Claude Code | [All rights reserved](https://github.com/anthropics/claude-code/blob/7ef6eec9d9ba84ea6f233f26c45f1df5c5991843/LICENSE.md) | Independent behavior specification and legal review only |
@@ -324,12 +300,12 @@ bundled LICENSE/NOTICE and attribution contents, and release-package checks.
 
 ## 7. Why a selective hybrid beats every whole-codebase option
 
-A direct Codex fork lacks some desired provider, event-sourcing, DAG, and
-context-optimization features. A direct OpenCode or Jcode fork would require
-retrofitting the most security-sensitive property: a consistent OS isolation
-boundary. Claude Code cannot supply a reusable core under the observed license.
-Orqen and documentIntelligence now pass the source-evidence gate but still fail
-the license and coding-sandbox gates.
+A direct Codex fork would introduce Rust and a second application/runtime stack
+before the current product contracts are stable. A direct OpenCode or Jcode fork
+would require retrofitting a consistent OS isolation boundary. Claude Code
+cannot supply a reusable core under the observed license. Orqen and
+documentIntelligence pass the source-evidence gate but still fail the license
+and coding-sandbox gates.
 
 The selective design therefore keeps one authoritative turn state machine, one
 event vocabulary, one policy gateway, one sandbox supervisor, and one durable
@@ -342,7 +318,7 @@ and retry semantics disagree.
 
 | Risk | Mitigation and release evidence |
 | --- | --- |
-| Upstream Codex changes faster than Atlas | P0 mutation/RPC map and merge budget, automated compatibility suite, scheduled security rebase |
+| Python event-loop blocking or GC increases latency | Bounded async ownership, blocking-worker isolation, latency/RSS benchmarks, and Rust activation thresholds |
 | Adapted MIT code creates provenance ambiguity | File-level manifest, retained notices, code review label, SBOM |
 | Context optimization reduces task quality | Paired on/off evaluations, critical-fact validator, source-span restoration |
 | Provider normalization hides semantics | Capability traits, lossless provider metadata, conformance matrix |
@@ -371,8 +347,8 @@ Atlas earns the “best base harness” label only after a pinned release candid
 - passes independent security and license review; and
 - documents failures and regressions as prominently as wins.
 
-Until those gates pass, the accurate claim is: **Codex is the strongest
-evidence-backed base among the reviewed candidates, and Atlas is the proposed
+Until those gates pass, the accurate claim is: **the existing Python platform
+is the lowest-risk current implementation base, and Atlas remains a proposed
 best-of-breed design.**
 
 ## 10. Local-source licensing and adaptation gate
@@ -386,8 +362,8 @@ complete. Before implementation uses either local tree:
 3. independently reimplement anything not expressly licensed;
 4. run dependency, tenant-isolation, parser, SSRF, secret, persistence,
    cancellation, and recovery tests; and
-5. issue an ADR for any proposal that changes the Codex kernel boundary.
+5. issue an ADR for any proposal that changes the Python process boundary.
 
 Until this gate closes, the plan may name evidenced behavior, but production
-source comes only from Codex, approved permissive projects, or new independent
-implementation.
+source comes only from this repository, approved permissive projects with
+file-level provenance, or new independent implementation.

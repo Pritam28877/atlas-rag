@@ -15,11 +15,12 @@ uv run python scripts/verify_harness_provenance.py
 
 ## Outbound license proposal
 
-Apache-2.0 is the proposed Atlas Harness outbound license because the selected
-Codex base is Apache-2.0 and the intended Rust kernel is a derivative or adapter
-around that source. The proposal remains `pending_human_approval`; this PR does
-not add a root `LICENSE`, represent that legal review occurred, or relicense the
-existing RAG application.
+Apache-2.0 remains the proposed Atlas Harness outbound license for the new
+Python feature package, subject to compatibility review with this repository
+and any future approved Apache-2.0 or MIT inputs. Codex is design evidence, not
+the current code base, and no Codex Rust source is included. The proposal
+remains `pending_human_approval`; this PR does not add a root `LICENSE`,
+represent that legal review occurred, or relicense the existing RAG application.
 
 Approval must record:
 
@@ -33,7 +34,7 @@ Approval must record:
 
 | Source | Evidence | Allowed now | Forbidden now |
 | --- | --- | --- | --- |
-| Codex `4c43465` | Verified Apache-2.0 | Base/adapt after file-level record and privileged-path review | Unrecorded copying or reachable unsandboxed RPC |
+| Codex `4c43465` | Verified Apache-2.0 | Behavior/security evidence for the Python plan; future adaptation only after the deferred Rust activation gate | Current copying, unrecorded adaptation, or reachable unsandboxed behavior |
 | OpenCode `7534d23` | Verified MIT | Selected pattern/file adaptation with retained notice | Whole-stack merge or lost attribution |
 | Jcode `11cda7d` | Verified MIT | Selected pattern/file adaptation with retained notice | Unsandboxed/fail-open behavior or lost attribution |
 | Claude Code public docs | Core repository observed all-rights-reserved | Neutral behavior requirements and independent implementation | Copying implementation source or implying source compatibility |
@@ -76,7 +77,8 @@ addition to any file-level record.
 The approved release process must:
 
 1. ship the Atlas outbound `LICENSE` in source and binary packages;
-2. ship the Codex Apache-2.0 license and any required upstream NOTICE content;
+2. ship Codex license/NOTICE content only if a future approved adaptation
+   actually includes Codex-derived files;
 3. retain the full MIT notice for copied OpenCode or Jcode material;
 4. generate a human-readable attribution report from the manifest;
 5. include dependency license inventory and SBOM checksums;
@@ -109,8 +111,8 @@ whether separation, additional records, patent review, or non-use is required.
 
 Every release candidate must provide:
 
-- locked Rust and TypeScript dependency graphs;
-- `cargo deny`/security audit and package-manager audit results;
+- locked Python and TypeScript dependency graphs;
+- Python and package-manager vulnerability/license audit results;
 - SPDX-compatible dependency license inventory;
 - CycloneDX or SPDX SBOM with artifact checksums;
 - reproducible build evidence from a clean checkout;
@@ -124,10 +126,11 @@ license, decide fair use, approve patents/trademarks, or replace counsel.
 
 ## Ownership and change control
 
-The trusted-kernel owner approves Codex-derived files. Provider/event owners
-approve OpenCode-derived material. Session/scheduler owners approve Jcode-derived
-material. The provenance owner reviews every manifest change and all
-restricted-source boundaries.
+The Python harness owner approves current production files. A future Rust owner
+may approve Codex-derived files only after the separate activation gate.
+Provider/event owners approve OpenCode-derived material. Session/scheduler
+owners approve Jcode-derived material. The provenance owner reviews every
+manifest change and all restricted-source boundaries.
 
 Any source revision update is a reviewed change that must:
 

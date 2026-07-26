@@ -1,13 +1,11 @@
 # Atlas Harness: end-to-end implementation plan
 
-Status: source-informed proposed delivery plan, researched on 2026-07-25.
+Status: Python-first proposed delivery plan, revised on 2026-07-26.
 
-This plan turns the
-[architecture and data-flow contract](01-best-of-breed-architecture.md) into a
-production-grade coding-agent harness. “Best” means safest reusable kernel,
-durable and explainable execution, strong provider portability, bounded
-multi-agent work, and measurable task quality. It does not mean combining every
-feature from every reference project.
+This plan turns the [architecture and data-flow contract](01-best-of-breed-architecture.md)
+into a production-grade coding-agent harness. “Best” means safe enforcement,
+durable execution, provider portability, bounded agents, and measured quality;
+it does not mean combining every feature from every reference project.
 
 ## 1. Outcome and definition of done
 
@@ -27,17 +25,15 @@ The first production release is done only when a user can:
 10. pass the security, reliability, quality, latency, cost, and memory gates in
     this document.
 
-No production claim is allowed from compilation alone or from vendor-reported
-benchmarks.
+No production claim is allowed from compilation or vendor benchmarks alone.
 
 ## 2. Scope and non-goals
 
 ### In scope
 
-- Rust daemon based on reusable Codex crates and app-server contracts, after
-  every privileged or unsandboxed RPC is removed, disabled, or wrapped.
+- Python 3.12 feature modules in the uv-managed FastAPI application, with domain logic independent of FastAPI and provider SDKs.
 - Local JSON-RPC over stdio/Unix socket; authenticated loopback HTTP as needed.
-- Event-sourced sessions with SQLite projections and content-addressed blobs.
+- SQLAlchemy event sessions with PostgreSQL tests, local SQLite, and content-addressed local/S3 blobs.
 - Capability-split provider layer and canonical streamed events.
 - Policy, approval, budget, sandbox, secret, and audit enforcement.
 - Tools, MCP, isolated plugins, hooks, skills, and instructions through one boundary.
@@ -45,6 +41,7 @@ benchmarks.
 - Bounded task DAG, child sessions, per-agent overlays, and verification gates.
 - CLI/TUI, generated TypeScript SDK, IDE adapter, observability, and evaluation.
 - An isolated evidence-ledger document adapter with immutable scoped citations.
+- A separate deferred Rust migration plan that is not part of this release.
 
 ### Non-goals for the first release
 
@@ -56,31 +53,32 @@ benchmarks.
 - No direct Orqen or documentIntelligence source reuse without a recorded
   license grant; their current local trees are architecture references only.
 - No model downgrade or context deletion hidden from the user.
+- No Rust build input or runtime component in the current release.
 
 ## 3. Repository and module layout
 
-Keep each crate focused and expose narrow traits:
+Keep each Python module feature-focused and expose narrow protocols:
 
 ```text
-atlas-harness/
-  crates/
-    atlas-protocol/ + atlas-app-server/    wire schema, auth, transport
-    atlas-core/ + atlas-events/            turn state, journal, projections
-    atlas-provider/ + atlas-context/       inference, manifests, compaction
-    atlas-policy/ + atlas-sandbox/         authority and OS enforcement
-    atlas-tools/ + atlas-extensions/       built-ins, MCP, hooks, plugins
-    atlas-scheduler/ + atlas-memory/       bounded DAG and provenance memory
-    atlas-documents/                        evidence ledger and retrieval adapter
-    atlas-observe/ + atlas-eval/           redaction, telemetry, replay, scores
-    atlas-cli/                              CLI and TUI client
-  sdk/typescript/ + adapters/               generated SDK, IDE, ACP, imports
-  schemas/ + tests/                         wire snapshots and verification
+app/services/harness/
+  protocol/ + events/ + runtime/ + sessions/
+  journal/ + artifacts/ + providers/ + context/
+  policy/ + sandbox/ + tools/ + extensions/
+  scheduler/ + memory/ + documents/
+  observability/ + evaluation/
+app/api/v1/harness/                    authenticated HTTP/stream boundary
+app/cli/harness/                       CLI and keyboard-accessible TUI
+sdk/typescript/ + schemas/harness/     generated SDK and schemas
+tests/harness/                          contract and E2E verification
 ```
 
-Target a small Codex derivative, but make that an evidence gate: a P0 spike maps
-every state mutation and privileged RPC, estimates the maintained patch surface,
-and sets an upstream-merge budget. If the spike fails, record a maintained-fork
-ADR instead of describing an invasive rewrite as a thin adapter.
+The Python control plane may execute only validated domain and coordination code
+in process. Model-authored content, tools, MCP servers, plugins, hooks, parsers,
+and code interpreters run in owned, filtered, resource-bounded subprocesses or
+workers behind the same policy and sandbox-supervisor contract. The
+[deferred Rust plan](07-rust-deferred-implementation-plan.md) can start only
+after the Python protocol is frozen, bottlenecks are measured, and the user
+explicitly approves its activation gate.
 
 ## 4. Canonical data model
 
@@ -125,7 +123,7 @@ Start with a versioned envelope containing `request_id`, `client_id`,
 
 Mutating commands require idempotency keys. List calls are cursor-paginated.
 Clients may request events after a durable sequence number. Slow subscribers
-receive a resync marker and catch up from SQLite instead of growing an
+receive a resync marker and catch up from the SQL journal instead of growing an
 unbounded memory queue.
 
 The server binds every command to its authenticated `Principal` and current
@@ -137,7 +135,7 @@ of authority. Every event subscription and approval response is re-authorized.
 Use one canonical vocabulary for accepted, started, delta, requested, approved,
 denied, completed, failed, cancelled, compacted, retried, task, artifact, usage,
 and recovery events. Preserve unknown fields for compatible clients. Generate
-Rust, TypeScript, and JSON Schema from one source. Test both directions: new
+JSON Schema and TypeScript from strict Pydantic v2 source models. Test both directions: new
 readers consume the previous two minor versions, while rollback readers preserve
 unknown fields and event types without projecting or discarding them. A writer
 version gate blocks schemas that the declared rollback binary cannot retain.
@@ -220,8 +218,8 @@ destination allowlisting, data-loss checks, request IDs, cost reservation,
 response limits, and audit. Telemetry export uses an equivalent redaction and
 egress gate; neither subsystem connects directly from the journal or router.
 
-Orqen demonstrates OpenAI, Gemini, Groq, xAI, and OpenRouter normalization, but
-is not a drop-in package. Independently implement Anthropic, Codex, and local
+Orqen demonstrates provider normalization but is not a drop-in package.
+Independently implement OpenAI, OpenRouter, Bedrock, Vertex/Gemini, and local
 adapters under one lifecycle and conformance contract.
 
 ## 8. Policy, approval, and sandbox subsystem
@@ -258,12 +256,11 @@ allowlisted environment, have bounded pending maps, and are terminated on
 deadline or workspace close. Sharing requires a stateless declaration and
 security review.
 
-The pinned
-[Codex app-server snapshot](https://github.com/openai/codex/blob/4c43465133428898aa84f0bfc02c306ed65fb66a/codex-rs/app-server/README.md)
-documents `thread/shellCommand` and `process/spawn` as unsandboxed and direct
-`fs/*` RPCs on host paths. Atlas registers none until authentication, policy,
-sandbox, result filtering, and audit are enforced. P0 inventories every
-privileged RPC, and CI fails if a new bypass becomes reachable.
+The pinned Codex review shows why raw shell, process, and host-filesystem
+methods are bypass risks. Atlas exposes no equivalent Python route, worker task,
+tool, hook, parser, plugin, or provider path until authentication, policy,
+sandbox or egress, result filtering, and audit are enforced. A CI-readable
+registry inventories every privileged operation and rejects missing evidence.
 
 ## 9. Context, compaction, and memory
 
@@ -332,7 +329,7 @@ concurrency, and project cost. Verification nodes are independent of producer
 nodes. Shared-file conflicts stage patches for deterministic resolution instead
 of relying only on agent messages. This retains Orqen's strongest audited
 pattern—graph validation, lease generations, durable checkpoints, and ordered
-recovery—behind the Codex-derived executor capability interface.
+recovery—behind the Atlas-owned Python executor capability interface.
 
 ### Initial enforced budgets
 
@@ -356,8 +353,10 @@ resumes do not reset budgets, and every child consumes its parent’s allocation
 
 ## 12. Persistence, recovery, and retention
 
-Append event and update projection in one immediate SQLite transaction. Use
-monotonic per-aggregate sequences and compare-and-set expected versions.
+Append an event and update its projection in one SQLAlchemy transaction. Use
+PostgreSQL row locking and constraints in production-like environments,
+explicit local SQLite semantics, monotonic per-aggregate sequences, and
+compare-and-set expected versions.
 Content-address large payloads and verify hashes on read.
 
 Durability classes:
@@ -406,12 +405,12 @@ one aggregate success score.
 
 | Phase | Deliverable | Exit evidence |
 | --- | --- | --- |
-| P0: provenance/spike | Source/license inventory, local Orqen/documentIntelligence audit, outbound-license/NOTICE plan, threat model, Codex privileged-RPC map, fork/merge budget | Legal/security approval; unlicensed local source excluded from copying |
-| P1: protocol | Thread/Turn/Item schema, command/event envelopes, code generation, bypass RPC denylist | Golden schemas, forward/backward compatibility, malformed input, every bypass unreachable |
-| P2: journal | SQLite event append/projection, blobs, replay, retention | Crash/fault injection; no acknowledged-event loss or replay divergence |
+| P0: provenance/Python boundary | Source/license inventory, threat model, Python process/isolation ADR, privileged-operation registry | Legal/security approval; unlicensed source excluded; unsafe paths unregistered |
+| P1: protocol | Pydantic Thread/Turn/Item schema, command/event envelopes, JSON Schema and TypeScript generation | Golden schemas, forward/backward compatibility, malformed input, privilege metadata complete |
+| P2: journal | PostgreSQL/local-SQLite event append/projection, blobs, replay, retention | Crash/fault injection; no acknowledged-event loss or replay divergence |
 | P3: single turn | Deterministic turn engine with mock provider | Happy, error, cancel, retry, reconnect, and idempotency tests |
 | P4: provider layer | Two cloud adapters and one local compatible adapter | Conformance matrix, live opt-in smoke tests, correct usage accounting |
-| P5: policy/sandbox | Capability rules, approvals, operation protocol, platform isolation, wrapped privileged RPCs | Escape suite; every side-effect path proves auth, policy, isolation, filtering, and audit |
+| P5: policy/sandbox | Capability rules, approvals, operation protocol, platform isolation, privileged-operation registry | Escape suite; every side-effect path proves auth, policy, isolation, filtering, and audit |
 | P6: tools/extensions | Built-ins, MCP, hooks, skills, isolated plugins | Schema fuzzing, timeout/cancel/cleanup, bounded output and pending maps |
 | P7: context | Manifests, tokenization, tiers, safe compaction, validation | Long-session recall and critical-fact preservation benchmarks |
 | P8: multi-agent | Bounded DAG, child sessions, overlays/leases, verification | Dependency, recursion, conflict, crash, cancellation, and budget tests |
@@ -468,7 +467,7 @@ Memory growth: constant per configured active session/worker bound; histories,
 pending MCP requests, event subscribers, background jobs, embeddings, caches,
 and terminal task records all have size and TTL eviction.
 
-Hot-path risks: model tokenization, context retrieval, SQLite writer contention,
+Hot-path risks: model tokenization, context retrieval, SQL writer contention,
 high-frequency deltas, slow event subscribers, MCP fan-out, and synchronized
 provider retries.
 
@@ -476,7 +475,7 @@ Why this is acceptable: the local-first release has one durable writer, batches
 non-critical deltas, serializes one session, parallelizes only independent
 sessions, and pushes large data to blobs.
 
-What breaks first at scale: SQLite write latency and provider quotas. Before a
+What breaks first at scale: database write latency and provider quotas. Before a
 distributed release, measure the threshold, then introduce partitioned event
 storage and durable distributed leases without changing protocol semantics.
 
@@ -484,7 +483,8 @@ storage and durable distributed leases without changing protocol semantics.
 
 P0 selects a compatible outbound license and defines SPDX headers, bundled
 LICENSE/NOTICE and attribution contents, and release verification. Package
-reproducible, signed binaries with an SBOM and pinned Rust/npm dependencies.
+reproducible Python wheels/containers and TypeScript artifacts with an SBOM and
+pinned uv/npm dependencies.
 Default to local-only transport, telemetry off, network denied for tools,
 conservative agent concurrency, and explicit provider configuration.
 
@@ -492,8 +492,8 @@ Use reversible projections plus forward- and backward-compatibility fixtures.
 Before emitting a new event type, the writer gate verifies the declared rollback
 binary can preserve it. Rollback never rewrites the journal: stop new-schema
 writes, run only a declared compatible binary, rebuild supported projections,
-and preserve unknown events for a later upgrade. Track Codex security fixes
-continuously against the measured patch and merge budget.
+and preserve unknown events for a later upgrade. Track Python/Node dependency,
+provider API, OS sandbox, and reviewed-source security changes continuously.
 
 The rationale, source comparison, and licensing boundary are detailed in
 [Why this is the best base harness](03-why-this-base-harness.md).

@@ -1,14 +1,16 @@
 # Atlas Harness: Mermaid architecture and data flow
 
-Status: proposed architecture, researched on 2026-07-25.
+Status: Python-first proposed architecture, revised on 2026-07-26.
 
 This document is the visual contract for a local-first, multi-provider,
-multi-agent coding harness. The working name is **Atlas Harness**. It uses the
-Apache-2.0 Codex Rust core and app-server protocol as its starting point, then
-adds independently reviewed patterns from OpenCode, Jcode, and the locally
-audited Orqen and documentIntelligence trees. Claude Code informs independently
-specified behavior. The two local trees have no visible license grant, so they
-are architectural evidence only until ownership and licensing are resolved.
+multi-agent coding harness. The working name is **Atlas Harness**. The current
+implementation uses Python 3.12 feature modules inside this repository's
+uv-managed FastAPI application. It independently implements reviewed behavioral
+patterns from Codex, OpenCode, Jcode, Claude Code, and the locally audited Orqen
+and documentIntelligence trees. Rust is not part of the current build or
+runtime; it has a separate activation-gated future plan. The two local trees
+have no visible license grant, so they remain architectural evidence only until
+ownership and licensing are resolved.
 
 The companion documents are:
 
@@ -16,6 +18,7 @@ The companion documents are:
 - [Why this is the best base harness](03-why-this-base-harness.md)
 - [Threat model](04-threat-model.md)
 - [Provenance and license plan](05-provenance-and-license.md)
+- [Deferred Rust implementation plan](07-rust-deferred-implementation-plan.md)
 
 Each diagram is embedded as a local PNG so it remains visible in editors and
 Markdown previews that do not render Mermaid. The editable Mermaid source is
@@ -146,12 +149,12 @@ telemetry egress apply destination, data, cost, redaction, and audit policy.
 
 | Proposed capability | Evidence used | Treatment |
 | --- | --- | --- |
-| Thread/Turn/Item protocol, app server, sandbox, exec policy | Codex app-server, Linux sandbox, and exec-policy source | Base and extend |
-| Canonical provider layer, durable event journal, generated SDK, rich MCP | OpenCode source | Adapt behind Codex-compatible contracts |
+| Thread/Turn/Item protocol, app server, sandbox, exec policy | Codex app-server, Linux sandbox, and exec-policy evidence | Independently implement as Python contracts; copy no Codex Rust source now |
+| Canonical provider layer, durable event journal, generated SDK, rich MCP | OpenCode source | Independently adapt the patterns behind Atlas-owned Python contracts |
 | Detached multi-client daemon, compaction boundaries, typed task DAG | Jcode source | Adapt with stricter bounds and isolation |
 | Hooks, scoped subagents, checkpoints, worktrees, deferred tool discovery | Claude Code official docs | Independent implementation subject to legal review |
-| Graph versions, run leases, deterministic waves, checkpoints, provider adapters | Local Orqen source | Adapt contracts after license clearance; never use it as the coding sandbox |
-| Canonical events, bounded tool loop, artifact lifecycle, evidence ledger, grounded finish | Local documentIntelligence source | Adapt contracts after license clearance; harden auth, persistence, parsing, and citations |
+| Graph versions, run leases, deterministic waves, checkpoints, provider adapters | Local Orqen source | Independently implement evidenced contracts; copy nothing without license clearance |
+| Canonical events, bounded tool loop, artifact lifecycle, evidence ledger, grounded finish | Local documentIntelligence source | Independently implement evidenced contracts; harden auth, persistence, parsing, and citations |
 | Tool recall, reconstruction validation, fail-open optional optimization | Public Orqen claims plus local gap analysis | Treat as measurable optimization; execution security remains fail-closed |
 
 ## Primary sources
