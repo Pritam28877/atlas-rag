@@ -117,6 +117,19 @@ from app.services.harness.providers.openai_decode_support import (
 from app.services.harness.providers.openai_decoder import (
     OpenAIResponsesDecoder,
 )
+from app.services.harness.providers.openrouter_compiler import (
+    OpenRouterResponsesCompiler,
+)
+from app.services.harness.providers.openrouter_contracts import (
+    CompiledOpenRouterResponsesRequest,
+    OpenRouterProviderPolicy,
+    OpenRouterProviderSlug,
+    OpenRouterRoutingMetadata,
+    compile_routing_metadata,
+)
+from app.services.harness.providers.openrouter_decoder import (
+    OpenRouterResponsesDecoder,
+)
 from app.services.harness.providers.payload_inspection import (
     DeterministicProviderPayloadInspector,
     ProviderPayloadInspectionPolicy,
@@ -163,6 +176,7 @@ __all__ = (
     "HttpCoreConnectorErrorCode",
     "HttpCoreEgressConnector",
     "CompiledOpenAIResponsesRequest",
+    "CompiledOpenRouterResponsesRequest",
     "GatewayProviderAttemptExecutor",
     "EgressAuditOutcome",
     "PayloadInspection",
@@ -182,6 +196,11 @@ __all__ = (
     "OpenAIResponseInput",
     "OpenAIResponsesCompiler",
     "OpenAIResponsesDecoder",
+    "OpenRouterProviderPolicy",
+    "OpenRouterProviderSlug",
+    "OpenRouterResponsesCompiler",
+    "OpenRouterResponsesDecoder",
+    "OpenRouterRoutingMetadata",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",
     "ProviderConfiguration",
@@ -226,6 +245,7 @@ __all__ = (
     "authorize_egress_target",
     "canonical_provider_origin",
     "canonical_provider_url",
+    "compile_routing_metadata",
     "load_provider_configuration",
     "provider_destination_sha256",
     "provider_egress_request_sha256",
