@@ -29,6 +29,7 @@ def test_journal_schema_is_scoped_bounded_and_replay_safe(monkeypatch) -> None:
     sql = render_upgrade_sql(monkeypatch)
     normalized_sql = re.sub(r"\s+", " ", sql)
 
+    assert "CREATE TABLE harness_journal_positions" in sql
     assert "CREATE TABLE harness_journal_aggregates" in sql
     assert "CREATE TABLE harness_journal_events" in sql
     assert "CREATE TABLE harness_journal_idempotency" in sql
@@ -40,9 +41,8 @@ def test_journal_schema_is_scoped_bounded_and_replay_safe(monkeypatch) -> None:
     )
     assert "octet_length(event_json) <= 4194304" in normalized_sql
     assert "octet_length(result_json) <= 4194304" in normalized_sql
-    assert "ON harness_journal_events (workspace_id, journal_sequence)" in (
-        normalized_sql
-    )
+    assert "PRIMARY KEY (workspace_id, journal_sequence)" in normalized_sql
+    assert "BIGSERIAL" not in sql
 
 
 def test_journal_schema_protects_monotonic_immutable_facts(monkeypatch) -> None:
@@ -51,4 +51,5 @@ def test_journal_schema_protects_monotonic_immutable_facts(monkeypatch) -> None:
     assert "CREATE TRIGGER harness_journal_events_immutable" in sql
     assert "CREATE TRIGGER harness_journal_idempotency_immutable" in sql
     assert "CREATE TRIGGER harness_journal_aggregates_monotonic" in sql
+    assert "CREATE TRIGGER harness_journal_positions_monotonic" in sql
     assert "NEW.current_sequence < OLD.current_sequence" in sql
