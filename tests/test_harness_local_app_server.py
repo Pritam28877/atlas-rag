@@ -119,6 +119,7 @@ def settings(
         "workspace_root": workspace_root,
         "state_directory": state_directory,
         "isolation_executable": Path("/usr/bin/true"),
+        "provider_config_path": tmp_path / "providers.json",
         "local_transport": transport,
         "request_max_bytes": 64 * 1024,
         "request_timeout_seconds": 1,
