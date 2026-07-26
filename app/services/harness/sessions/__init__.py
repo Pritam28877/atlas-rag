@@ -1,5 +1,21 @@
 """Owned Atlas Harness session and subscriber lifecycles."""
 
+from app.services.harness.sessions.cancellation_contracts import (
+    CancellationControlOutcome,
+    CancellationEvidenceSink,
+    CancellationReport,
+    CancellationResourceIdentity,
+    CancellationResourceKind,
+    CancellationResourceResult,
+    CancellationScopeState,
+    CancellationSettlement,
+    OwnedCancellationResource,
+)
+from app.services.harness.sessions.cancellation_coordinator import (
+    CancellationCoordinator,
+    CancellationCoordinatorError,
+    CancellationCoordinatorErrorCode,
+)
 from app.services.harness.sessions.replay_dispatcher import (
     CommandReplayRepository,
     ReplayDispatcherError,
@@ -47,8 +63,20 @@ from app.services.harness.sessions.writer_coordinator import (
 )
 
 __all__ = (
-    "ProviderAttemptSource",
+    "CancellationControlOutcome",
+    "CancellationCoordinator",
+    "CancellationCoordinatorError",
+    "CancellationCoordinatorErrorCode",
+    "CancellationEvidenceSink",
+    "CancellationReport",
+    "CancellationResourceIdentity",
+    "CancellationResourceKind",
+    "CancellationResourceResult",
+    "CancellationScopeState",
+    "CancellationSettlement",
     "CommandReplayRepository",
+    "OwnedCancellationResource",
+    "ProviderAttemptSource",
     "RepeatedCallCounter",
     "ReplayDispatcherError",
     "ReplayDispatcherErrorCode",
