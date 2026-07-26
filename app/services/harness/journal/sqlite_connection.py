@@ -22,6 +22,7 @@ from app.services.harness.journal.sqlite_migrations import (
     SQLITE_MIGRATE_V4_TO_V5,
     SQLITE_MIGRATE_V5_TO_V6,
     SQLITE_MIGRATE_V6_TO_V7,
+    SQLITE_MIGRATE_V7_TO_V8,
 )
 from app.services.harness.journal.sqlite_schema import (
     SQLITE_SCHEMA,
@@ -142,6 +143,7 @@ class SQLiteConnectionOwner:
                 connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
                 connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
                 connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
+                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == 2:
                 connection.executescript(SQLITE_MIGRATE_V2_TO_V3)
@@ -149,24 +151,32 @@ class SQLiteConnectionOwner:
                 connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
                 connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
                 connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
+                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == 3:
                 connection.executescript(SQLITE_MIGRATE_V3_TO_V4)
                 connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
                 connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
                 connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
+                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == 4:
                 connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
                 connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
                 connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
+                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == 5:
                 connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
                 connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
+                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == 6:
                 connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
+                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
+                connection.executescript(SQLITE_SCHEMA)
+            elif schema_version["schema_version"] == 7:
+                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
                 connection.executescript(SQLITE_SCHEMA)
             elif schema_version["schema_version"] == SQLITE_SCHEMA_VERSION:
                 connection.executescript(SQLITE_SCHEMA)
