@@ -28,6 +28,17 @@ from app.services.harness.runtime.peer_auth import (
     PeerSessionTokenManager,
     VerifiedPeerSession,
 )
+from app.services.harness.runtime.subscriptions import (
+    EventSubscription,
+    PublishDisposition,
+    ResyncRequired,
+    SequencedEvent,
+    SubscriptionDelivery,
+    SubscriptionError,
+    SubscriptionErrorCode,
+    SubscriptionSnapshot,
+    SubscriptionState,
+)
 
 __all__ = (
     "AdmissionError",
@@ -39,6 +50,7 @@ __all__ = (
     "AuthorityRepository",
     "AuthoritySnapshot",
     "CommandAuthorityBinder",
+    "EventSubscription",
     "FrameDecoder",
     "FrameError",
     "FrameErrorCode",
@@ -46,7 +58,15 @@ __all__ = (
     "PeerAuthenticationErrorCode",
     "PeerCredentials",
     "PeerSessionTokenManager",
+    "PublishDisposition",
     "RequestAdmission",
+    "ResyncRequired",
+    "SequencedEvent",
+    "SubscriptionDelivery",
+    "SubscriptionError",
+    "SubscriptionErrorCode",
+    "SubscriptionSnapshot",
+    "SubscriptionState",
     "VerifiedPeerSession",
     "decode_command",
     "encode_frame",
