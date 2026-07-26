@@ -7,6 +7,9 @@ from app.services.harness.protocol import (
 from app.services.harness.providers.bearer_authorization import (
     BearerProviderCredentialEncoder,
 )
+from app.services.harness.providers.bedrock_botocore_sources import (
+    BotocoreStaticCredentialBackend,
+)
 from app.services.harness.providers.bedrock_compiler import (
     BedrockCompileError,
     BedrockCompileErrorCode,
@@ -239,6 +242,7 @@ __all__ = (
     "BedrockDecodeError",
     "BedrockDecodeErrorCode",
     "BedrockCredentialSourceKind",
+    "BotocoreStaticCredentialBackend",
     "BedrockIdentityReference",
     "BedrockIdentityReferenceId",
     "BedrockInferenceConfiguration",
