@@ -1,14 +1,20 @@
 import asyncio
 import os
+import sqlite3
 from datetime import timedelta
 from pathlib import Path
+
+import pytest
 
 from app.services.harness.artifacts import (
     BlobReservationStatus,
     RetentionPolicy,
     StorageSealReason,
 )
-from app.services.harness.journal import SQLiteStorageStore
+from app.services.harness.journal import (
+    RetentionStoreConflict,
+    SQLiteStorageStore,
+)
 from scripts.probe_harness_sqlite_kill import NOW
 
 WORKSPACE_ID = "wsp_" + "0" * 32
@@ -168,5 +174,67 @@ def test_release_restores_capacity_and_disk_boundary_seals(
         assert released.status is BlobReservationStatus.RELEASED
         assert denied.admission.reason is StorageSealReason.DISK_RESERVE
         assert repeated.admission.reason is StorageSealReason.ALREADY_SEALED
+
+    asyncio.run(scenario())
+
+
+def test_collected_committed_reservation_cannot_be_republished(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        path = database_path(tmp_path)
+        policy = RetentionPolicy(
+            blob_quota_bytes=2 * MEBIBYTE,
+            disk_reserve_bytes=MEBIBYTE,
+        )
+        store = await SQLiteStorageStore.open(path)
+        decision = await store.reserve(
+            policy,
+            WORKSPACE_ID,
+            "f" * 64,
+            1024,
+            available_filesystem_bytes=4 * MEBIBYTE,
+            reserved_at=NOW,
+        )
+        assert decision.reservation is not None
+        await store.commit(
+            decision.reservation,
+            committed_at=NOW + timedelta(seconds=1),
+        )
+        await store.close()
+
+        connection = sqlite3.connect(path)
+        try:
+            connection.execute("DROP TRIGGER harness_retained_blobs_transition")
+            connection.execute(
+                "DROP TRIGGER harness_retained_blobs_require_collectable"
+            )
+            connection.execute(
+                """
+                UPDATE harness_retained_blobs SET garbage_collected_at = ?
+                WHERE workspace_id = ? AND content_sha256 = ?
+                """,
+                (
+                    (NOW + timedelta(seconds=2)).isoformat(),
+                    WORKSPACE_ID,
+                    "f" * 64,
+                ),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+        reopened = await SQLiteStorageStore.open(path)
+
+        with pytest.raises(RetentionStoreConflict, match="cannot be republished"):
+            await reopened.reserve(
+                policy,
+                WORKSPACE_ID,
+                "f" * 64,
+                1024,
+                available_filesystem_bytes=4 * MEBIBYTE,
+                reserved_at=NOW + timedelta(seconds=3),
+            )
+        await reopened.close()
 
     asyncio.run(scenario())
