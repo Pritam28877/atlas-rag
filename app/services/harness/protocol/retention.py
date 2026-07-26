@@ -1,4 +1,4 @@
-"""Strict bounded evidence and policy contracts for artifact retention."""
+"""Strict bounded domain contracts for artifact retention."""
 
 from __future__ import annotations
 
@@ -7,17 +7,18 @@ from typing import Self
 
 from pydantic import Field, model_validator
 
-from app.services.harness.protocol import (
+from app.services.harness.protocol.base import (
+    BoundedReason,
     Sha256,
     StrictProtocolModel,
     UtcTimestamp,
     WorkspaceId,
 )
-from app.services.harness.protocol.base import BoundedReason
 
 GIBIBYTE = 1024 * 1024 * 1024
 MAXIMUM_TRACKED_BLOBS = 10_000
 MAXIMUM_GC_CANDIDATES = 1_000
+MAXIMUM_SNAPSHOT_SEGMENTS = 1_000
 
 
 class StorageSealReason(StrEnum):
@@ -78,6 +79,59 @@ class SyncedSnapshot(StrictProtocolModel):
             != self.reachable_content_sha256s
         ):
             raise ValueError("snapshot reachable hashes must be unique and sorted")
+        return self
+
+
+class SealedJournalSegment(StrictProtocolModel):
+    workspace_id: WorkspaceId
+    segment_sha256: Sha256
+    snapshot_sha256: Sha256
+    first_journal_sequence: int = Field(ge=1, le=2**63 - 1)
+    last_journal_sequence: int = Field(ge=1, le=2**63 - 1)
+    event_count: int = Field(ge=1, le=2**31 - 1)
+    sealed_at: UtcTimestamp
+
+    @model_validator(mode="after")
+    def validate_sequence_range(self) -> Self:
+        if self.last_journal_sequence < self.first_journal_sequence:
+            raise ValueError("sealed segment sequence range is reversed")
+        sequence_width = (
+            self.last_journal_sequence - self.first_journal_sequence + 1
+        )
+        if self.event_count > sequence_width:
+            raise ValueError("sealed segment event count exceeds sequence range")
+        return self
+
+
+class SyncedSnapshotBundle(StrictProtocolModel):
+    snapshot: SyncedSnapshot
+    segments: tuple[SealedJournalSegment, ...] = Field(
+        max_length=MAXIMUM_SNAPSHOT_SEGMENTS
+    )
+
+    @model_validator(mode="after")
+    def validate_segments(self) -> Self:
+        previous_last_sequence = 0
+        observed_hashes: set[str] = set()
+        for segment in self.segments:
+            if (
+                segment.workspace_id != self.snapshot.workspace_id
+                or segment.snapshot_sha256 != self.snapshot.snapshot_sha256
+            ):
+                raise ValueError("sealed segment scope does not match snapshot")
+            if segment.segment_sha256 in observed_hashes:
+                raise ValueError("sealed segment hashes must be unique")
+            if segment.first_journal_sequence <= previous_last_sequence:
+                raise ValueError("sealed segments must be sorted and non-overlapping")
+            if (
+                segment.last_journal_sequence
+                > self.snapshot.through_journal_sequence
+            ):
+                raise ValueError("sealed segment exceeds snapshot replay baseline")
+            if segment.sealed_at > self.snapshot.synced_at:
+                raise ValueError("sealed segment cannot postdate its snapshot")
+            observed_hashes.add(segment.segment_sha256)
+            previous_last_sequence = segment.last_journal_sequence
         return self
 
 

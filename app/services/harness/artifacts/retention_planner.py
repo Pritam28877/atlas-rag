@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 
 from pydantic import TypeAdapter
 
-from app.services.harness.artifacts.retention_contracts import (
+from app.services.harness.protocol import UtcTimestamp
+from app.services.harness.protocol.retention import (
     MAXIMUM_TRACKED_BLOBS,
     ArtifactLegalHold,
     ArtifactReference,
@@ -16,7 +17,6 @@ from app.services.harness.artifacts.retention_contracts import (
     WorkspaceStorageState,
     WriteAdmission,
 )
-from app.services.harness.protocol import UtcTimestamp
 
 _UTC_TIMESTAMP_ADAPTER = TypeAdapter(UtcTimestamp)
 
