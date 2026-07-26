@@ -1,5 +1,9 @@
 """Capability-split Atlas Harness provider adapters."""
 
+from app.services.harness.protocol import (
+    EgressAuditOutcome,
+    ProviderEgressAuditRecord,
+)
 from app.services.harness.providers.config_contracts import (
     LoadedProviderConfiguration,
     ProviderConfiguration,
@@ -27,10 +31,8 @@ from app.services.harness.providers.credential_material import (
     CredentialSecretMaterial,
 )
 from app.services.harness.providers.egress_contracts import (
-    EgressAuditOutcome,
     PayloadInspection,
     ProviderAddressResolver,
-    ProviderEgressAuditRecord,
     ProviderEgressAuditSink,
     ProviderEgressConnector,
     ProviderEgressRequest,
