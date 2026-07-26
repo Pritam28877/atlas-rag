@@ -7,6 +7,11 @@ This model covers the release-one architecture in
 security contract, not evidence that controls are implemented. Each later PR
 must link its control and adversarial verification back to the threat IDs here.
 
+The current process boundary is defined by
+[ADR 0003](../decisions/0003-python-harness-boundary.md). The
+[privileged-operation registry](python-privileged-operation-registry.json) is
+default deny and contains no registered operation in this feasibility phase.
+
 ## Security objectives
 
 1. A command acts only for the server-authenticated principal and current
