@@ -94,6 +94,19 @@ from app.services.harness.providers.httpcore_connector import (
     HttpCoreEgressConnector,
     ProviderCredentialHeaderEncoder,
 )
+from app.services.harness.providers.openai_compiler import (
+    OpenAICompileError,
+    OpenAICompileErrorCode,
+    OpenAIResponsesCompiler,
+)
+from app.services.harness.providers.openai_contracts import (
+    CompiledOpenAIResponsesRequest,
+    OpenAIFunctionCallOutput,
+    OpenAIFunctionTool,
+    OpenAIInputText,
+    OpenAIMessageInput,
+    OpenAIResponseInput,
+)
 from app.services.harness.providers.payload_inspection import (
     DeterministicProviderPayloadInspector,
     ProviderPayloadInspectionPolicy,
@@ -139,11 +152,20 @@ __all__ = (
     "HttpCoreConnectorError",
     "HttpCoreConnectorErrorCode",
     "HttpCoreEgressConnector",
+    "CompiledOpenAIResponsesRequest",
     "GatewayProviderAttemptExecutor",
     "EgressAuditOutcome",
     "PayloadInspection",
     "AuthorizedEgressTarget",
     "LoadedProviderConfiguration",
+    "OpenAICompileError",
+    "OpenAICompileErrorCode",
+    "OpenAIFunctionCallOutput",
+    "OpenAIFunctionTool",
+    "OpenAIInputText",
+    "OpenAIMessageInput",
+    "OpenAIResponseInput",
+    "OpenAIResponsesCompiler",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",
     "ProviderConfiguration",
