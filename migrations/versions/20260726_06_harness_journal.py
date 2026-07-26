@@ -17,6 +17,17 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.execute(
         """
+        CREATE TABLE harness_journal_positions (
+            workspace_id CHAR(36) PRIMARY KEY,
+            current_sequence BIGINT NOT NULL DEFAULT 0,
+            CONSTRAINT ck_harness_journal_position_workspace CHECK (
+                workspace_id ~ '^wsp_[0-9a-f]{32}$'
+            ),
+            CONSTRAINT ck_harness_journal_position_sequence CHECK (
+                current_sequence >= 0
+            )
+        );
+
         CREATE TABLE harness_journal_aggregates (
             workspace_id CHAR(36) NOT NULL,
             aggregate_id CHAR(36) NOT NULL,
@@ -35,7 +46,7 @@ def upgrade() -> None:
         );
 
         CREATE TABLE harness_journal_events (
-            journal_sequence BIGSERIAL PRIMARY KEY,
+            journal_sequence BIGINT NOT NULL,
             event_id CHAR(36) NOT NULL,
             workspace_id CHAR(36) NOT NULL,
             aggregate_id CHAR(36) NOT NULL,
@@ -45,6 +56,7 @@ def upgrade() -> None:
             request_sha256 CHAR(64) NOT NULL,
             durability VARCHAR(16) NOT NULL,
             committed_at TIMESTAMPTZ NOT NULL,
+            PRIMARY KEY (workspace_id, journal_sequence),
             FOREIGN KEY (workspace_id, aggregate_id)
                 REFERENCES harness_journal_aggregates(
                     workspace_id, aggregate_id
@@ -75,8 +87,6 @@ def upgrade() -> None:
                 durability IN ('synchronous', 'buffered')
             )
         );
-        CREATE INDEX ix_harness_journal_workspace_sequence
-            ON harness_journal_events (workspace_id, journal_sequence);
 
         CREATE TABLE harness_journal_idempotency (
             workspace_id CHAR(36) NOT NULL,
@@ -134,6 +144,25 @@ def upgrade() -> None:
         CREATE TRIGGER harness_journal_aggregates_monotonic
             BEFORE UPDATE OR DELETE ON harness_journal_aggregates
             FOR EACH ROW EXECUTE FUNCTION protect_harness_journal_aggregate();
+
+        CREATE FUNCTION protect_harness_journal_position()
+        RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+            IF TG_OP = 'DELETE' THEN
+                RAISE EXCEPTION 'harness journal position is monotonic'
+                    USING ERRCODE = 'integrity_constraint_violation';
+            END IF;
+            IF NEW.workspace_id IS DISTINCT FROM OLD.workspace_id
+                OR NEW.current_sequence < OLD.current_sequence THEN
+                RAISE EXCEPTION 'harness journal position is monotonic'
+                    USING ERRCODE = 'integrity_constraint_violation';
+            END IF;
+            RETURN NEW;
+        END;
+        $$;
+        CREATE TRIGGER harness_journal_positions_monotonic
+            BEFORE UPDATE OR DELETE ON harness_journal_positions
+            FOR EACH ROW EXECUTE FUNCTION protect_harness_journal_position();
         """
     )
 
@@ -144,7 +173,9 @@ def downgrade() -> None:
         DROP TABLE harness_journal_idempotency;
         DROP TABLE harness_journal_events;
         DROP TABLE harness_journal_aggregates;
+        DROP TABLE harness_journal_positions;
         DROP FUNCTION reject_harness_journal_fact_mutation();
         DROP FUNCTION protect_harness_journal_aggregate();
+        DROP FUNCTION protect_harness_journal_position();
         """
     )
