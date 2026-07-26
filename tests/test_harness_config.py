@@ -13,6 +13,9 @@ def test_harness_is_disabled_and_bounded_by_default() -> None:
     assert settings.harness.workspace_root is None
     assert settings.harness.state_directory is None
     assert settings.harness.isolation_executable is None
+    assert settings.harness.local_transport == "stdio"
+    assert settings.harness.unix_socket_path is None
+    assert settings.harness.loopback_http_enabled is False
     assert settings.harness.active_sessions == 8
     assert settings.harness.provider_concurrency == 4
     assert settings.harness.provider_queue_size == 128
@@ -117,6 +120,60 @@ def test_enabled_harness_keeps_isolation_binary_outside_writable_roots(
         Settings(_env_file=None)
 
 
+def test_unix_transport_requires_state_contained_absolute_socket(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    base_environment = {
+        "HARNESS__ENABLED": "true",
+        "HARNESS__WORKSPACE_ROOT": "/srv/atlas/workspaces",
+        "HARNESS__STATE_DIRECTORY": "/var/lib/atlas",
+        "HARNESS__ISOLATION_EXECUTABLE": "/usr/bin/bwrap",
+        "HARNESS__LOCAL_TRANSPORT": "unix",
+    }
+    for name, value in base_environment.items():
+        monkeypatch.setenv(name, value)
+
+    with pytest.raises(ValidationError, match="requires unix_socket_path"):
+        Settings(_env_file=None)
+
+    monkeypatch.setenv("HARNESS__UNIX_SOCKET_PATH", "/tmp/atlas.sock")
+    with pytest.raises(ValidationError, match="inside harness state_directory"):
+        Settings(_env_file=None)
+
+    monkeypatch.setenv(
+        "HARNESS__UNIX_SOCKET_PATH",
+        "/var/lib/atlas/run/atlas.sock",
+    )
+    settings = Settings(_env_file=None)
+    assert settings.harness.local_transport == "unix"
+
+
+def test_stdio_transport_rejects_ambiguous_unix_socket(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    environment = {
+        "HARNESS__ENABLED": "true",
+        "HARNESS__WORKSPACE_ROOT": "/srv/atlas/workspaces",
+        "HARNESS__STATE_DIRECTORY": "/var/lib/atlas",
+        "HARNESS__ISOLATION_EXECUTABLE": "/usr/bin/bwrap",
+        "HARNESS__UNIX_SOCKET_PATH": "/var/lib/atlas/run/atlas.sock",
+    }
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+
+    with pytest.raises(ValidationError, match="stdio harness"):
+        Settings(_env_file=None)
+
+
+def test_loopback_http_cannot_be_enabled_in_this_phase(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HARNESS__LOOPBACK_HTTP_ENABLED", "true")
+
+    with pytest.raises(ValidationError, match="False"):
+        Settings(_env_file=None)
+
+
 def test_harness_settings_contain_no_provider_credentials() -> None:
     settings = Settings(_env_file=None)
     secret_terms = {"api_key", "credential", "password", "secret", "token"}
@@ -141,6 +198,9 @@ def test_harness_settings_contain_no_provider_credentials() -> None:
         ("HARNESS__TURN_MAX_STEPS", "257"),
         ("HARNESS__TURN_MAX_SECONDS", "3601"),
         ("HARNESS__PROCESS_MAX_COUNT", "65"),
+        ("HARNESS__REQUEST_TIMEOUT_SECONDS", "3601"),
+        ("HARNESS__HANDSHAKE_TIMEOUT_SECONDS", "31"),
+        ("HARNESS__SHUTDOWN_TIMEOUT_SECONDS", "31"),
         ("HARNESS__CLOUD_SPEND_LIMIT_USD", "10000.0001"),
     ],
 )
