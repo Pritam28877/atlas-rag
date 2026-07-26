@@ -42,6 +42,10 @@ type ProviderDecisionId = Annotated[
     str,
     _identifier_constraints("pvd"),
 ]
+type ProviderCostReservationId = Annotated[
+    str,
+    _identifier_constraints("pcs"),
+]
 type EvaluationId = Annotated[str, _identifier_constraints("evl")]
 type DecisionId = Annotated[str, _identifier_constraints("dcs")]
 type RequestId = Annotated[str, _identifier_constraints("req")]

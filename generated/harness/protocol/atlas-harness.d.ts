@@ -879,6 +879,41 @@ export type Kind24 = "completed";
 export type Sequence1 = number;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostAdmissionCode".
+ */
+export type ProviderCostAdmissionCode =
+  "allowed" | "call_limit" | "turn_limit" | "workspace_limit";
+export type MaxCallMicrousd = number;
+export type MaxTurnMicrousd = number;
+export type MaxWorkspaceMicrousd = number;
+export type ActualCostMicrousd = number | null;
+export type Attempt1 = number;
+export type EstimatedCostMicrousd = number;
+export type ProviderRequestSha256 = string;
+export type RequestedAt1 = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostReservationId".
+ */
+export type ProviderCostReservationId = string;
+export type Revision = number;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostReservationStatus".
+ */
+export type ProviderCostReservationStatus = "reserved" | "released" | "settled";
+export type UpdatedAt = string;
+export type Allowed = boolean;
+export type AlreadyExists = boolean;
+export type Reason12 = string;
+export type ActiveReservations = number;
+export type ObservedAt = string;
+export type TurnReservedMicrousd = number;
+export type TurnSettledMicrousd = number;
+export type WorkspaceReservedMicrousd = number;
+export type WorkspaceSettledMicrousd = number;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderDecisionId".
  */
 export type ProviderDecisionId = string;
@@ -887,7 +922,7 @@ export type ProviderDecisionId = string;
  * via the `definition` "ProviderDeltaText".
  */
 export type ProviderDeltaText = string;
-export type Attempt1 = number;
+export type Attempt2 = number;
 export type BodyBytes = number;
 export type BodySha256 = string;
 export type DestinationSha256 = string;
@@ -897,7 +932,7 @@ export type InspectionPolicyRevisionSha256 = string;
  * via the `definition` "ProviderName".
  */
 export type ProviderName = string;
-export type Reason12 = string;
+export type Reason13 = string;
 export type RecordedAt = string;
 export type RedirectCount = number;
 export type ResponseBytes = number | null;
@@ -916,7 +951,7 @@ export type ProviderFailureClass =
   | "malformed"
   | "internal";
 export type Kind25 = "error";
-export type Reason13 = string;
+export type Reason14 = string;
 export type RetryAllowed = boolean;
 export type Sequence2 = number;
 export type Kind26 = "reasoning_delta";
@@ -1387,7 +1422,7 @@ export type ContextFeatures =
     ];
 export type ContextWindowTokens1 = number;
 export type DestinationSha2561 = string;
-export type EstimatedCostMicrousd = number;
+export type EstimatedCostMicrousd1 = number;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "RouteHealth".
@@ -1630,7 +1665,7 @@ export type EligibleRoutes = ProviderRoute[];
 export type HealthSnapshotSha2561 = string | null;
 export type ModelRevisionSha2562 = string | null;
 export type PriceVersionSha2561 = string | null;
-export type Reason14 = string;
+export type Reason15 = string;
 /**
  * @maxItems 16
  */
@@ -1858,7 +1893,7 @@ export type RootUri = string;
  * via the `definition` "TaskGraphId".
  */
 export type TaskGraphId = string;
-export type Attempt2 = number;
+export type Attempt3 = number;
 export type CompletedAt1 = string | null;
 export type CreatedAt3 = string;
 /**
@@ -1884,7 +1919,7 @@ export type TaskState =
   | "failed"
   | "cancelled";
 export type TaskSpecSha2561 = string;
-export type UpdatedAt = string;
+export type UpdatedAt1 = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "TaskWorkspaceMode".
@@ -1898,7 +1933,7 @@ export type WorkspaceViewSha256 = string;
 export type TenantId = string;
 export type CreatedAt4 = string;
 export type EventSequence = number;
-export type UpdatedAt1 = string;
+export type UpdatedAt2 = string;
 export type AcceptedAt = string;
 export type CompletedAt2 = string | null;
 export type DeadlineAt = string;
@@ -2536,10 +2571,70 @@ export interface ProviderCompleted {
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostLimits".
+ */
+export interface ProviderCostLimits {
+  max_call_microusd: MaxCallMicrousd;
+  max_turn_microusd: MaxTurnMicrousd;
+  max_workspace_microusd: MaxWorkspaceMicrousd;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostReservation".
+ */
+export interface ProviderCostReservation {
+  actual_cost_microusd?: ActualCostMicrousd;
+  request: ProviderCostReservationRequest;
+  revision: Revision;
+  status: ProviderCostReservationStatus;
+  updated_at: UpdatedAt;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostReservationRequest".
+ */
+export interface ProviderCostReservationRequest {
+  attempt: Attempt1;
+  estimated_cost_microusd: EstimatedCostMicrousd;
+  limits: ProviderCostLimits;
+  provider_request_sha256: ProviderRequestSha256;
+  request_id: RequestId;
+  requested_at: RequestedAt1;
+  reservation_id: ProviderCostReservationId;
+  turn_id: TurnId;
+  workspace_id: WorkspaceId;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostReservationDecision".
+ */
+export interface ProviderCostReservationDecision {
+  allowed: Allowed;
+  already_exists?: AlreadyExists;
+  code: ProviderCostAdmissionCode;
+  reason: Reason12;
+  reservation?: ProviderCostReservation | null;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderCostSnapshot".
+ */
+export interface ProviderCostSnapshot {
+  active_reservations: ActiveReservations;
+  observed_at: ObservedAt;
+  turn_id: TurnId;
+  turn_reserved_microusd: TurnReservedMicrousd;
+  turn_settled_microusd: TurnSettledMicrousd;
+  workspace_id: WorkspaceId;
+  workspace_reserved_microusd: WorkspaceReservedMicrousd;
+  workspace_settled_microusd: WorkspaceSettledMicrousd;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderEgressAuditRecord".
  */
 export interface ProviderEgressAuditRecord {
-  attempt: Attempt1;
+  attempt: Attempt2;
   body_bytes: BodyBytes;
   body_sha256: BodySha256;
   classification: DataClassification;
@@ -2547,7 +2642,7 @@ export interface ProviderEgressAuditRecord {
   inspection_policy_revision_sha256: InspectionPolicyRevisionSha256;
   outcome: EgressAuditOutcome;
   provider: ProviderName;
-  reason: Reason12;
+  reason: Reason13;
   recorded_at: RecordedAt;
   redirect_count: RedirectCount;
   request_id: RequestId;
@@ -2562,7 +2657,7 @@ export interface ProviderEgressAuditRecord {
 export interface ProviderError {
   failure_class: ProviderFailureClass;
   kind?: Kind25;
-  reason: Reason13;
+  reason: Reason14;
   retry_allowed: RetryAllowed;
   sequence: Sequence2;
 }
@@ -2602,7 +2697,7 @@ export interface ProviderRoute {
   context_features?: ContextFeatures;
   context_window_tokens: ContextWindowTokens1;
   destination_sha256: DestinationSha2561;
-  estimated_cost_microusd: EstimatedCostMicrousd;
+  estimated_cost_microusd: EstimatedCostMicrousd1;
   health: RouteHealth;
   health_snapshot_sha256: HealthSnapshotSha256;
   input_modalities?: InputModalities;
@@ -2646,7 +2741,7 @@ export interface RejectedProviderRoute {
   model_revision_sha256?: ModelRevisionSha2562;
   price_version_sha256?: PriceVersionSha2561;
   provider?: ProviderName | null;
-  reason: Reason14;
+  reason: Reason15;
   rejection_codes?: RejectionCodes;
   route_id: RouteId;
 }
@@ -2705,7 +2800,7 @@ export interface ProviderTokenUsage {
  * via the `definition` "TaskNodeRecord".
  */
 export interface TaskNodeRecord {
-  attempt: Attempt2;
+  attempt: Attempt3;
   budget: ExecutionBudget;
   completed_at?: CompletedAt1;
   created_at: CreatedAt3;
@@ -2721,7 +2816,7 @@ export interface TaskNodeRecord {
   state: TaskState;
   task_id: TaskId;
   task_spec_sha256: TaskSpecSha2561;
-  updated_at: UpdatedAt;
+  updated_at: UpdatedAt1;
   usage: ResourceUsage;
   workspace_id: WorkspaceId;
   workspace_mode: TaskWorkspaceMode;
@@ -2739,7 +2834,7 @@ export interface ThreadRecord {
   retention_class: RetentionClass;
   state: ThreadState;
   thread_id: ThreadId;
-  updated_at: UpdatedAt1;
+  updated_at: UpdatedAt2;
   workspace_id: WorkspaceId;
 }
 /**

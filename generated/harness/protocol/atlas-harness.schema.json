@@ -2292,6 +2292,260 @@
       "title": "ProviderCompleted",
       "type": "object"
     },
+    "ProviderCostAdmissionCode": {
+      "enum": [
+        "allowed",
+        "call_limit",
+        "turn_limit",
+        "workspace_limit"
+      ],
+      "title": "ProviderCostAdmissionCode",
+      "type": "string"
+    },
+    "ProviderCostLimits": {
+      "additionalProperties": false,
+      "properties": {
+        "max_call_microusd": {
+          "maximum": 10000000000,
+          "minimum": 1,
+          "title": "Max Call Microusd",
+          "type": "integer"
+        },
+        "max_turn_microusd": {
+          "maximum": 10000000000,
+          "minimum": 1,
+          "title": "Max Turn Microusd",
+          "type": "integer"
+        },
+        "max_workspace_microusd": {
+          "maximum": 10000000000,
+          "minimum": 1,
+          "title": "Max Workspace Microusd",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_call_microusd",
+        "max_turn_microusd",
+        "max_workspace_microusd"
+      ],
+      "title": "ProviderCostLimits",
+      "type": "object"
+    },
+    "ProviderCostReservation": {
+      "additionalProperties": false,
+      "properties": {
+        "actual_cost_microusd": {
+          "anyOf": [
+            {
+              "maximum": 10000000000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Cost Microusd"
+        },
+        "request": {
+          "$ref": "#/$defs/ProviderCostReservationRequest"
+        },
+        "revision": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/ProviderCostReservationStatus"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request",
+        "status",
+        "updated_at",
+        "revision"
+      ],
+      "title": "ProviderCostReservation",
+      "type": "object"
+    },
+    "ProviderCostReservationDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "title": "Allowed",
+          "type": "boolean"
+        },
+        "already_exists": {
+          "default": false,
+          "title": "Already Exists",
+          "type": "boolean"
+        },
+        "code": {
+          "$ref": "#/$defs/ProviderCostAdmissionCode"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "pattern": "^[^\\x00]+$",
+          "title": "Reason",
+          "type": "string"
+        },
+        "reservation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProviderCostReservation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "allowed",
+        "code",
+        "reason"
+      ],
+      "title": "ProviderCostReservationDecision",
+      "type": "object"
+    },
+    "ProviderCostReservationId": {
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^pcs_[0-9a-f]{32}$",
+      "type": "string"
+    },
+    "ProviderCostReservationRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt": {
+          "maximum": 64,
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "estimated_cost_microusd": {
+          "maximum": 10000000000,
+          "minimum": 0,
+          "title": "Estimated Cost Microusd",
+          "type": "integer"
+        },
+        "limits": {
+          "$ref": "#/$defs/ProviderCostLimits"
+        },
+        "provider_request_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Provider Request Sha256",
+          "type": "string"
+        },
+        "request_id": {
+          "$ref": "#/$defs/RequestId"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        },
+        "reservation_id": {
+          "$ref": "#/$defs/ProviderCostReservationId"
+        },
+        "turn_id": {
+          "$ref": "#/$defs/TurnId"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/WorkspaceId"
+        }
+      },
+      "required": [
+        "reservation_id",
+        "workspace_id",
+        "turn_id",
+        "request_id",
+        "provider_request_sha256",
+        "attempt",
+        "estimated_cost_microusd",
+        "limits",
+        "requested_at"
+      ],
+      "title": "ProviderCostReservationRequest",
+      "type": "object"
+    },
+    "ProviderCostReservationStatus": {
+      "enum": [
+        "reserved",
+        "released",
+        "settled"
+      ],
+      "title": "ProviderCostReservationStatus",
+      "type": "string"
+    },
+    "ProviderCostSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "active_reservations": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Active Reservations",
+          "type": "integer"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "turn_id": {
+          "$ref": "#/$defs/TurnId"
+        },
+        "turn_reserved_microusd": {
+          "maximum": 10000000000,
+          "minimum": 0,
+          "title": "Turn Reserved Microusd",
+          "type": "integer"
+        },
+        "turn_settled_microusd": {
+          "maximum": 10000000000,
+          "minimum": 0,
+          "title": "Turn Settled Microusd",
+          "type": "integer"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/WorkspaceId"
+        },
+        "workspace_reserved_microusd": {
+          "maximum": 10000000000,
+          "minimum": 0,
+          "title": "Workspace Reserved Microusd",
+          "type": "integer"
+        },
+        "workspace_settled_microusd": {
+          "maximum": 10000000000,
+          "minimum": 0,
+          "title": "Workspace Settled Microusd",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "turn_id",
+        "workspace_reserved_microusd",
+        "workspace_settled_microusd",
+        "turn_reserved_microusd",
+        "turn_settled_microusd",
+        "active_reservations",
+        "observed_at"
+      ],
+      "title": "ProviderCostSnapshot",
+      "type": "object"
+    },
     "ProviderDecisionId": {
       "maxLength": 36,
       "minLength": 36,
@@ -4638,6 +4892,15 @@
     },
     "PrincipalRecord": {
       "$ref": "#/$defs/PrincipalRecord"
+    },
+    "ProviderCostReservation": {
+      "$ref": "#/$defs/ProviderCostReservation"
+    },
+    "ProviderCostReservationDecision": {
+      "$ref": "#/$defs/ProviderCostReservationDecision"
+    },
+    "ProviderCostSnapshot": {
+      "$ref": "#/$defs/ProviderCostSnapshot"
     },
     "ProviderEgressAuditRecord": {
       "$ref": "#/$defs/ProviderEgressAuditRecord"
