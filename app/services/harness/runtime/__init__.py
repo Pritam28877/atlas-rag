@@ -46,6 +46,11 @@ from app.services.harness.runtime.peer_auth import (
     PeerSessionTokenManager,
     VerifiedPeerSession,
 )
+from app.services.harness.runtime.stdio_auth import (
+    StdioParentCredentialReader,
+    StdioParentIdentityError,
+    StdioSessionAuthenticator,
+)
 from app.services.harness.runtime.streams import (
     AsyncStreamWriter,
     DrainingFrameSender,
@@ -114,6 +119,9 @@ __all__ = (
     "SubscriptionErrorCode",
     "SubscriptionSnapshot",
     "SubscriptionState",
+    "StdioParentCredentialReader",
+    "StdioParentIdentityError",
+    "StdioSessionAuthenticator",
     "UnixPeerCredentialError",
     "UnixPeerCredentialReader",
     "UnixChallengeHandshake",

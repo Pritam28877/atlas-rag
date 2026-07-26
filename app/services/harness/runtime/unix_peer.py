@@ -65,6 +65,35 @@ class UnixPeerCredentialReader:
                 "local peer authentication failed"
             ) from error
 
+    async def read_process_owner(self, process_id: int) -> PeerCredentials:
+        """Reads procfs owner and stable evidence for a known parent process."""
+
+        try:
+            return await asyncio.to_thread(
+                self._read_process_owner,
+                process_id,
+            )
+        except (OSError, ValueError) as error:
+            raise UnixPeerCredentialError(
+                "local peer authentication failed"
+            ) from error
+
+    def _read_process_owner(self, process_id: int) -> PeerCredentials:
+        if not 1 <= process_id <= 2**31 - 1:
+            raise UnixPeerCredentialError("local peer authentication failed")
+        process_directory = self._proc_root / str(process_id)
+        process_status = process_directory.stat()
+        start_ticks, executable_sha256 = self._read_stable_process_evidence(
+            process_id
+        )
+        return PeerCredentials(
+            user_id=process_status.st_uid,
+            group_id=process_status.st_gid,
+            process_id=process_id,
+            process_start_ticks=start_ticks,
+            executable_sha256=executable_sha256,
+        )
+
     def _read_stable_process_evidence(self, process_id: int) -> tuple[int, str]:
         process_directory = self._proc_root / str(process_id)
         start_ticks_before = self._read_start_ticks(process_directory / "stat")
