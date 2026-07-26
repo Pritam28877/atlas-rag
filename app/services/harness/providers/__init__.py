@@ -39,6 +39,11 @@ from app.services.harness.providers.egress_contracts import (
     ProviderPayloadInspector,
     SafeEgressHeader,
 )
+from app.services.harness.providers.egress_dns import (
+    ProviderDnsError,
+    ProviderDnsErrorCode,
+    SystemProviderAddressResolver,
+)
 from app.services.harness.providers.egress_gateway import (
     ProviderEgressGateway,
     ProviderEgressGatewayError,
@@ -71,6 +76,10 @@ from app.services.harness.providers.httpcore_connector import (
     HttpCoreEgressConnector,
     ProviderCredentialHeaderEncoder,
 )
+from app.services.harness.providers.payload_inspection import (
+    DeterministicProviderPayloadInspector,
+    ProviderPayloadInspectionPolicy,
+)
 from app.services.harness.providers.pinned_network import (
     PinnedProviderNetworkBackend,
 )
@@ -102,6 +111,7 @@ __all__ = (
     "EnvironmentCredentialError",
     "EnvironmentCredentialErrorCode",
     "EnvironmentCredentialReference",
+    "DeterministicProviderPayloadInspector",
     "HttpCoreConnectorError",
     "HttpCoreConnectorErrorCode",
     "HttpCoreEgressConnector",
@@ -117,6 +127,8 @@ __all__ = (
     "ProviderHealthRegistryError",
     "ProviderHealthRegistryErrorCode",
     "ProviderCredentialHeaderEncoder",
+    "ProviderDnsError",
+    "ProviderDnsErrorCode",
     "PinnedProviderNetworkBackend",
     "ProviderEgressPolicy",
     "ProviderEgressPolicyError",
@@ -136,7 +148,9 @@ __all__ = (
     "RecordedProviderStream",
     "ProviderRouteConfiguration",
     "ProviderPayloadInspector",
+    "ProviderPayloadInspectionPolicy",
     "SafeEgressHeader",
+    "SystemProviderAddressResolver",
     "authorize_egress_target",
     "canonical_provider_origin",
     "canonical_provider_url",
