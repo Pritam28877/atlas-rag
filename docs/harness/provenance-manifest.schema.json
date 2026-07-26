@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atlas.local/schemas/harness-provenance-v1.json",
+  "title": "Atlas Harness provenance manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "reviewed_at",
+    "outbound_license",
+    "sources",
+    "adapted_files"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "outbound_license": {
+      "$ref": "#/$defs/outboundLicense"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "adapted_files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/adaptedFile"
+      }
+    }
+  },
+  "$defs": {
+    "outboundLicense": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposal", "status", "approval_required", "notice_plan"],
+      "properties": {
+        "proposal": {
+          "enum": ["Apache-2.0"]
+        },
+        "status": {
+          "enum": ["pending_human_approval", "approved"]
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "notice_plan": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spdx", "status", "evidence"],
+      "properties": {
+        "spdx": {
+          "type": ["string", "null"]
+        },
+        "status": {
+          "enum": ["verified", "restricted", "unverified"]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["treatment", "copy_allowed", "conditions"],
+      "properties": {
+        "treatment": {
+          "enum": [
+            "base_and_adapt",
+            "pattern_adaptation",
+            "behavior_spec_only",
+            "concept_only"
+          ]
+        },
+        "copy_allowed": {
+          "type": "boolean"
+        },
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "location",
+        "revision",
+        "revision_kind",
+        "reviewed_at",
+        "owner",
+        "license",
+        "usage"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": ["git_repository", "local_git_tree", "documentation"]
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision_kind": {
+          "enum": ["git_commit", "documentation_snapshot_date"]
+        },
+        "reviewed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "license": {
+          "$ref": "#/$defs/license"
+        },
+        "usage": {
+          "$ref": "#/$defs/usage"
+        }
+      }
+    },
+    "adaptedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "source_id",
+        "source_path",
+        "source_revision",
+        "license",
+        "change_summary",
+        "owner"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1
+        },
+        "change_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

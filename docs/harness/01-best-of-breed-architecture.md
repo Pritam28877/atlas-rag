@@ -14,6 +14,8 @@ The companion documents are:
 
 - [End-to-end implementation plan](02-end-to-end-implementation-plan.md)
 - [Why this is the best base harness](03-why-this-base-harness.md)
+- [Threat model](04-threat-model.md)
+- [Provenance and license plan](05-provenance-and-license.md)
 
 Each diagram is embedded as a local PNG so it remains visible in editors and
 Markdown previews that do not render Mermaid. The editable Mermaid source is
