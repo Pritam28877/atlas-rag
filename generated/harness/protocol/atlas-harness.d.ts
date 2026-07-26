@@ -923,6 +923,330 @@ export type MaxRetentionDays = number;
  * @maxItems 64
  */
 export type RequiredCapabilities1 = string[];
+/**
+ * @maxItems 16
+ */
+export type RequiredContextFeatures =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
+/**
+ * @maxItems 16
+ */
+export type RequiredInputModalities =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
+/**
+ * @maxItems 16
+ */
+export type RequiredOutputModalities =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
 export type ReservedOutputTokens1 = number;
 /**
  * @minItems 1
@@ -937,6 +1261,114 @@ export type AcceptedDataClassifications =
  * @maxItems 64
  */
 export type Capabilities1 = string[];
+/**
+ * @maxItems 16
+ */
+export type ContextFeatures =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
 export type ContextWindowTokens1 = number;
 export type DestinationSha256 = string;
 export type EstimatedCostMicrousd = number;
@@ -944,11 +1376,228 @@ export type EstimatedCostMicrousd = number;
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "RouteHealth".
  */
-export type RouteHealth = "healthy" | "degraded";
+export type RouteHealth = "unknown" | "healthy" | "degraded" | "unavailable" | "stale";
 export type HealthSnapshotSha256 = string;
+/**
+ * @maxItems 16
+ */
+export type InputModalities =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
 export type MaxOutputTokens1 = number;
 export type ModelRevisionSha2561 = string;
+/**
+ * @maxItems 16
+ */
+export type OutputModalities =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
 export type PriceVersionSha256 = string;
+export type Priority1 = number;
 export type RetentionDays = number;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -961,7 +1610,191 @@ export type DecidedAt1 = string;
  * @maxItems 64
  */
 export type EligibleRoutes = ProviderRoute[];
+export type HealthSnapshotSha2561 = string | null;
+export type ModelRevisionSha2562 = string | null;
+export type PriceVersionSha2561 = string | null;
 export type Reason13 = string;
+/**
+ * @maxItems 16
+ */
+export type RejectionCodes =
+  | []
+  | [ProviderRouteRejectionCode]
+  | [ProviderRouteRejectionCode, ProviderRouteRejectionCode]
+  | [ProviderRouteRejectionCode, ProviderRouteRejectionCode, ProviderRouteRejectionCode]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ]
+  | [
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+      ProviderRouteRejectionCode,
+    ];
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ProviderRouteRejectionCode".
+ */
+export type ProviderRouteRejectionCode =
+  | "capability"
+  | "context_feature"
+  | "context_window"
+  | "cost"
+  | "data_classification"
+  | "health"
+  | "input_modality"
+  | "output_limit"
+  | "output_modality"
+  | "region"
+  | "retention"
+  | "training";
 /**
  * @maxItems 256
  */
@@ -1017,7 +1850,7 @@ export type DependencyTaskIds = TaskId[];
 export type Depth = number;
 export type GraphSha256 = string;
 export type LeaseGeneration = number | null;
-export type Priority1 = number;
+export type Priority2 = number;
 export type StartedAt1 = string | null;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -1468,7 +2301,7 @@ export interface EvaluationMetric {
   score_ppm: ScorePpm;
 }
 /**
- * Pinned evaluation evidence without floating-point scores or unbounded traces.
+ * Pinned evaluation evidence without floating-point scores.
  *
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "EvaluationRunRecord".
@@ -1715,6 +2548,9 @@ export interface ProviderRequirements {
   max_cost_microusd: MaxCostMicrousd1;
   max_retention_days: MaxRetentionDays;
   required_capabilities: RequiredCapabilities1;
+  required_context_features?: RequiredContextFeatures;
+  required_input_modalities?: RequiredInputModalities;
+  required_output_modalities?: RequiredOutputModalities;
   reserved_output_tokens: ReservedOutputTokens1;
 }
 /**
@@ -1724,15 +2560,19 @@ export interface ProviderRequirements {
 export interface ProviderRoute {
   accepted_data_classifications: AcceptedDataClassifications;
   capabilities: Capabilities1;
+  context_features?: ContextFeatures;
   context_window_tokens: ContextWindowTokens1;
   destination_sha256: DestinationSha256;
   estimated_cost_microusd: EstimatedCostMicrousd;
   health: RouteHealth;
   health_snapshot_sha256: HealthSnapshotSha256;
+  input_modalities?: InputModalities;
   max_output_tokens: MaxOutputTokens1;
   model: ModelName;
   model_revision_sha256: ModelRevisionSha2561;
+  output_modalities?: OutputModalities;
   price_version_sha256: PriceVersionSha256;
+  priority?: Priority1;
   provider: ProviderName;
   region: Region;
   retention_days: RetentionDays;
@@ -1760,7 +2600,14 @@ export interface ProviderRouteDecisionRecord {
  * via the `definition` "RejectedProviderRoute".
  */
 export interface RejectedProviderRoute {
+  health?: RouteHealth | null;
+  health_snapshot_sha256?: HealthSnapshotSha2561;
+  model?: ModelName | null;
+  model_revision_sha256?: ModelRevisionSha2562;
+  price_version_sha256?: PriceVersionSha2561;
+  provider?: ProviderName | null;
   reason: Reason13;
+  rejection_codes?: RejectionCodes;
   route_id: RouteId;
 }
 /**
@@ -1829,7 +2676,7 @@ export interface TaskNodeRecord {
   lease_generation?: LeaseGeneration;
   owner_principal_id: PrincipalId;
   parent_task_id?: TaskId | null;
-  priority: Priority1;
+  priority: Priority2;
   started_at?: StartedAt1;
   state: TaskState;
   task_id: TaskId;
