@@ -1,5 +1,8 @@
 """Explicit local SQLite schema for immutable journal facts."""
 
+from app.services.harness.journal.sqlite_recovery_schema import (
+    SQLITE_RECOVERY_SCHEMA,
+)
 from app.services.harness.journal.sqlite_retention_evidence_schema import (
     SQLITE_RETENTION_EVIDENCE_SCHEMA,
 )
@@ -10,7 +13,7 @@ from app.services.harness.journal.sqlite_storage_schema import (
     SQLITE_STORAGE_SCHEMA,
 )
 
-SQLITE_SCHEMA_VERSION = 5
+SQLITE_SCHEMA_VERSION = 6
 
 SQLITE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS harness_journal_schema (
@@ -19,7 +22,7 @@ CREATE TABLE IF NOT EXISTS harness_journal_schema (
 );
 
 INSERT OR IGNORE INTO harness_journal_schema (singleton, schema_version)
-VALUES (1, 5);
+VALUES (1, 6);
 
 CREATE TABLE IF NOT EXISTS harness_journal_positions (
     workspace_id TEXT PRIMARY KEY,
@@ -275,4 +278,9 @@ WHEN COALESCE((
 BEGIN
     SELECT RAISE(ABORT, 'harness journal requires operator');
 END;
-""" + SQLITE_RETENTION_SCHEMA + SQLITE_RETENTION_EVIDENCE_SCHEMA + SQLITE_STORAGE_SCHEMA
+""" + (
+    SQLITE_RETENTION_SCHEMA
+    + SQLITE_RETENTION_EVIDENCE_SCHEMA
+    + SQLITE_STORAGE_SCHEMA
+    + SQLITE_RECOVERY_SCHEMA
+)
