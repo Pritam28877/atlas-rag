@@ -38,6 +38,11 @@ from app.services.harness.runtime.peer_auth import (
     PeerSessionTokenManager,
     VerifiedPeerSession,
 )
+from app.services.harness.runtime.streams import (
+    AsyncStreamWriter,
+    DrainingFrameSender,
+    LocalStreamRunner,
+)
 from app.services.harness.runtime.subscriptions import (
     EventSubscription,
     PublishDisposition,
@@ -59,6 +64,7 @@ __all__ = (
     "AuthorityDenialReason",
     "AuthorityRepository",
     "AuthoritySnapshot",
+    "AsyncStreamWriter",
     "CommandAuthorityBinder",
     "CommandDispatcher",
     "CommandErrorReply",
@@ -66,12 +72,14 @@ __all__ = (
     "ConnectionClosedError",
     "ConnectionErrorCode",
     "ConnectionFatalError",
+    "DrainingFrameSender",
     "EventSubscription",
     "FrameDecoder",
     "FrameError",
     "FrameErrorCode",
     "FrameSender",
     "LocalConnection",
+    "LocalStreamRunner",
     "PeerAuthenticationError",
     "PeerAuthenticationErrorCode",
     "PeerCredentials",
