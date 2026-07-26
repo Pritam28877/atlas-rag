@@ -221,11 +221,11 @@ BEGIN
     END;
 END;
 
-CREATE TRIGGER IF NOT EXISTS harness_events_require_health
+CREATE TRIGGER IF NOT EXISTS harness_events_require_healthy_health
 BEFORE INSERT ON harness_events
-WHEN (
+WHEN COALESCE((
     SELECT journal_status FROM harness_journal_health WHERE singleton = 1
-) = 'needs_operator'
+), 'needs_operator') <> 'healthy'
 BEGIN
     SELECT RAISE(ABORT, 'harness journal requires operator');
 END;
