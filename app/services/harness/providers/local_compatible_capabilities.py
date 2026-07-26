@@ -46,7 +46,6 @@ class LocalCompatibleProbe(StrictProtocolModel):
     model_revision_sha256: Sha256
     destination_sha256: Sha256
     supported_features: tuple[LocalCompatibleFeature, ...] = Field(
-        min_length=1,
         max_length=32,
     )
     evidence_sha256: Sha256

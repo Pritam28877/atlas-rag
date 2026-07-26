@@ -4,3 +4,4 @@
 - `test_capability_decision.py`: fresh probe decisions.
 - `test_compiler.py`: capability-gated mapping.
 - `test_identity_policy.py`: auth and SSRF policy.
+- `test_probe.py`: bounded behavioral probing.
