@@ -1,0 +1,6 @@
+{"item":{"arguments":"","call_id":"call_weather-A1","id":"fc_1","name":"weather.lookup","status":"in_progress","type":"function_call"},"output_index":0,"sequence_number":1,"type":"response.output_item.added"}
+{"delta":"{\"city\":","item_id":"fc_1","output_index":0,"sequence_number":2,"type":"response.function_call_arguments.delta"}
+{"arguments":"{ \"units\": \"c\", \"city\": \"Pune\" }","item_id":"fc_1","name":"weather.lookup","output_index":0,"sequence_number":3,"type":"response.function_call_arguments.done"}
+{"item":{"arguments":"","call_id":"call_clock_B2","id":"fc_2","name":"clock.read","status":"in_progress","type":"function_call"},"output_index":1,"sequence_number":4,"type":"response.output_item.added"}
+{"arguments":"{\"zone\":\"Asia/Kolkata\"}","item_id":"fc_2","name":"clock.read","output_index":1,"sequence_number":5,"type":"response.function_call_arguments.done"}
+{"response":{"status":"completed","usage":{"input_tokens":20,"input_tokens_details":{"cached_tokens":0},"output_tokens":9,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":29}},"sequence_number":6,"type":"response.completed"}

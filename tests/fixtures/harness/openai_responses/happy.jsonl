@@ -1,0 +1,4 @@
+{"response":{"status":"in_progress"},"sequence_number":1,"type":"response.created"}
+{"delta":"Checked bounded evidence.","item_id":"rs_1","output_index":0,"sequence_number":2,"summary_index":0,"type":"response.reasoning_summary_text.delta"}
+{"content_index":0,"delta":"Hello from OpenAI.","item_id":"msg_1","output_index":1,"sequence_number":3,"type":"response.output_text.delta"}
+{"response":{"status":"completed","usage":{"input_tokens":11,"input_tokens_details":{"cached_tokens":3},"output_tokens":5,"output_tokens_details":{"reasoning_tokens":2},"total_tokens":16}},"sequence_number":4,"type":"response.completed"}

@@ -107,6 +107,16 @@ from app.services.harness.providers.openai_contracts import (
     OpenAIMessageInput,
     OpenAIResponseInput,
 )
+from app.services.harness.providers.openai_decode_support import (
+    MAXIMUM_OPENAI_FUNCTION_CALLS,
+    MAXIMUM_OPENAI_WIRE_EVENT_BYTES,
+    MAXIMUM_OPENAI_WIRE_EVENTS,
+    OpenAIDecodeError,
+    OpenAIDecodeErrorCode,
+)
+from app.services.harness.providers.openai_decoder import (
+    OpenAIResponsesDecoder,
+)
 from app.services.harness.providers.payload_inspection import (
     DeterministicProviderPayloadInspector,
     ProviderPayloadInspectionPolicy,
@@ -158,14 +168,20 @@ __all__ = (
     "PayloadInspection",
     "AuthorizedEgressTarget",
     "LoadedProviderConfiguration",
+    "MAXIMUM_OPENAI_FUNCTION_CALLS",
+    "MAXIMUM_OPENAI_WIRE_EVENT_BYTES",
+    "MAXIMUM_OPENAI_WIRE_EVENTS",
     "OpenAICompileError",
     "OpenAICompileErrorCode",
+    "OpenAIDecodeError",
+    "OpenAIDecodeErrorCode",
     "OpenAIFunctionCallOutput",
     "OpenAIFunctionTool",
     "OpenAIInputText",
     "OpenAIMessageInput",
     "OpenAIResponseInput",
     "OpenAIResponsesCompiler",
+    "OpenAIResponsesDecoder",
     "ProviderConfigLoadError",
     "ProviderConfigLoadErrorCode",
     "ProviderConfiguration",
