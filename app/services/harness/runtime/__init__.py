@@ -54,6 +54,10 @@ from app.services.harness.runtime.subscriptions import (
     SubscriptionSnapshot,
     SubscriptionState,
 )
+from app.services.harness.runtime.unix_peer import (
+    UnixPeerCredentialError,
+    UnixPeerCredentialReader,
+)
 
 __all__ = (
     "AdmissionError",
@@ -93,6 +97,8 @@ __all__ = (
     "SubscriptionErrorCode",
     "SubscriptionSnapshot",
     "SubscriptionState",
+    "UnixPeerCredentialError",
+    "UnixPeerCredentialReader",
     "VerifiedPeerSession",
     "decode_command",
     "encode_frame",
