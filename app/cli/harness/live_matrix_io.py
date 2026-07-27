@@ -13,6 +13,10 @@ from pydantic import Field, ValidationError, model_validator
 
 from app.cli.harness.adapter_smoke_io import AdapterSmokeResult
 from app.cli.harness.bedrock_smoke_io import BedrockSmokeResult
+from app.cli.harness.live_matrix_failure import (
+    LiveSmokeFailureReceipt,
+    failed_live_observations,
+)
 from app.cli.harness.live_matrix_smoke import (
     LiveSmokeResult,
     live_observations_from_smoke,
@@ -47,6 +51,7 @@ Clock = Callable[[], datetime]
 class LiveSmokeResultKind(StrEnum):
     ADAPTER = "adapter"
     BEDROCK = "bedrock"
+    FAILURE = "failure"
     PROVIDER = "provider"
 
 
@@ -128,12 +133,15 @@ async def build_live_matrix_from_manifest(
         results,
         strict=True,
     ):
-        observations.extend(
-            live_observations_from_smoke(
-                descriptors[reference.provider],
-                result,
+        descriptor = descriptors[reference.provider]
+        if isinstance(result, LiveSmokeFailureReceipt):
+            observations.extend(
+                failed_live_observations(descriptor, result)
             )
-        )
+        else:
+            observations.extend(
+                live_observations_from_smoke(descriptor, result)
+            )
     generated_at = (clock or _utc_now)()
     matrix = build_live_conformance_matrix(
         manifest.providers,
@@ -164,7 +172,7 @@ async def _load_manifest(path: Path) -> LiveMatrixManifest:
 
 async def _load_result(
     reference: LiveSmokeEvidenceReference,
-) -> LiveSmokeResult:
+) -> LiveSmokeResult | LiveSmokeFailureReceipt:
     content = await read_private_smoke_input(
         reference.result_path,
         maximum_bytes=MAXIMUM_SMOKE_POLICY_BYTES,
@@ -172,12 +180,15 @@ async def _load_result(
     result_model: (
         type[AdapterSmokeResult]
         | type[BedrockSmokeResult]
+        | type[LiveSmokeFailureReceipt]
         | type[ProviderSmokeResult]
     )
     if reference.kind is LiveSmokeResultKind.ADAPTER:
         result_model = AdapterSmokeResult
     elif reference.kind is LiveSmokeResultKind.BEDROCK:
         result_model = BedrockSmokeResult
+    elif reference.kind is LiveSmokeResultKind.FAILURE:
+        result_model = LiveSmokeFailureReceipt
     else:
         result_model = ProviderSmokeResult
     try:

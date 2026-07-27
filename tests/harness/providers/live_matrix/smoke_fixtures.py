@@ -4,7 +4,14 @@ from datetime import timedelta
 
 from app.cli.harness.adapter_smoke_io import AdapterSmokeResult
 from app.cli.harness.bedrock_smoke_io import BedrockSmokeResult
+from app.cli.harness.live_matrix_failure import LiveSmokeFailureReceipt
 from app.cli.harness.provider_smoke_io import ProviderSmokeResult
+from app.services.harness.providers.conformance_contracts import (
+    ConformanceScenario,
+)
+from app.services.harness.providers.live_matrix_contracts import (
+    LiveEvidenceFailureCode,
+)
 from tests.harness.providers.live_matrix.fixtures import NOW
 
 
@@ -65,4 +72,24 @@ def bedrock_result() -> BedrockSmokeResult:
         charged_cost_microusd=9,
         signed_cost_cap_microusd=10,
         completed_at=NOW + timedelta(seconds=1),
+    )
+
+
+def failure_receipt() -> LiveSmokeFailureReceipt:
+    return LiveSmokeFailureReceipt(
+        provider="vertex",
+        model="configured-model",
+        model_revision_sha256="6" * 64,
+        adapter_revision_sha256="a" * 64,
+        route_binding_sha256="b" * 64,
+        scenarios=(
+            ConformanceScenario.TEXT_STREAM,
+            ConformanceScenario.USAGE_COST,
+        ),
+        failure_code=LiveEvidenceFailureCode.TIMEOUT,
+        latency_ms=30_000,
+        charged_cost_microusd=4,
+        authorized_cost_cap_microusd=10,
+        trace_sha256="d" * 64,
+        occurred_at=NOW + timedelta(seconds=1),
     )
