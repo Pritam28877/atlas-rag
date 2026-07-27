@@ -1,5 +1,14 @@
 """Capability policy models and deterministic compilation."""
 
+from app.services.harness.policy.approvals import (
+    MAXIMUM_APPROVAL_LIFETIME,
+    ApprovalAuthorizationError,
+    authorize_with_approval,
+    expire_approval,
+    request_capability_approval,
+    respond_to_approval,
+    revoke_approval,
+)
 from app.services.harness.policy.compiler import compile_capability_decision
 from app.services.harness.policy.models import (
     CapabilityKind,
@@ -30,6 +39,7 @@ from app.services.harness.policy.models import (
 )
 
 __all__ = (
+    "ApprovalAuthorizationError",
     "CapabilityKind",
     "CapabilityLimits",
     "CapabilityProposal",
@@ -42,6 +52,7 @@ __all__ = (
     "FilesystemOperation",
     "FilesystemTarget",
     "LayerPolicyDecision",
+    "MAXIMUM_APPROVAL_LIFETIME",
     "NetworkMethod",
     "NetworkTarget",
     "PolicyBundle",
@@ -53,7 +64,12 @@ __all__ = (
     "SecretTarget",
     "ToolTarget",
     "capability_target_sha256",
+    "authorize_with_approval",
     "compile_capability_decision",
+    "expire_approval",
     "policy_bundle_version",
     "policy_document_version",
+    "request_capability_approval",
+    "respond_to_approval",
+    "revoke_approval",
 )

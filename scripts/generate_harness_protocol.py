@@ -46,6 +46,11 @@ from app.services.harness.protocol import (
     TurnRecord,
     WorkspaceRecord,
 )
+from app.services.harness.protocol.approvals import (
+    ApprovalReceipt,
+    ApprovalRequestBinding,
+    DurableApprovalRecord,
+)
 from scripts.harness_protocol_fixtures import (
     FIXTURE_PATHS,
     build_compatibility_fixture_documents,
@@ -78,6 +83,9 @@ PROTOCOL_MODELS: tuple[type[BaseModel], ...] = (
     ContextManifest,
     OperationRecord,
     ApprovalRecord,
+    ApprovalRequestBinding,
+    DurableApprovalRecord,
+    ApprovalReceipt,
     ArtifactRecord,
     TaskNodeRecord,
     ProviderRouteDecisionRecord,

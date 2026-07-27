@@ -17,6 +17,65 @@
       "pattern": "^apr_[0-9a-f]{32}$",
       "type": "string"
     },
+    "ApprovalReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_id": {
+          "$ref": "#/$defs/ApprovalId"
+        },
+        "authorization_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Authorization Sha256",
+          "type": "string"
+        },
+        "generation": {
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Generation",
+          "type": "integer"
+        },
+        "previous_receipt_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Receipt Sha256"
+        },
+        "receipt_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Receipt Sha256",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/DurableApprovalState"
+        },
+        "transitioned_at": {
+          "format": "date-time",
+          "title": "Transitioned At",
+          "type": "string"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/WorkspaceId"
+        }
+      },
+      "required": [
+        "approval_id",
+        "workspace_id",
+        "generation",
+        "state",
+        "authorization_sha256",
+        "transitioned_at",
+        "receipt_sha256"
+      ],
+      "title": "ApprovalReceipt",
+      "type": "object"
+    },
     "ApprovalRecord": {
       "additionalProperties": false,
       "description": "Hash-bound approval that narrows authority for one exact operation.",
@@ -119,6 +178,94 @@
         "reason"
       ],
       "title": "ApprovalRecord",
+      "type": "object"
+    },
+    "ApprovalRequestBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_id": {
+          "$ref": "#/$defs/ApprovalId"
+        },
+        "authorization_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Authorization Sha256",
+          "type": "string"
+        },
+        "capability": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+          "title": "Capability",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "grant_id": {
+          "$ref": "#/$defs/GrantId"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/OperationId"
+        },
+        "policy_decision_id": {
+          "$ref": "#/$defs/DecisionId"
+        },
+        "policy_version": {
+          "maxLength": 68,
+          "pattern": "^pol_[0-9a-f]{64}$",
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "principal_id": {
+          "$ref": "#/$defs/PrincipalId"
+        },
+        "proposal_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Proposal Sha256",
+          "type": "string"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/ApprovalScope"
+        },
+        "scope_binding_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Scope Binding Sha256",
+          "type": "string"
+        },
+        "target_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Target Sha256",
+          "type": "string"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/WorkspaceId"
+        }
+      },
+      "required": [
+        "approval_id",
+        "operation_id",
+        "workspace_id",
+        "principal_id",
+        "grant_id",
+        "policy_decision_id",
+        "policy_version",
+        "capability",
+        "target_sha256",
+        "proposal_sha256",
+        "scope",
+        "scope_binding_sha256",
+        "requested_at",
+        "expires_at",
+        "authorization_sha256"
+      ],
+      "title": "ApprovalRequestBinding",
       "type": "object"
     },
     "ApprovalRespondCommand": {
@@ -957,6 +1104,105 @@
         "require_approval"
       ],
       "title": "DecisionOutcome",
+      "type": "string"
+    },
+    "DurableApprovalRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/ApprovalRequestBinding"
+        },
+        "decided_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decided At"
+        },
+        "decided_by_principal_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PrincipalId"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "generation": {
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Generation",
+          "type": "integer"
+        },
+        "latest_receipt_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Latest Receipt Sha256",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "pattern": "^[^\\x00]+$",
+          "title": "Reason",
+          "type": "string"
+        },
+        "revoked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revoked At"
+        },
+        "revoked_by_principal_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PrincipalId"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "state": {
+          "$ref": "#/$defs/DurableApprovalState"
+        }
+      },
+      "required": [
+        "binding",
+        "generation",
+        "state",
+        "reason",
+        "latest_receipt_sha256"
+      ],
+      "title": "DurableApprovalRecord",
+      "type": "object"
+    },
+    "DurableApprovalState": {
+      "enum": [
+        "requested",
+        "approved",
+        "denied",
+        "expired",
+        "revoked",
+        "cancelled",
+        "consumed"
+      ],
+      "title": "DurableApprovalState",
       "type": "string"
     },
     "EgressAuditOutcome": {
@@ -4929,8 +5175,14 @@
     }
   ],
   "x-atlas-root-models": {
+    "ApprovalReceipt": {
+      "$ref": "#/$defs/ApprovalReceipt"
+    },
     "ApprovalRecord": {
       "$ref": "#/$defs/ApprovalRecord"
+    },
+    "ApprovalRequestBinding": {
+      "$ref": "#/$defs/ApprovalRequestBinding"
     },
     "ArtifactRecord": {
       "$ref": "#/$defs/ArtifactRecord"
@@ -4943,6 +5195,9 @@
     },
     "ContextManifest": {
       "$ref": "#/$defs/ContextManifest"
+    },
+    "DurableApprovalRecord": {
+      "$ref": "#/$defs/DurableApprovalRecord"
     },
     "EvaluationRunRecord": {
       "$ref": "#/$defs/EvaluationRunRecord"
