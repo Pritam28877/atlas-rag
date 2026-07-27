@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api.v1.harness import create_harness_router
+from app.api.v1.harness.policy import create_policy_router
 from app.core.auth import Principal
 from app.services.harness.policy import PolicyEffect, PolicyLayer
 from tests.harness.policy.approval_fixtures import asked_decision
@@ -23,7 +23,7 @@ class Verifier:
 def client() -> TestClient:
     app = FastAPI()
     app.state.auth = Verifier()
-    app.include_router(create_harness_router())
+    app.include_router(create_policy_router())
     return TestClient(app)
 
 
