@@ -100,6 +100,29 @@ def load_recoverable_background_jobs(
     return tuple(decode_background_job(row) for row in rows)
 
 
+def load_expired_background_jobs(
+    connection: sqlite3.Connection,
+    *,
+    expired_at_or_before: datetime,
+    maximum_records: int,
+) -> tuple[BackgroundJobRecord, ...]:
+    _validate_limit(maximum_records)
+    rows = connection.execute(
+        """
+        SELECT workspace_id, operation_id, owner_principal_id, job_state,
+               execution_generation, execution_owner_id, record_json,
+               updated_at, retention_expires_at
+        FROM harness_background_jobs
+        WHERE job_state IN ('completed', 'failed', 'cancelled', 'ambiguous')
+          AND retention_expires_at <= ?
+        ORDER BY retention_expires_at, workspace_id, operation_id
+        LIMIT ?
+        """,
+        (expired_at_or_before.isoformat(), maximum_records),
+    ).fetchall()
+    return tuple(decode_background_job(row) for row in rows)
+
+
 def count_workspace_background_jobs(
     connection: sqlite3.Connection,
     workspace_id: str,

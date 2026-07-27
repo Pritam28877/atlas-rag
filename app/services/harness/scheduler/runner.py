@@ -15,16 +15,16 @@ from app.services.harness.protocol.background_job_execution import (
     BackgroundJobExecutor,
     BackgroundJobStore,
 )
+from app.services.harness.protocol.background_job_updates import (
+    claim_background_job,
+    refresh_background_job,
+    terminal_background_job,
+)
 from app.services.harness.protocol.background_jobs import (
     BackgroundJobConfiguration,
     BackgroundJobRecord,
     BackgroundJobState,
     JobExecutionOwnerId,
-)
-from app.services.harness.scheduler.job_updates import (
-    claim_background_job,
-    refresh_background_job,
-    terminal_background_job,
 )
 
 

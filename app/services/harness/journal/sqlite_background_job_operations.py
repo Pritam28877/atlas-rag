@@ -106,6 +106,38 @@ def purge_expired_background_jobs(
         raise
 
 
+def delete_expired_background_job(
+    connection: sqlite3.Connection,
+    job: BackgroundJobRecord,
+    *,
+    expired_at_or_before: datetime,
+) -> bool:
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        deleted = connection.execute(
+            """
+            DELETE FROM harness_background_jobs
+            WHERE workspace_id = ? AND operation_id = ?
+              AND job_state IN (
+                  'completed', 'failed', 'cancelled', 'ambiguous'
+              )
+              AND retention_expires_at <= ?
+              AND record_json = ?
+            """,
+            (
+                job.workspace_id,
+                job.operation_id,
+                expired_at_or_before.isoformat(),
+                job.model_dump_json(),
+            ),
+        )
+        connection.commit()
+        return deleted.rowcount == 1
+    except BaseException:
+        connection.rollback()
+        raise
+
+
 def _insert_background_job(
     connection: sqlite3.Connection,
     job: BackgroundJobRecord,

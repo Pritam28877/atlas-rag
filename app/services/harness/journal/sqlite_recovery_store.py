@@ -17,6 +17,7 @@ from app.services.harness.journal.sqlite_recovery_rows import (
     MAXIMUM_RECOVERY_RECORDS,
     decode_lease,
     load_active_leases,
+    load_operation,
     load_recoverable_operations,
 )
 from app.services.harness.protocol import OperationRecord, WorkspaceId
@@ -111,6 +112,19 @@ class SQLiteRecoveryStore:
                 connection,
                 workspace_id,
                 maximum_records,
+            )
+        )
+
+    async def load_operation(
+        self,
+        workspace_id: WorkspaceId,
+        operation_id: str,
+    ) -> OperationRecord | None:
+        return await self._connection_owner.execute(
+            lambda connection: load_operation(
+                connection,
+                workspace_id,
+                operation_id,
             )
         )
 
