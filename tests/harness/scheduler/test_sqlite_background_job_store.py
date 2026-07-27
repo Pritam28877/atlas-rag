@@ -12,81 +12,24 @@ from app.services.harness.journal import (
     BackgroundJobStoreConflict,
     BackgroundJobStoreConflictCode,
     SQLiteBackgroundJobStore,
-    SQLiteRecoveryStore,
 )
 from app.services.harness.journal.sqlite_schema import SQLITE_SCHEMA
-from app.services.harness.scheduler import (
-    BackgroundJobArtifact,
-    BackgroundJobRecord,
-    BackgroundJobState,
-)
-from app.services.harness.tools.operation_lifecycle import (
-    DurableOperationLifecycle,
-)
+from app.services.harness.scheduler import BackgroundJobState
 from tests.harness.operations.fixtures import (
-    ARGS_SHA256,
     NOW,
     OPERATION_ID,
     WORKSPACE_ID,
-    fence,
-    request,
 )
-
-OWNER_ID = "prn_" + "7" * 32
-OTHER_OWNER_ID = "prn_" + "8" * 32
-EXECUTION_OWNER_ID = "jow_" + "9" * 32
-
-
-def database_path(tmp_path: Path) -> Path:
-    os.chmod(tmp_path, 0o700)
-    return tmp_path / "journal.sqlite3"
-
-
-def queued_job() -> BackgroundJobRecord:
-    return BackgroundJobRecord(
-        workspace_id=WORKSPACE_ID,
-        operation_id=OPERATION_ID,
-        owner_principal_id=OWNER_ID,
-        call_id="background-call-1",
-        tool_name="workspace.write_file",
-        tool_version="1.0.0",
-        descriptor_sha256="a" * 64,
-        args_sha256=ARGS_SHA256,
-        state=BackgroundJobState.QUEUED,
-        created_at=NOW + timedelta(seconds=2),
-        updated_at=NOW + timedelta(seconds=2),
-        queue_expires_at=NOW + timedelta(hours=1),
-    )
-
-
-def transition(
-    job: BackgroundJobRecord,
-    **changes: object,
-) -> BackgroundJobRecord:
-    values = job.model_dump(mode="python")
-    values.update(changes)
-    return BackgroundJobRecord.model_validate(values)
-
-
-def result_artifact() -> BackgroundJobArtifact:
-    return BackgroundJobArtifact(
-        artifact_id="art_" + "a" * 32,
-        media_type="application/json",
-        size_bytes=24,
-        content_sha256="b" * 64,
-    )
-
-
-async def save_dispatched_operation(path: Path) -> None:
-    recovery_store = await SQLiteRecoveryStore.open(path)
-    lifecycle = DurableOperationLifecycle(recovery_store)
-    prepared = await lifecycle.prepare(request(), fence(), prepared_at=NOW)
-    await lifecycle.dispatch(
-        prepared,
-        fence(),
-        dispatched_at=NOW + timedelta(seconds=1),
-    )
-    await recovery_store.close()
+from tests.harness.scheduler.fixtures import (
+    EXECUTION_OWNER_ID,
+    OTHER_OWNER_ID,
+    OWNER_ID,
+    database_path,
+    queued_job,
+    result_artifact,
+    save_dispatched_operation,
+    transition,
+)
 
 
 def test_restart_preserves_fenced_job_and_owner_scope(tmp_path: Path) -> None:

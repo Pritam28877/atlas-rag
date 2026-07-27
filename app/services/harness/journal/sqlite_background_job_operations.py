@@ -155,6 +155,8 @@ def _require_operation_binding(
         or operation.tool_name != job.tool_name
         or operation.tool_version != job.tool_version
         or operation.args_sha256 != job.args_sha256
+        or operation.capability != job.capability
+        or operation.idempotency_class is not job.idempotency_class
     ):
         _reject(BackgroundJobStoreConflictCode.IDENTITY)
 
@@ -194,9 +196,13 @@ def _validate_transition(
         _reject(BackgroundJobStoreConflictCode.OWNER)
     immutable_identity = (
         "call_id",
+        "requested_name",
         "tool_name",
         "tool_version",
+        "capability",
+        "idempotency_class",
         "descriptor_sha256",
+        "arguments_json",
         "args_sha256",
         "created_at",
         "queue_expires_at",

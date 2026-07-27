@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
+from app.services.harness.protocol import IdempotencyClass
 from app.services.harness.scheduler import (
     BackgroundJobArtifact,
     BackgroundJobConfiguration,
@@ -12,6 +13,7 @@ from app.services.harness.scheduler import (
     BackgroundJobState,
     require_background_job_transition,
 )
+from tests.harness.operations.fixtures import ARGS_SHA256
 
 NOW = datetime(2026, 7, 27, 8, 0, tzinfo=UTC)
 SHA256 = "a" * 64
@@ -26,10 +28,18 @@ def job_record(
         "operation_id": f"opn_{'2' * 32}",
         "owner_principal_id": f"prn_{'3' * 32}",
         "call_id": "call-1",
+        "requested_name": "workspace.read",
         "tool_name": "workspace.read",
         "tool_version": "1.0.0",
+        "capability": "filesystem.write",
+        "idempotency_class": IdempotencyClass.NON_IDEMPOTENT,
         "descriptor_sha256": SHA256,
-        "args_sha256": "b" * 64,
+        "arguments_json": (
+            '{"content_sha256":"'
+            + "3" * 64
+            + '","path":"src/app.py"}'
+        ),
+        "args_sha256": ARGS_SHA256,
         "state": state,
         "execution_generation": 0,
         "created_at": NOW,
@@ -57,6 +67,12 @@ def test_configuration_enforces_global_bounds() -> None:
         BackgroundJobConfiguration(maximum_concurrent_jobs=257)
     with pytest.raises(ValidationError):
         BackgroundJobConfiguration(retention_ttl_seconds=2_592_001)
+    with pytest.raises(ValidationError, match="aggregate output"):
+        BackgroundJobConfiguration(
+            maximum_concurrent_jobs=256,
+            maximum_log_bytes=1024 * 1024,
+            maximum_result_bytes=1024 * 1024,
+        )
 
 
 def test_queued_job_has_no_runtime_owner() -> None:

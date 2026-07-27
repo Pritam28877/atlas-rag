@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 from enum import StrEnum
 from typing import Annotated, Self
@@ -11,6 +12,7 @@ from pydantic import Field, StringConstraints, model_validator
 from app.services.harness.protocol.base import (
     ArtifactId,
     BoundedReason,
+    Capability,
     MediaType,
     OperationId,
     PageInfo,
@@ -20,12 +22,21 @@ from app.services.harness.protocol.base import (
     UtcTimestamp,
     WorkspaceId,
 )
-from app.services.harness.protocol.execution import ToolName, ToolVersion
+from app.services.harness.protocol.execution import (
+    IdempotencyClass,
+    ToolName,
+    ToolVersion,
+)
+from app.services.harness.protocol.operation_admission import (
+    canonical_operation_args_sha256,
+)
 from app.services.harness.protocol.provider_stream import ProviderCallId
 
 MAXIMUM_BACKGROUND_JOBS = 4_096
 MAXIMUM_BACKGROUND_JOB_PAGE = 200
 MAXIMUM_BACKGROUND_JOB_BYTES = 16 * 1024 * 1024
+MAXIMUM_AGGREGATE_BACKGROUND_JOB_BYTES = 256 * 1024 * 1024
+MAXIMUM_BACKGROUND_JOB_ARGUMENT_BYTES = 64 * 1024
 MAXIMUM_QUEUE_TTL = timedelta(days=7)
 MAXIMUM_RETENTION_TTL = timedelta(days=30)
 
@@ -104,9 +115,20 @@ class BackgroundJobConfiguration(StrictProtocolModel):
         le=MAXIMUM_BACKGROUND_JOB_BYTES,
     )
     execution_lease_seconds: int = Field(default=30, ge=5, le=300)
+    cancellation_grace_seconds: int = Field(default=5, ge=1, le=60)
     queue_ttl_seconds: int = Field(default=3_600, ge=60, le=604_800)
     retention_ttl_seconds: int = Field(default=86_400, ge=60, le=2_592_000)
     cleanup_batch_size: int = Field(default=128, ge=1, le=256)
+
+    @model_validator(mode="after")
+    def validate_aggregate_memory_bound(self) -> Self:
+        bytes_per_job = self.maximum_log_bytes + self.maximum_result_bytes
+        if (
+            bytes_per_job * self.maximum_concurrent_jobs
+            > MAXIMUM_AGGREGATE_BACKGROUND_JOB_BYTES
+        ):
+            raise ValueError("background job aggregate output exceeds 256 MiB")
+        return self
 
 
 class BackgroundJobArtifact(StrictProtocolModel):
@@ -123,9 +145,17 @@ class BackgroundJobRecord(StrictProtocolModel):
     operation_id: OperationId
     owner_principal_id: PrincipalId
     call_id: ProviderCallId
+    requested_name: ToolName
     tool_name: ToolName
     tool_version: ToolVersion
+    capability: Capability
+    idempotency_class: IdempotencyClass
     descriptor_sha256: Sha256
+    arguments_json: str = Field(
+        min_length=2,
+        max_length=MAXIMUM_BACKGROUND_JOB_ARGUMENT_BYTES,
+        repr=False,
+    )
     args_sha256: Sha256
     state: BackgroundJobState
     execution_generation: int = Field(default=0, ge=0, le=2_147_483_647)
@@ -144,6 +174,7 @@ class BackgroundJobRecord(StrictProtocolModel):
 
     @model_validator(mode="after")
     def validate_lifecycle(self) -> Self:
+        self._validate_arguments()
         if self.updated_at < self.created_at:
             raise ValueError("job update cannot precede creation")
         if self.queue_expires_at <= self.created_at:
@@ -159,6 +190,26 @@ class BackgroundJobRecord(StrictProtocolModel):
         self._validate_terminal_state()
         self._validate_cancellation()
         return self
+
+    def _validate_arguments(self) -> None:
+        try:
+            arguments = json.loads(self.arguments_json)
+            canonical = json.dumps(
+                arguments,
+                allow_nan=False,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            digest = canonical_operation_args_sha256(arguments)
+        except (RecursionError, TypeError, ValueError) as error:
+            raise ValueError("background job arguments are invalid") from error
+        if (
+            not isinstance(arguments, dict)
+            or canonical != self.arguments_json
+            or digest != self.args_sha256
+        ):
+            raise ValueError("background job arguments are inconsistent")
 
     def _validate_execution_owner(self) -> None:
         is_active = self.state in {
