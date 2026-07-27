@@ -43,6 +43,18 @@ from app.services.harness.scheduler.durable import (
     DurableDagStore,
     InMemoryDurableDagStore,
 )
+from app.services.harness.scheduler.recovery import (
+    DagReconciliation,
+    DagRecoveryAction,
+    DagRecoveryEvidence,
+    DagWorkerObservation,
+    DagWorkerOutcome,
+    DurableDagRecoveryCoordinator,
+    InMemoryRecoverableDagStore,
+    RecoverableDagStore,
+    build_dag_recovery_evidence,
+    dag_recovery_evidence_sha256,
+)
 
 __all__ = (
     "BACKGROUND_JOB_TRANSITIONS",
@@ -79,5 +91,15 @@ __all__ = (
     "DurableDagScheduler",
     "DurableDagStore",
     "InMemoryDurableDagStore",
+    "DagRecoveryAction",
+    "DagRecoveryEvidence",
+    "DagReconciliation",
+    "DagWorkerObservation",
+    "DagWorkerOutcome",
+    "DurableDagRecoveryCoordinator",
+    "InMemoryRecoverableDagStore",
+    "RecoverableDagStore",
+    "build_dag_recovery_evidence",
+    "dag_recovery_evidence_sha256",
     "require_background_job_transition",
 )

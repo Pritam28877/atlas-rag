@@ -27,6 +27,7 @@ class DagNodeStatus(StrEnum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    PAUSED = "paused"
 
 
 class DagNodeRecord(StrictProtocolModel):

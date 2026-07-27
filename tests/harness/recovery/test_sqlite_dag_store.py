@@ -12,8 +12,13 @@ from app.services.harness.recovery import SQLiteDurableDagStore
 from app.services.harness.scheduler import (
     DagNodeSpec,
     DagNodeStatus,
+    DagRecoveryAction,
     DagStoreConflict,
+    DagWorkerObservation,
+    DagWorkerOutcome,
+    DurableDagRecoveryCoordinator,
     DurableDagScheduler,
+    InMemoryRecoverableDagStore,
     TaskGraphDefinition,
     compile_task_graph,
 )
@@ -145,5 +150,150 @@ def test_sqlite_dag_store_rejects_graph_hash_reuse(tmp_path: Path) -> None:
         with pytest.raises(DagStoreConflict):
             await SQLiteDurableDagStore(owner, _graph(second_priority=2)).initialize()
         await owner.close()
+
+    asyncio.run(scenario())
+
+
+def test_cancellation_propagates_to_every_nonterminal_descendant() -> None:
+    async def scenario() -> None:
+        graph = _graph()
+        store = InMemoryRecoverableDagStore(graph)
+        scheduler = DurableDagScheduler(graph, store)
+        leases = await scheduler.claim_ready("worker-a", now=NOW)
+        coordinator = DurableDagRecoveryCoordinator(graph, store)
+
+        reconciliations = await coordinator.cancel_subgraph(
+            leases[0].task_id,
+            "parent cancellation requested",
+            observed_at=NOW + timedelta(seconds=1),
+        )
+        records = await store.records()
+        evidence = await coordinator.recovery_evidence()
+
+        assert {item.record.status for item in reconciliations} == {
+            DagNodeStatus.CANCELLED,
+        }
+        assert all(record.owner_id is None for record in records)
+        assert all(record.status is DagNodeStatus.CANCELLED for record in records)
+        stale = await coordinator.reconcile_worker(
+            DagWorkerObservation(
+                task_id=leases[0].task_id,
+                owner_id=leases[0].owner_id,
+                lease_generation=leases[0].lease_generation,
+                outcome=DagWorkerOutcome.COMPLETED,
+                result_sha256="a" * 64,
+                observed_at=NOW + timedelta(seconds=2),
+            )
+        )
+        assert len(evidence) == len(records)
+        assert stale.action is DagRecoveryAction.STALE_WORKER
+        assert (await store.records())[0].status is DagNodeStatus.CANCELLED
+
+    asyncio.run(scenario())
+
+
+def test_ambiguous_worker_result_pauses_without_retry() -> None:
+    async def scenario() -> None:
+        graph = _graph()
+        store = InMemoryRecoverableDagStore(graph)
+        scheduler = DurableDagScheduler(graph, store)
+        lease = (await scheduler.claim_ready("worker-a", now=NOW))[0]
+        coordinator = DurableDagRecoveryCoordinator(graph, store)
+        observation = DagWorkerObservation(
+            task_id=lease.task_id,
+            owner_id=lease.owner_id,
+            lease_generation=lease.lease_generation,
+            outcome=DagWorkerOutcome.UNKNOWN,
+            failure_reason="external side effect status unknown",
+            observed_at=NOW + timedelta(seconds=1),
+        )
+
+        result = await coordinator.reconcile_worker(observation)
+        retry = await scheduler.claim_ready(
+            "worker-b",
+            now=NOW + timedelta(seconds=2),
+        )
+        evidence = await coordinator.recovery_evidence()
+
+        assert result.action is DagRecoveryAction.PAUSED_AMBIGUOUS
+        assert result.record.status is DagNodeStatus.PAUSED
+        assert retry == ()
+        assert evidence[0].evidence_sha256 == result.evidence.evidence_sha256
+
+    asyncio.run(scenario())
+
+
+def test_sqlite_reconciled_evidence_survives_restart(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        path = tmp_path / "dag.sqlite3"
+        owner = _owner(path)
+        await owner.initialize()
+        graph = _graph()
+        store = SQLiteDurableDagStore(owner, graph)
+        await store.initialize()
+        scheduler = DurableDagScheduler(graph, store)
+        lease = (await scheduler.claim_ready("worker-a", now=NOW))[0]
+        coordinator = DurableDagRecoveryCoordinator(graph, store)
+        observation = DagWorkerObservation(
+            task_id=lease.task_id,
+            owner_id=lease.owner_id,
+            lease_generation=lease.lease_generation,
+            outcome=DagWorkerOutcome.COMPLETED,
+            result_sha256=hashlib.sha256(b"result").hexdigest(),
+            observed_at=NOW + timedelta(seconds=1),
+        )
+        first = await coordinator.reconcile_worker(observation)
+        await owner.close()
+
+        restarted_owner = _owner(path)
+        await restarted_owner.initialize()
+        restarted_store = SQLiteDurableDagStore(restarted_owner, graph)
+        await restarted_store.initialize()
+        restarted_coordinator = DurableDagRecoveryCoordinator(
+            graph,
+            restarted_store,
+        )
+        records = await restarted_store.records()
+        evidence = await restarted_coordinator.recovery_evidence()
+        await restarted_owner.close()
+
+        assert records[0].status is DagNodeStatus.COMPLETED
+        assert evidence == (first.evidence,)
+
+    asyncio.run(scenario())
+
+
+def test_sqlite_cancellation_clears_leases_and_persists_evidence(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        path = tmp_path / "dag.sqlite3"
+        graph = _graph()
+        owner = _owner(path)
+        await owner.initialize()
+        store = SQLiteDurableDagStore(owner, graph)
+        await store.initialize()
+        scheduler = DurableDagScheduler(graph, store)
+        lease = (await scheduler.claim_ready("worker-a", now=NOW))[0]
+        coordinator = DurableDagRecoveryCoordinator(graph, store)
+        cancelled = await coordinator.cancel_subgraph(
+            lease.task_id,
+            "parent cancellation requested",
+            observed_at=NOW + timedelta(seconds=1),
+        )
+        await owner.close()
+
+        restarted_owner = _owner(path)
+        await restarted_owner.initialize()
+        restarted_store = SQLiteDurableDagStore(restarted_owner, graph)
+        await restarted_store.initialize()
+        records = await restarted_store.records()
+        evidence = await restarted_store.recovery_evidence()
+        await restarted_owner.close()
+
+        assert len(cancelled) == len(records)
+        assert all(record.status is DagNodeStatus.CANCELLED for record in records)
+        assert len(evidence) == len(records)
+        assert all(record.owner_id is None for record in records)
 
     asyncio.run(scenario())
