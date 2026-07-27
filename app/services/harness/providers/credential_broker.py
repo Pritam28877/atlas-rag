@@ -193,13 +193,12 @@ class ConfiguredCredentialBroker:
                 return_when=asyncio.FIRST_COMPLETED,
             )
             if cancellation_task in done:
-                _zero_completed_material(load_task)
-                await _cancel_task(load_task)
+                await _discard_material_task(load_task)
                 raise CredentialBrokerError(
                     CredentialBrokerErrorCode.CANCELLED
                 )
             if load_task not in done:
-                await _cancel_task(load_task)
+                await _discard_material_task(load_task)
                 raise CredentialBrokerError(
                     CredentialBrokerErrorCode.DEADLINE
                 )
@@ -207,7 +206,7 @@ class ConfiguredCredentialBroker:
         except CredentialBrokerError:
             raise
         except asyncio.CancelledError:
-            await _cancel_task(load_task)
+            await _discard_material_task(load_task)
             raise
         except Exception:
             raise CredentialBrokerError(
@@ -239,8 +238,9 @@ async def _cancel_task(task: asyncio.Task[object]) -> None:
     await asyncio.gather(task, return_exceptions=True)
 
 
-def _zero_completed_material(
+async def _discard_material_task(
     task: asyncio.Task[CredentialSecretMaterial],
 ) -> None:
+    await _cancel_task(task)
     if task.done() and not task.cancelled() and task.exception() is None:
         task.result().zero()
