@@ -1,4 +1,4 @@
-"""Strict bounded contracts for durable background tool jobs."""
+"""Strict bounded protocol contracts for durable background tool jobs."""
 
 from __future__ import annotations
 
@@ -64,6 +64,7 @@ BACKGROUND_JOB_TRANSITIONS = {
     ),
     BackgroundJobState.RUNNING: frozenset(
         {
+            BackgroundJobState.RUNNING,
             BackgroundJobState.CANCELLING,
             BackgroundJobState.COMPLETED,
             BackgroundJobState.FAILED,
@@ -72,6 +73,7 @@ BACKGROUND_JOB_TRANSITIONS = {
     ),
     BackgroundJobState.CANCELLING: frozenset(
         {
+            BackgroundJobState.CANCELLING,
             BackgroundJobState.CANCELLED,
             BackgroundJobState.FAILED,
             BackgroundJobState.AMBIGUOUS,
