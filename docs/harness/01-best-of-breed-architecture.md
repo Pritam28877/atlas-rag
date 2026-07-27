@@ -18,6 +18,7 @@ The companion documents are:
 - [Why this is the best base harness](03-why-this-base-harness.md)
 - [Threat model](04-threat-model.md)
 - [Provenance and license plan](05-provenance-and-license.md)
+- [Non-live security review evidence](10-security-review-evidence.md)
 - [Deferred Rust implementation plan](07-rust-deferred-implementation-plan.md)
 
 Each diagram is embedded as a local PNG so it remains visible in editors and
