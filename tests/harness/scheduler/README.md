@@ -7,4 +7,5 @@
 - `test_background_job_retention.py`: bounded TTL job cleanup.
 - `test_background_job_startup.py`: restart resume and reconciliation.
 - `test_dag_compiler.py`: bounded graph validation and ready waves.
+- `test_durable_dag.py`: lease fencing and dependency checkpoints.
 - `fixtures.py`: shared durable job records and operation setup.
