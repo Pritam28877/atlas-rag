@@ -99,7 +99,9 @@ class ConformanceOutcomeAccumulator:
         )
         semantic = {
             "cancelled": self._cancelled,
-            "event_kinds": _normalized_kinds(self._event_kinds),
+            "event_kinds": _normalized_kinds(
+                self._event_kinds,
+            ),
             "failure_class": self._failure_class,
             "finish_reason": self._finish_reason,
             "reasoning_sha256": reasoning_sha256,
@@ -108,7 +110,11 @@ class ConformanceOutcomeAccumulator:
             "tools": [
                 tool.model_dump(mode="json") for tool in self._tools
             ],
-            "usage_observed": self._usage is not None,
+            "usage_observed": (
+                self._usage is not None
+                and self._event_kinds[-1]
+                is ProviderStreamKind.COMPLETED
+            ),
         }
         encoded = json.dumps(
             semantic,
@@ -141,7 +147,13 @@ def _normalized_kinds(
         ProviderStreamKind.REASONING_DELTA,
         ProviderStreamKind.TEXT_DELTA,
     }
+    terminal_ignores_usage = event_kinds[-1] in {
+        ProviderStreamKind.CANCELLED,
+        ProviderStreamKind.ERROR,
+    }
     for kind in event_kinds:
+        if terminal_ignores_usage and kind is ProviderStreamKind.USAGE:
+            continue
         if kind not in delta_kinds or not normalized or normalized[-1] != kind:
             normalized.append(kind)
     return tuple(normalized)

@@ -2,6 +2,8 @@ import hashlib
 
 from app.services.harness.protocol import (
     ProviderCompleted,
+    ProviderError,
+    ProviderFailureClass,
     ProviderFinishReason,
     ProviderTextDelta,
     ProviderTokenUsage,
@@ -54,6 +56,21 @@ def test_projection_preserves_semantic_text_and_terminal_differences() -> None:
     assert first.equivalence_sha256 != limited.equivalence_sha256
 
 
+def test_error_equivalence_allows_optional_usage_evidence() -> None:
+    with_usage = ConformanceOutcomeAccumulator()
+    with_usage.consume(_usage(sequence=1, input_tokens=5))
+    with_usage.consume(_policy_error(sequence=2))
+
+    without_usage = ConformanceOutcomeAccumulator()
+    without_usage.consume(_policy_error(sequence=1))
+
+    first = with_usage.finish()
+    second = without_usage.finish()
+    assert first.usage is not None
+    assert second.usage is None
+    assert first.equivalence_sha256 == second.equivalence_sha256
+
+
 def _completed_text(
     text: str,
     finish_reason: ProviderFinishReason,
@@ -79,4 +96,13 @@ def _usage(sequence: int, input_tokens: int) -> ProviderUsage:
             reasoning_tokens=0,
             cost_microusd=input_tokens + 1,
         ),
+    )
+
+
+def _policy_error(sequence: int) -> ProviderError:
+    return ProviderError(
+        sequence=sequence,
+        failure_class=ProviderFailureClass.POLICY,
+        retry_allowed=False,
+        reason="Policy rejected the conformance request.",
     )
