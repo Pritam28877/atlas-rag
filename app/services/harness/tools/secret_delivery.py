@@ -15,6 +15,10 @@ from app.services.harness.protocol.secret_delivery import (
     secret_handle_sha256,
 )
 
+MAXIMUM_SECRET_VALUE_BYTES = 64 * 1024
+MAXIMUM_SECRET_SCOPE_BYTES = 256 * 1024
+SECRET_ZERO_CHUNK_BYTES = 64 * 1024
+
 
 class ChildSecretBackend(Protocol):
     async def resolve(
@@ -59,7 +63,7 @@ class ChildSecretScope:
             return
         self._released = True
         for value in self._secret_environment.values():
-            value[:] = bytes(len(value))
+            _zero_value(value)
         self._secret_environment.clear()
         self.parent_environment.clear()
 
@@ -103,6 +107,7 @@ class PerCallSecretBroker:
             if name in parent_environment
         }
         resolved: dict[str, bytearray] = {}
+        resolved_bytes = 0
         try:
             for binding in request.bindings:
                 if cancellation.is_set():
@@ -115,14 +120,27 @@ class PerCallSecretBroker:
                     cancellation=cancellation,
                     deadline_at=deadline_at,
                 )
+                if not isinstance(value, bytearray):
+                    raise ChildSecretDeliveryError(
+                        "child secret backend returned an invalid value"
+                    )
                 if cancellation.is_set():
-                    value[:] = bytes(len(value))
+                    _zero_value(value)
                     raise ChildSecretDeliveryError(
                         "child secret delivery cancelled"
                     )
                 if not value:
                     raise ChildSecretDeliveryError(
                         "child secret backend returned no value"
+                    )
+                resolved_bytes += len(value)
+                if (
+                    len(value) > MAXIMUM_SECRET_VALUE_BYTES
+                    or resolved_bytes > MAXIMUM_SECRET_SCOPE_BYTES
+                ):
+                    _zero_value(value)
+                    raise ChildSecretDeliveryError(
+                        "child secret value exceeds delivery bounds"
                     )
                 resolved[binding.environment_name] = value
         except ChildSecretDeliveryError:
@@ -167,5 +185,12 @@ class PerCallSecretBroker:
 
 def _zero_values(values: dict[str, bytearray]) -> None:
     for value in values.values():
-        value[:] = bytes(len(value))
+        _zero_value(value)
     values.clear()
+
+
+def _zero_value(value: bytearray) -> None:
+    zero_chunk = bytes(min(len(value), SECRET_ZERO_CHUNK_BYTES))
+    for offset in range(0, len(value), SECRET_ZERO_CHUNK_BYTES):
+        end = min(offset + SECRET_ZERO_CHUNK_BYTES, len(value))
+        value[offset:end] = zero_chunk[: end - offset]
