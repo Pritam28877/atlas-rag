@@ -16,6 +16,10 @@ from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 from typing import cast
 
+from app.services.harness.providers.conformance_resources import (
+    CONFORMANCE_FIXTURE_RELATIVE_PATHS,
+)
+
 
 class PackageVerificationError(ValueError):
     """Raised when a built package is unsafe, oversized, or irreproducible."""
@@ -25,6 +29,9 @@ _FORBIDDEN_PARTS = {".git", ".tasks", "__pycache__", "node_modules"}
 _FORBIDDEN_FILE_NAMES = {".env", "id_rsa", "id_ed25519"}
 _WHEEL_NOTICE = "app/services/harness/NOTICE.md"
 _SDIST_NOTICE = "docs/harness/NOTICE.md"
+_WHEEL_CONFORMANCE_PREFIX = (
+    "app/services/harness/providers/conformance_fixtures"
+)
 
 
 def _mapping(value: object, label: str) -> dict[str, object]:
@@ -83,6 +90,14 @@ def validate_wheel(path: Path, maximum_bytes: int) -> int:
         raise PackageVerificationError("wheel omits the harness engineering notice")
     if "app/services/harness/__init__.py" not in names:
         raise PackageVerificationError("wheel omits the harness package")
+    expected_fixtures = {
+        f"{_WHEEL_CONFORMANCE_PREFIX}/{relative_path}"
+        for relative_path in CONFORMANCE_FIXTURE_RELATIVE_PATHS
+    }
+    if not expected_fixtures.issubset(names):
+        raise PackageVerificationError(
+            "wheel omits checksum-pinned conformance fixtures"
+        )
     return size
 
 
