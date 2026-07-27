@@ -25,6 +25,15 @@ from app.services.harness.protocol.background_jobs import (
     require_background_job_transition,
 )
 from app.services.harness.scheduler.coordinator import BackgroundJobCoordinator
+from app.services.harness.scheduler.dag import (
+    DagCompilation,
+    DagCompileError,
+    DagNodeSpec,
+    TaskGraphDefinition,
+    compile_task_graph,
+    ready_task_ids,
+    task_graph_sha256,
+)
 
 __all__ = (
     "BACKGROUND_JOB_TRANSITIONS",
@@ -47,5 +56,12 @@ __all__ = (
     "BackgroundJobState",
     "JobExecutionOwnerId",
     "BackgroundJobStore",
+    "DagCompilation",
+    "DagCompileError",
+    "DagNodeSpec",
+    "TaskGraphDefinition",
+    "compile_task_graph",
+    "ready_task_ids",
+    "task_graph_sha256",
     "require_background_job_transition",
 )
