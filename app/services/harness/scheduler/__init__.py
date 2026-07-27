@@ -34,6 +34,15 @@ from app.services.harness.scheduler.dag import (
     ready_task_ids,
     task_graph_sha256,
 )
+from app.services.harness.scheduler.durable import (
+    DagLease,
+    DagNodeRecord,
+    DagNodeStatus,
+    DagStoreConflict,
+    DurableDagScheduler,
+    DurableDagStore,
+    InMemoryDurableDagStore,
+)
 
 __all__ = (
     "BACKGROUND_JOB_TRANSITIONS",
@@ -63,5 +72,12 @@ __all__ = (
     "compile_task_graph",
     "ready_task_ids",
     "task_graph_sha256",
+    "DagLease",
+    "DagNodeRecord",
+    "DagNodeStatus",
+    "DagStoreConflict",
+    "DurableDagScheduler",
+    "DurableDagStore",
+    "InMemoryDurableDagStore",
     "require_background_job_transition",
 )
