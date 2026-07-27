@@ -14,6 +14,7 @@ from app.services.harness.sandbox.environment import (
     SandboxChildEnvironment,
     SandboxEnvironmentError,
     prepare_child_environment,
+    redact_secret_output,
 )
 from app.services.harness.sandbox.errors import (
     SandboxOutputLimitExceeded,
@@ -201,8 +202,14 @@ class SandboxSupervisor:
                     )
                 return SandboxProcessResult(
                     return_code=return_code_value,
-                    stdout=stdout_value,
-                    stderr=stderr_value,
+                    stdout=redact_secret_output(
+                        stdout_value,
+                        environment.secret_environment,
+                    ),
+                    stderr=redact_secret_output(
+                        stderr_value,
+                        environment.secret_environment,
+                    ),
                 )
         except asyncio.CancelledError:
             raise SandboxProcessCancelled("sandbox execution was cancelled") from None

@@ -23,6 +23,7 @@ from app.services.harness.sandbox import (
 from app.services.harness.sandbox.environment import (
     SandboxEnvironmentError,
     prepare_child_environment,
+    redact_secret_output,
 )
 from tests.harness.policy.fixtures import NOW
 from tests.harness.sandbox.fixtures import (
@@ -111,6 +112,12 @@ def test_readonly_secret_is_packetized_without_repr_disclosure(
     assert "synthetic-secret" not in repr(environment)
     packet[:] = bytes(len(packet))
     assert b"synthetic-secret" not in packet
+    redacted = redact_secret_output(
+        b"before synthetic-secret after synthetic-secret",
+        environment.secret_environment,
+    )
+    assert b"synthetic-secret" not in redacted
+    assert redacted.count(b"****************") == 2
 
 
 def test_mutable_or_oversized_environment_fails_closed(tmp_path: Path) -> None:

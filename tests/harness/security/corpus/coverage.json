@@ -1,0 +1,17 @@
+{
+  "environment.parent_secret": "tests/harness/security/test_linux_escape_corpus.py::test_real_read_only_sandbox_blocks_escape_corpus",
+  "extension.mcp_process": "tests/harness/security/test_disabled_hosts.py::test_parser_mcp_and_plugin_hosts_are_planned_disabled",
+  "extension.plugin_process": "tests/harness/security/test_disabled_hosts.py::test_parser_mcp_and_plugin_hosts_are_planned_disabled",
+  "filesystem.declared_write": "tests/harness/security/test_linux_escape_corpus.py::test_real_read_only_sandbox_blocks_escape_corpus",
+  "filesystem.host_path": "tests/harness/security/test_linux_escape_corpus.py::test_real_read_only_sandbox_blocks_escape_corpus",
+  "filesystem.path_traversal": "tests/harness/sandbox/test_profile.py::test_profile_contract_rejects_mount_path_traversal",
+  "filesystem.symlink_escape": "tests/harness/sandbox/test_profile.py::test_workspace_escape_and_overlapping_mounts_fail_closed",
+  "filesystem.undeclared_write": "tests/harness/security/test_linux_escape_corpus.py::test_real_read_only_sandbox_blocks_escape_corpus",
+  "network.direct_egress": "tests/harness/security/test_linux_escape_corpus.py::test_real_read_only_sandbox_blocks_escape_corpus",
+  "network.redirect_without_proxy": "tests/harness/sandbox/test_capabilities.py::test_proxy_and_mutated_capability_evidence_fail_closed",
+  "output.combined_limit": "tests/harness/sandbox/test_supervisor.py::test_output_limit_terminates_and_reaps_process",
+  "output.secret_canary": "tests/harness/security/test_linux_escape_corpus.py::test_secret_profile_is_denied_and_output_is_defense_in_depth_redacted",
+  "parser.document_process": "tests/harness/security/test_disabled_hosts.py::test_parser_mcp_and_plugin_hosts_are_planned_disabled",
+  "process.descendant_after_cancel": "tests/harness/sandbox/test_supervisor.py::test_timeout_and_cancellation_reap_descendants",
+  "system.host_block_device": "tests/harness/security/test_linux_escape_corpus.py::test_real_read_only_sandbox_blocks_escape_corpus"
+}

@@ -125,6 +125,8 @@ class LinuxBubblewrapCommandBuilder:
             "--new-session",
             "--hostname",
             "atlas-sandbox",
+            "--cap-drop",
+            "ALL",
             "--clearenv",
         ]
         ordered_directories = sorted(
@@ -175,6 +177,7 @@ class LinuxBubblewrapCommandBuilder:
                 SANDBOX_SECRET_FIFO,
             ]
         )
+        command.extend(["--remount-ro", "/"])
         for name, value in sorted(parent_environment.items()):
             if "\x00" in value or len(value) > 4096:
                 raise LinuxSandboxCommandError(
