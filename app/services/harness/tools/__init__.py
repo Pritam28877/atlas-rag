@@ -1,5 +1,6 @@
 """Typed and bounded Atlas Harness tools."""
 
+from app.services.harness.tools.builtin_executor import ProcessDispatchContext
 from app.services.harness.tools.builtins import (
     BUILTIN_TOOL_VERSION,
     PATCH_FILE_TOOL_NAME,
@@ -19,6 +20,18 @@ from app.services.harness.tools.contracts import (
     build_tool_descriptor,
     canonical_tool_schema,
     tool_descriptor_sha256,
+)
+from app.services.harness.tools.dispatch_admission import (
+    ToolDispatchAdmissionError,
+    ToolDispatchAdmissionErrorCode,
+)
+from app.services.harness.tools.dispatch_contracts import (
+    ToolDispatchOutcome,
+    ToolDispatchStatus,
+)
+from app.services.harness.tools.dispatch_service import (
+    BuiltinToolDispatcher,
+    ToolDispatchDurabilityError,
 )
 from app.services.harness.tools.file_contracts import (
     PatchFileArguments,
@@ -58,6 +71,7 @@ from app.services.harness.tools.registry import (
 
 __all__ = (
     "BUILTIN_TOOL_VERSION",
+    "BuiltinToolDispatcher",
     "DEFAULT_TOOL_OUTPUT_BYTES",
     "MAXIMUM_REGISTERED_TOOLS",
     "MAXIMUM_TOOL_OUTPUT_BYTES",
@@ -70,6 +84,7 @@ __all__ = (
     "PROCESS_TOOL_VERSION",
     "ProcessToolError",
     "ProcessToolErrorCode",
+    "ProcessDispatchContext",
     "ReadFileArguments",
     "ReadFileResult",
     "READ_FILE_TOOL_NAME",
@@ -82,6 +97,11 @@ __all__ = (
     "SandboxedProcessService",
     "StrictToolArguments",
     "ToolDescriptor",
+    "ToolDispatchAdmissionError",
+    "ToolDispatchAdmissionErrorCode",
+    "ToolDispatchDurabilityError",
+    "ToolDispatchOutcome",
+    "ToolDispatchStatus",
     "ToolOutputContract",
     "ToolOutputOverflow",
     "ToolRegistration",
