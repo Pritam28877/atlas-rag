@@ -26,6 +26,12 @@ from app.services.harness.evaluation.release import (
     ReleaseStatus,
     build_release_decision,
 )
+from app.services.harness.evaluation.soak import (
+    SoakAccumulator,
+    SoakBudget,
+    SoakSample,
+    SoakSummary,
+)
 from app.services.harness.evaluation.trace_replay import (
     ReplayDivergence,
     ReplayResult,
@@ -62,6 +68,10 @@ __all__ = (
     "ReleaseDecision",
     "ReleaseStatus",
     "build_release_decision",
+    "SoakAccumulator",
+    "SoakBudget",
+    "SoakSample",
+    "SoakSummary",
     "replay_trace",
     "replay_trace_sha256",
 )

@@ -26,6 +26,10 @@ Run only in an explicit disposable environment with cloud calls disabled unless
 the provider matrix separately authorizes a capped test. Sample at least every
 minute and retain raw samples plus five-minute summaries for:
 
+The `SoakAccumulator` contract keeps only counters and maxima in process memory;
+raw samples belong in the bounded evidence store. A violation remains visible
+in the summary and makes `complete` false.
+
 | Signal | Bound to prove |
 | --- | --- |
 | RSS and child processes | No monotonic growth after warm-up |
