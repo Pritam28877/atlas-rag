@@ -1,0 +1,2 @@
+{"delta":"Atlas conformance.","sequence_number":1,"type":"response.output_text.delta"}
+{"response":{"status":"completed","usage":{"input_tokens":3,"output_tokens":2,"total_tokens":5}},"sequence_number":2,"type":"response.completed"}

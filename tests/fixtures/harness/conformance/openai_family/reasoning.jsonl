@@ -1,0 +1,3 @@
+{"delta":"Bounded reasoning.","sequence_number":1,"type":"response.reasoning_summary_text.delta"}
+{"delta":"Atlas conformance.","sequence_number":2,"type":"response.output_text.delta"}
+{"response":{"status":"completed","usage":{"input_tokens":4,"output_tokens":3,"output_tokens_details":{"reasoning_tokens":1},"total_tokens":7}},"sequence_number":3,"type":"response.completed"}
