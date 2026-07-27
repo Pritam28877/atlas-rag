@@ -72,3 +72,33 @@ def test_builtin_alias_resolves_to_canonical_validated_call() -> None:
     assert validated.requested_name == "read_file"
     assert validated.tool_name == READ_FILE_TOOL_NAME
     assert validated.capability == "filesystem.read"
+
+
+def test_builtin_json_arrays_validate_as_strict_tuples() -> None:
+    registry = builtin_tool_registry()
+    arguments_json = json.dumps(
+        {
+            "arguments": ["-c", "print('safe')"],
+            "executable": "/usr/bin/python3",
+            "working_directory": "work",
+        },
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    call = ProviderToolCall(
+        sequence=1,
+        call_id="call-process",
+        tool_name=PROCESS_TOOL_NAME,
+        arguments_json=arguments_json,
+        arguments_sha256=hashlib.sha256(
+            arguments_json.encode()
+        ).hexdigest(),
+    )
+
+    validated = registry.validate_provider_call(call)
+
+    assert json.loads(validated.arguments_json)["arguments"] == [
+        "-c",
+        "print('safe')",
+    ]
+    assert registry.revalidate_call(validated) == validated
