@@ -30,6 +30,13 @@ from app.services.harness.recovery.coordinator import (
     StartupRecoveryStatus,
 )
 from app.services.harness.recovery.sqlite_dag_store import SQLiteDurableDagStore
+from app.services.harness.recovery.upgrade import (
+    UpgradePlan,
+    WriterGateDecision,
+    plan_upgrade,
+    plan_writer_gate,
+    preserve_rollback_record,
+)
 
 __all__ = (
     "RecoveryCoordinator",
@@ -54,4 +61,9 @@ __all__ = (
     "StartupRecoveryReport",
     "StartupRecoveryStatus",
     "SQLiteDurableDagStore",
+    "UpgradePlan",
+    "WriterGateDecision",
+    "plan_upgrade",
+    "plan_writer_gate",
+    "preserve_rollback_record",
 )
