@@ -1,0 +1,4 @@
+{"kind":"reasoning_delta","sequence":1,"text":"Bounded reasoning."}
+{"kind":"text_delta","sequence":2,"text":"Atlas conformance."}
+{"kind":"usage","sequence":3,"usage":{"cached_input_tokens":0,"cost_microusd":8,"input_tokens":4,"output_tokens":3,"reasoning_tokens":1}}
+{"finish_reason":"stop","kind":"completed","sequence":4}

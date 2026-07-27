@@ -1,0 +1,2 @@
+{"kind":"usage","sequence":1,"usage":{"cached_input_tokens":0,"cost_microusd":5,"input_tokens":3,"output_tokens":2,"reasoning_tokens":0}}
+{"finish_reason":"length","kind":"completed","sequence":2}
