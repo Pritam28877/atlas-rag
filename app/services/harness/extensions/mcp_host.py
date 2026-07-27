@@ -10,6 +10,8 @@ from typing import Protocol
 from app.services.harness.extensions.mcp_contracts import (
     McpCallRequest,
     McpCallResult,
+    McpInitializeRequest,
+    McpNegotiatedSession,
     McpServerDescriptor,
     parse_mcp_response,
 )
@@ -22,6 +24,11 @@ class McpTransport(Protocol):
     ) -> bytes | str | Mapping[str, object]: ...
 
     async def close(self) -> None: ...
+
+    async def initialize(
+        self,
+        request: McpInitializeRequest,
+    ) -> McpNegotiatedSession: ...
 
 
 class McpHostErrorCode(StrEnum):
@@ -55,6 +62,7 @@ class McpHost:
         self._transport = transport
         self._pending: dict[str, asyncio.Task[McpCallResult]] = {}
         self._closed = False
+        self._negotiated: McpNegotiatedSession | None = None
 
     @property
     def descriptor(self) -> McpServerDescriptor:
@@ -67,6 +75,27 @@ class McpHost:
     @property
     def closed(self) -> bool:
         return self._closed
+
+    @property
+    def negotiated(self) -> McpNegotiatedSession | None:
+        return self._negotiated
+
+    async def negotiate(
+        self,
+        request: McpInitializeRequest,
+    ) -> McpNegotiatedSession:
+        if self._closed:
+            raise McpHostError(McpHostErrorCode.CLOSED)
+        try:
+            negotiated = await self._transport.initialize(request)
+            self._negotiated = McpNegotiatedSession.model_validate(
+                negotiated.model_dump()
+            )
+            return self._negotiated
+        except McpHostError:
+            raise
+        except Exception:
+            raise McpHostError(McpHostErrorCode.TRANSPORT) from None
 
     async def call(
         self,

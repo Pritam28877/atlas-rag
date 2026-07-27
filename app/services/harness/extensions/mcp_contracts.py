@@ -24,6 +24,7 @@ MCP_DEFAULT_PENDING_CALLS = 32
 MCP_HARD_PENDING_CALLS = 256
 MCP_MAX_PARAMETER_BYTES = 128 * 1024
 MCP_MAX_RESPONSE_BYTES = 16 * 1024 * 1024
+MCP_PROTOCOL_VERSION = "1.0"
 
 McpMethod = BoundedLabel
 McpCredentialHandle = str
@@ -34,6 +35,39 @@ McpVersion = str
 class McpTransportKind(StrEnum):
     STDIO = "stdio"
     HTTP = "http"
+
+
+class McpInitializeRequest(StrictProtocolModel):
+    """Bounded protocol negotiation request."""
+
+    protocol_version: str = Field(
+        default=MCP_PROTOCOL_VERSION,
+        pattern=r"^[0-9]+\.[0-9]+$",
+    )
+    client_name: BoundedLabel
+    client_version: BoundedLabel
+    capabilities_json: str = Field(min_length=2, max_length=64 * 1024)
+
+    @model_validator(mode="after")
+    def validate_capabilities(self) -> Self:
+        _canonical_json_object(self.capabilities_json, "MCP capabilities")
+        return self
+
+
+class McpNegotiatedSession(StrictProtocolModel):
+    """Server capabilities accepted for this host lifetime."""
+
+    protocol_version: str = Field(pattern=r"^[0-9]+\.[0-9]+$")
+    server_name: BoundedLabel
+    server_version: BoundedLabel
+    capabilities_json: str = Field(min_length=2, max_length=64 * 1024)
+
+    @model_validator(mode="after")
+    def validate_capabilities(self) -> Self:
+        _canonical_json_object(self.capabilities_json, "MCP server capabilities")
+        if self.protocol_version != MCP_PROTOCOL_VERSION:
+            raise ValueError("MCP protocol version is not supported")
+        return self
 
 
 class McpEgressPolicy(StrictProtocolModel):
@@ -236,3 +270,19 @@ def parse_mcp_response(
         response_bytes=len(serialized.encode("utf-8")),
         response_sha256=hashlib.sha256(serialized.encode("utf-8")).hexdigest(),
     )
+
+
+def _canonical_json_object(value: str, label: str) -> None:
+    try:
+        parsed = json.loads(value)
+        canonical = json.dumps(
+            parsed,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    except (TypeError, ValueError, json.JSONDecodeError) as error:
+        raise ValueError(f"{label} must be valid JSON") from error
+    if not isinstance(parsed, dict) or canonical != value:
+        raise ValueError(f"{label} must be a canonical JSON object")

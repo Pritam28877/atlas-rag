@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import json
 from collections.abc import Mapping
 
 import pytest
@@ -12,7 +13,9 @@ from app.services.harness.extensions import (
     McpHost,
     McpHostError,
     McpHostErrorCode,
+    McpInitializeRequest,
     McpServerDescriptor,
+    McpStdioTransport,
     McpTransportKind,
 )
 
@@ -55,6 +58,40 @@ class FakeTransport:
         if isinstance(self.response, (bytes, str, Mapping)):
             return self.response
         raise RuntimeError("invalid fake response")
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class FakeStdioChannel:
+    def __init__(self) -> None:
+        self.payloads: list[bytes] = []
+        self.closed = False
+
+    async def exchange(self, payload: bytes, *, cancellation: object = None) -> bytes:
+        self.payloads.append(payload)
+        request = json.loads(payload)
+        if request["method"] == "initialize":
+            return json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": "initialize",
+                    "result": {
+                        "protocolVersion": "1.0",
+                        "serverInfo": {"name": "weather", "version": "1.0.0"},
+                        "capabilities": {},
+                    },
+                },
+                separators=(",", ":"),
+            ).encode()
+        return json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": request["id"],
+                "result": {"ok": True},
+            },
+            separators=(",", ":"),
+        ).encode()
 
     async def close(self) -> None:
         self.closed = True
@@ -159,3 +196,25 @@ def test_http_mcp_requires_tls_and_allowlisted_host() -> None:
             egress=McpEgressPolicy(allowed_hosts=("example.test",)),
             credential_handles=(),
         )
+
+
+def test_stdio_transport_negotiates_and_maps_json_rpc() -> None:
+    async def scenario() -> None:
+        channel = FakeStdioChannel()
+        host = McpHost(_descriptor(), McpStdioTransport(_descriptor(), channel))
+        negotiated = await host.negotiate(
+            McpInitializeRequest(
+                client_name="atlas",
+                client_version="1.0.0",
+                capabilities_json="{}",
+            )
+        )
+        result = await host.call(_request())
+
+        assert negotiated.server_name == "weather"
+        assert result.result_json == '{"ok":true}'
+        assert len(channel.payloads) == 2
+        await host.close()
+        assert channel.closed
+
+    asyncio.run(scenario())
