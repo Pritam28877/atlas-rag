@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "scan_roots": [
+    "app/api/v1/harness",
+    "app/cli/harness",
+    "app/services/harness"
+  ],
+  "callsites": [
+    {
+      "id": "app/api/v1/harness/policy.py#create_policy_router.explain_policy:api.route.POST:1",
+      "path": "app/api/v1/harness/policy.py",
+      "symbol": "create_policy_router.explain_policy",
+      "sink": "api.route.POST",
+      "ordinal": 1,
+      "exposure": "authenticated_read_only",
+      "operation_id": null,
+      "enforced_gates": [
+        "authentication",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [],
+      "evidence": {
+        "authentication": "app/api/v1/harness/policy.py#create_policy_router.explain_policy",
+        "result_filter": "app/api/v1/harness/policy.py#create_policy_router.explain_policy",
+        "schema_validation": "app/api/v1/harness/policy.py#_parse_policy_decision"
+      }
+    },
+    {
+      "id": "app/api/v1/harness/policy.py#create_policy_router.lint_policy:api.route.POST:1",
+      "path": "app/api/v1/harness/policy.py",
+      "symbol": "create_policy_router.lint_policy",
+      "sink": "api.route.POST",
+      "ordinal": 1,
+      "exposure": "authenticated_read_only",
+      "operation_id": null,
+      "enforced_gates": [
+        "authentication",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [],
+      "evidence": {
+        "authentication": "app/api/v1/harness/policy.py#create_policy_router.lint_policy",
+        "result_filter": "app/api/v1/harness/policy.py#create_policy_router.lint_policy",
+        "schema_validation": "app/api/v1/harness/policy.py#_parse_policy_bundle"
+      }
+    },
+    {
+      "id": "app/services/harness/providers/bedrock_stream_transport.py#BoundedBedrockConverseTransport._run_worker:network.bedrock_stream:1",
+      "path": "app/services/harness/providers/bedrock_stream_transport.py",
+      "symbol": "BoundedBedrockConverseTransport._run_worker",
+      "sink": "network.bedrock_stream",
+      "ordinal": 1,
+      "exposure": "opt_in_cli",
+      "operation_id": "harness.provider.request",
+      "enforced_gates": [
+        "audit",
+        "authorization",
+        "budget",
+        "cancellation",
+        "egress",
+        "idempotency",
+        "policy",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [],
+      "evidence": {
+        "audit": "app/cli/harness/bedrock_smoke_io.py#write_bedrock_smoke_result",
+        "authorization": "app/cli/harness/bedrock_smoke_runtime.py#load_bedrock_smoke_runtime",
+        "budget": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "cancellation": "app/services/harness/providers/bedrock_stream_transport.py#BoundedBedrockConverseTransport.stream",
+        "egress": "app/services/harness/providers/bedrock_stream_transport.py#BoundedBedrockConverseTransport.stream",
+        "idempotency": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "policy": "app/services/harness/providers/bedrock_policy.py#authorize_bedrock_route",
+        "result_filter": "app/cli/harness/bedrock_smoke_attempt.py#_verify_call",
+        "schema_validation": "app/services/harness/providers/bedrock_contracts.py#CompiledBedrockConverseStreamRequest"
+      }
+    },
+    {
+      "id": "app/services/harness/providers/egress_dns.py#_system_lookup:network.dns_lookup:1",
+      "path": "app/services/harness/providers/egress_dns.py",
+      "symbol": "_system_lookup",
+      "sink": "network.dns_lookup",
+      "ordinal": 1,
+      "exposure": "opt_in_cli",
+      "operation_id": "harness.provider.request",
+      "enforced_gates": [
+        "audit",
+        "authorization",
+        "budget",
+        "cancellation",
+        "egress",
+        "idempotency",
+        "policy",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [],
+      "evidence": {
+        "audit": "app/services/harness/providers/egress_gateway.py#ProviderEgressGateway._audit_record",
+        "authorization": "app/cli/harness/provider_smoke_contracts.py#authorize_provider_smoke",
+        "budget": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "cancellation": "app/services/harness/providers/egress_dns.py#SystemProviderAddressResolver.resolve",
+        "egress": "app/services/harness/providers/egress_dns.py#SystemProviderAddressResolver.resolve",
+        "idempotency": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "policy": "app/services/harness/providers/egress_policy.py#authorize_egress_target",
+        "result_filter": "app/services/harness/providers/egress_dns.py#SystemProviderAddressResolver._resolve_bounded",
+        "schema_validation": "app/services/harness/providers/egress_contracts.py#ProviderEgressRequestMetadata"
+      }
+    },
+    {
+      "id": "app/services/harness/providers/httpcore_connector.py#HttpCoreEgressConnector._send_once:network.client:1",
+      "path": "app/services/harness/providers/httpcore_connector.py",
+      "symbol": "HttpCoreEgressConnector._send_once",
+      "sink": "network.client",
+      "ordinal": 1,
+      "exposure": "opt_in_cli",
+      "operation_id": "harness.provider.request",
+      "enforced_gates": [
+        "audit",
+        "authorization",
+        "budget",
+        "cancellation",
+        "egress",
+        "idempotency",
+        "policy",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [],
+      "evidence": {
+        "audit": "app/services/harness/providers/egress_gateway.py#ProviderEgressGateway._audit_record",
+        "authorization": "app/cli/harness/provider_smoke_contracts.py#authorize_provider_smoke",
+        "budget": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "cancellation": "app/services/harness/providers/httpcore_connector.py#HttpCoreEgressConnector.send",
+        "egress": "app/services/harness/providers/httpcore_connector.py#HttpCoreEgressConnector.send",
+        "idempotency": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "policy": "app/services/harness/providers/egress_policy.py#authorize_egress_target",
+        "result_filter": "app/services/harness/providers/gateway_attempt.py#GatewayProviderAttemptExecutor.execute",
+        "schema_validation": "app/services/harness/providers/egress_contracts.py#ProviderEgressRequestMetadata"
+      }
+    },
+    {
+      "id": "app/services/harness/providers/pinned_network.py#PinnedProviderNetworkBackend.connect_tcp:network.connect:1",
+      "path": "app/services/harness/providers/pinned_network.py",
+      "symbol": "PinnedProviderNetworkBackend.connect_tcp",
+      "sink": "network.connect",
+      "ordinal": 1,
+      "exposure": "opt_in_cli",
+      "operation_id": "harness.provider.request",
+      "enforced_gates": [
+        "audit",
+        "authorization",
+        "budget",
+        "cancellation",
+        "egress",
+        "idempotency",
+        "policy",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [],
+      "evidence": {
+        "audit": "app/services/harness/providers/egress_gateway.py#ProviderEgressGateway._audit_record",
+        "authorization": "app/cli/harness/provider_smoke_contracts.py#authorize_provider_smoke",
+        "budget": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "cancellation": "app/services/harness/providers/httpcore_connector.py#HttpCoreEgressConnector.send",
+        "egress": "app/services/harness/providers/pinned_network.py#PinnedProviderNetworkBackend.connect_tcp",
+        "idempotency": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "policy": "app/services/harness/providers/egress_policy.py#authorize_egress_target",
+        "result_filter": "app/services/harness/providers/gateway_attempt.py#GatewayProviderAttemptExecutor.execute",
+        "schema_validation": "app/services/harness/providers/egress_contracts.py#ProviderEgressRequestMetadata"
+      }
+    },
+    {
+      "id": "app/services/harness/providers/provider_sse_httpcore.py#PinnedSseHttpCoreConnector.stream:network.client:1",
+      "path": "app/services/harness/providers/provider_sse_httpcore.py",
+      "symbol": "PinnedSseHttpCoreConnector.stream",
+      "sink": "network.client",
+      "ordinal": 1,
+      "exposure": "opt_in_cli",
+      "operation_id": "harness.provider.request",
+      "enforced_gates": [
+        "audit",
+        "authorization",
+        "budget",
+        "cancellation",
+        "egress",
+        "idempotency",
+        "policy",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [],
+      "evidence": {
+        "audit": "app/cli/harness/adapter_smoke_io.py#write_adapter_smoke_result",
+        "authorization": "app/cli/harness/adapter_smoke_contracts.py#authorize_adapter_smoke",
+        "budget": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "cancellation": "app/services/harness/providers/provider_sse_httpcore.py#PinnedSseHttpCoreConnector.stream",
+        "egress": "app/services/harness/providers/provider_sse_httpcore.py#PinnedSseHttpCoreConnector.stream",
+        "idempotency": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "policy": "app/services/harness/providers/provider_sse_httpcore.py#PinnedSseHttpCoreConnector._target",
+        "result_filter": "app/cli/harness/adapter_smoke_io.py#build_adapter_smoke_result",
+        "schema_validation": "app/services/harness/providers/provider_sse_httpcore.py#AuthorizedSseHttpRoute"
+      }
+    },
+    {
+      "id": "app/services/harness/providers/vertex_credentials.py#_load_google_credential:network.credential_discovery:1",
+      "path": "app/services/harness/providers/vertex_credentials.py",
+      "symbol": "_load_google_credential",
+      "sink": "network.credential_discovery",
+      "ordinal": 1,
+      "exposure": "opt_in_cli",
+      "operation_id": "harness.provider.request",
+      "enforced_gates": [
+        "audit",
+        "authorization",
+        "budget",
+        "egress",
+        "idempotency",
+        "policy",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [
+        "cancellation"
+      ],
+      "evidence": {
+        "audit": "app/cli/harness/adapter_smoke_io.py#write_adapter_smoke_result",
+        "authorization": "app/cli/harness/adapter_smoke_contracts.py#authorize_adapter_smoke",
+        "budget": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "egress": "app/services/harness/providers/vertex_credentials.py#_load_google_credential",
+        "idempotency": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "policy": "app/cli/harness/vertex_adapter_smoke_runner.py#_load_vertex_contracts",
+        "result_filter": "app/services/harness/providers/vertex_credentials.py#VertexCredentialBackend._material",
+        "schema_validation": "app/services/harness/providers/vertex_credentials.py#RefreshedVertexCredential"
+      }
+    },
+    {
+      "id": "app/services/harness/providers/vertex_credentials.py#_load_google_credential:network.credential_refresh:1",
+      "path": "app/services/harness/providers/vertex_credentials.py",
+      "symbol": "_load_google_credential",
+      "sink": "network.credential_refresh",
+      "ordinal": 1,
+      "exposure": "opt_in_cli",
+      "operation_id": "harness.provider.request",
+      "enforced_gates": [
+        "audit",
+        "authorization",
+        "budget",
+        "egress",
+        "idempotency",
+        "policy",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [
+        "cancellation"
+      ],
+      "evidence": {
+        "audit": "app/cli/harness/adapter_smoke_io.py#write_adapter_smoke_result",
+        "authorization": "app/cli/harness/adapter_smoke_contracts.py#authorize_adapter_smoke",
+        "budget": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "egress": "app/services/harness/providers/vertex_credentials.py#_load_google_credential",
+        "idempotency": "app/services/harness/providers/dispatch_coordinator.py#ProviderDispatchCoordinator.dispatch",
+        "policy": "app/cli/harness/vertex_adapter_smoke_runner.py#_load_vertex_contracts",
+        "result_filter": "app/services/harness/providers/vertex_credentials.py#VertexCredentialBackend._material",
+        "schema_validation": "app/services/harness/providers/vertex_credentials.py#RefreshedVertexCredential"
+      }
+    },
+    {
+      "id": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap:process.create:1",
+      "path": "app/services/harness/sandbox/capabilities.py",
+      "symbol": "_probe_bubblewrap",
+      "sink": "process.create",
+      "ordinal": 1,
+      "exposure": "internal_guarded",
+      "operation_id": "harness.sandbox.subprocess.start",
+      "enforced_gates": [
+        "budget",
+        "cancellation",
+        "result_filter",
+        "schema_validation"
+      ],
+      "missing_gates": [
+        "audit",
+        "authorization",
+        "idempotency",
+        "policy",
+        "sandbox"
+      ],
+      "evidence": {
+        "budget": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap",
+        "cancellation": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap",
+        "result_filter": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap",
+        "schema_validation": "app/services/harness/sandbox/capabilities.py#_build_capabilities"
+      }
+    },
+    {
+      "id": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap:process.create:2",
+      "path": "app/services/harness/sandbox/capabilities.py",
+      "symbol": "_probe_bubblewrap",
+      "sink": "process.create",
+      "ordinal": 2,
+      "exposure": "internal_guarded",
+      "operation_id": "harness.sandbox.subprocess.start",
+      "enforced_gates": [
+        "budget",
+        "cancellation",
+        "result_filter",
+        "sandbox",
+        "schema_validation"
+      ],
+      "missing_gates": [
+        "audit",
+        "authorization",
+        "idempotency",
+        "policy"
+      ],
+      "evidence": {
+        "budget": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap",
+        "cancellation": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap",
+        "result_filter": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap",
+        "sandbox": "app/services/harness/sandbox/capabilities.py#_probe_bubblewrap",
+        "schema_validation": "app/services/harness/sandbox/capabilities.py#_build_capabilities"
+      }
+    },
+    {
+      "id": "app/services/harness/sandbox/supervisor.py#SandboxSupervisor.run:process.create:1",
+      "path": "app/services/harness/sandbox/supervisor.py",
+      "symbol": "SandboxSupervisor.run",
+      "sink": "process.create",
+      "ordinal": 1,
+      "exposure": "internal_guarded",
+      "operation_id": "harness.sandbox.subprocess.start",
+      "enforced_gates": [
+        "budget",
+        "cancellation",
+        "result_filter",
+        "sandbox",
+        "schema_validation"
+      ],
+      "missing_gates": [
+        "audit",
+        "authorization",
+        "idempotency",
+        "policy"
+      ],
+      "evidence": {
+        "budget": "app/services/harness/sandbox/supervisor.py#SandboxSupervisor.run",
+        "cancellation": "app/services/harness/sandbox/supervisor.py#SandboxSupervisor.run",
+        "result_filter": "app/services/harness/sandbox/environment.py#redact_secret_output",
+        "sandbox": "app/services/harness/sandbox/linux.py#LinuxBubblewrapCommandBuilder.build",
+        "schema_validation": "app/services/harness/sandbox/models.py#SandboxProfile"
+      }
+    }
+  ]
+}
