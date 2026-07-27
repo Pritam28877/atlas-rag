@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from scripts.verify_harness_python_boundaries import (
+    MAX_SOURCE_FILES,
     BoundaryError,
     validate_boundaries,
 )
@@ -87,6 +88,20 @@ def test_declared_dependency_graph_rejects_cycle() -> None:
 
     with pytest.raises(BoundaryError, match="dependency cycle"):
         validate_boundaries(boundaries)
+
+
+def test_source_file_budget_remains_bounded(tmp_path: Path) -> None:
+    copy_package_layout(tmp_path)
+    protocol_path = tmp_path / "app/services/harness/protocol"
+    existing_count = len(list((tmp_path / "app").rglob("*.py")))
+    for file_number in range(MAX_SOURCE_FILES - existing_count + 1):
+        (protocol_path / f"budget_{file_number}.py").write_text(
+            '"""Boundary budget fixture."""\n',
+            encoding="utf-8",
+        )
+
+    with pytest.raises(BoundaryError, match="source files exceeds"):
+        validate_boundaries(load_boundaries(), root=tmp_path)
 
 
 def test_core_package_cannot_import_infrastructure(tmp_path: Path) -> None:

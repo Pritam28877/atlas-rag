@@ -57,6 +57,10 @@ from app.services.harness.protocol.operation_admission import (
     OperationDurabilityReceipt,
     OperationFence,
 )
+from app.services.harness.protocol.recovery import (
+    OperationReconciliationDecision,
+    OperationStatusProof,
+)
 from app.services.harness.protocol.secret_delivery import (
     SecretDeliveryReceipt,
     SecretInjectionRequest,
@@ -102,6 +106,8 @@ PROTOCOL_MODELS: tuple[type[BaseModel], ...] = (
     OperationDispatchPermit,
     SecretInjectionRequest,
     SecretDeliveryReceipt,
+    OperationStatusProof,
+    OperationReconciliationDecision,
     ArtifactRecord,
     TaskNodeRecord,
     ProviderRouteDecisionRecord,

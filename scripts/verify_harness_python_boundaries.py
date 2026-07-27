@@ -15,7 +15,7 @@ DEFAULT_BOUNDARIES = ROOT / "docs" / "harness" / "python-package-boundaries.json
 PACKAGE_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 LAYERS = {"domain", "core", "adapter"}
 MAX_PACKAGES = 64
-MAX_SOURCE_FILES = 256
+MAX_SOURCE_FILES = 320
 
 BOUNDARY_FIELDS = {
     "schema_version",

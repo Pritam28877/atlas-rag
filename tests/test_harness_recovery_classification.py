@@ -71,7 +71,7 @@ def test_dispatched_non_idempotent_operation_needs_operator() -> None:
     assert repeated == decision
 
 
-def test_prepared_and_repeatable_operations_are_safe_to_resume() -> None:
+def test_only_prepared_operation_is_safe_to_resume_without_status_proof() -> None:
     prepared = classify_operation_recovery(
         operation(OperationState.PREPARED, IdempotencyClass.NON_IDEMPOTENT),
         recovered_at=NOW + timedelta(seconds=2),
@@ -86,8 +86,8 @@ def test_prepared_and_repeatable_operations_are_safe_to_resume() -> None:
     )
 
     assert prepared.action is OperationRecoveryAction.RESUME_PREPARED
-    assert repeatable.action is OperationRecoveryAction.RETRY_IDEMPOTENT
-    assert read_only.action is OperationRecoveryAction.RETRY_IDEMPOTENT
+    assert repeatable.action is OperationRecoveryAction.NEEDS_OPERATOR
+    assert read_only.action is OperationRecoveryAction.NEEDS_OPERATOR
 
 
 def test_lease_expiry_is_deadline_based_and_idempotent() -> None:

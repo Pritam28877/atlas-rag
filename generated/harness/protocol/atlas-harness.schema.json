@@ -2266,6 +2266,37 @@
       "title": "OperationLimits",
       "type": "object"
     },
+    "OperationReconciliationDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "$ref": "#/$defs/OperationRecord"
+        },
+        "outcome": {
+          "$ref": "#/$defs/OperationReconciliationOutcome"
+        },
+        "proof_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Proof Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "outcome",
+        "operation",
+        "proof_sha256"
+      ],
+      "title": "OperationReconciliationDecision",
+      "type": "object"
+    },
+    "OperationReconciliationOutcome": {
+      "enum": [
+        "retry_proven_not_started",
+        "terminal_proven"
+      ],
+      "title": "OperationReconciliationOutcome",
+      "type": "string"
+    },
     "OperationRecord": {
       "additionalProperties": false,
       "description": "Fenced side effect whose ambiguous state is never treated as failure.",
@@ -2459,6 +2490,105 @@
         "cancelled"
       ],
       "title": "OperationState",
+      "type": "string"
+    },
+    "OperationStatusProof": {
+      "additionalProperties": false,
+      "properties": {
+        "args_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Args Sha256",
+          "type": "string"
+        },
+        "failure_reason": {
+          "anyOf": [
+            {
+              "maxLength": 2048,
+              "minLength": 1,
+              "pattern": "^[^\\x00]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Reason"
+        },
+        "fencing_token": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "title": "Fencing Token",
+          "type": "integer"
+        },
+        "kind": {
+          "$ref": "#/$defs/OperationStatusProofKind"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/OperationId"
+        },
+        "proof_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Proof Sha256",
+          "type": "string"
+        },
+        "result_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Sha256"
+        },
+        "status_request_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Status Request Sha256",
+          "type": "string"
+        },
+        "status_response_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Status Response Sha256",
+          "type": "string"
+        },
+        "tool_name": {
+          "$ref": "#/$defs/ToolName"
+        },
+        "tool_version": {
+          "$ref": "#/$defs/ToolVersion"
+        }
+      },
+      "required": [
+        "operation_id",
+        "tool_name",
+        "tool_version",
+        "args_sha256",
+        "fencing_token",
+        "kind",
+        "status_request_sha256",
+        "status_response_sha256",
+        "observed_at",
+        "proof_sha256"
+      ],
+      "title": "OperationStatusProof",
+      "type": "object"
+    },
+    "OperationStatusProofKind": {
+      "enum": [
+        "not_started",
+        "completed",
+        "failed"
+      ],
+      "title": "OperationStatusProofKind",
       "type": "string"
     },
     "OperationsCommandTypes": {
@@ -5562,8 +5692,14 @@
     "OperationFence": {
       "$ref": "#/$defs/OperationFence"
     },
+    "OperationReconciliationDecision": {
+      "$ref": "#/$defs/OperationReconciliationDecision"
+    },
     "OperationRecord": {
       "$ref": "#/$defs/OperationRecord"
+    },
+    "OperationStatusProof": {
+      "$ref": "#/$defs/OperationStatusProof"
     },
     "PageInfo": {
       "$ref": "#/$defs/PageInfo"
