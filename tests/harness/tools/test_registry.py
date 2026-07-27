@@ -89,6 +89,20 @@ def test_oversized_arguments_fail_before_model_validation() -> None:
     assert failure.value.code is ToolRegistryErrorCode.ARGUMENT_LIMIT
 
 
+def test_validated_call_is_rebound_to_immutable_registration() -> None:
+    tools = registry()
+    resolved = tools.validate_provider_call(
+        provider_call(name="read_file"),
+    )
+
+    assert tools.revalidate_call(resolved) == resolved
+
+    forged = resolved.model_copy(update={"descriptor_sha256": "f" * 64})
+    with pytest.raises(ToolRegistryError) as failure:
+        tools.revalidate_call(forged)
+    assert failure.value.code is ToolRegistryErrorCode.INVALID_ARGUMENTS
+
+
 @pytest.mark.parametrize(
     "arguments_json",
     (

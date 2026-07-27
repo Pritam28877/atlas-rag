@@ -178,6 +178,48 @@ class ToolRegistry:
             output=descriptor.output,
         )
 
+    def revalidate_call(
+        self,
+        call: ValidatedToolCall,
+    ) -> ValidatedToolCall:
+        try:
+            verified = ValidatedToolCall.model_validate(call.model_dump())
+            registration = self.registration(
+                verified.tool_name,
+                version=verified.tool_version,
+            )
+            requested_registration = self.registration(
+                verified.requested_name,
+                version=verified.tool_version,
+            )
+            normalized_json, args_sha256 = _validate_arguments(
+                verified.arguments_json,
+                registration.argument_model,
+            )
+        except ToolRegistryError:
+            raise
+        except Exception:
+            raise ToolRegistryError(
+                ToolRegistryErrorCode.INVALID_ARGUMENTS
+            ) from None
+        descriptor = registration.descriptor
+        if (
+            requested_registration is not registration
+            or normalized_json != verified.arguments_json
+            or args_sha256 != verified.args_sha256
+            or descriptor.name != verified.tool_name
+            or descriptor.version != verified.tool_version
+            or descriptor.descriptor_sha256 != verified.descriptor_sha256
+            or descriptor.capability != verified.capability
+            or descriptor.idempotency_class
+            is not verified.idempotency_class
+            or descriptor.output != verified.output
+        ):
+            raise ToolRegistryError(
+                ToolRegistryErrorCode.INVALID_ARGUMENTS
+            )
+        return verified
+
 
 def _validate_arguments(
     arguments_json: str,
@@ -199,7 +241,7 @@ def _validate_arguments(
         if canonical_input != arguments_json:
             raise ValueError("tool arguments must use canonical JSON")
         canonical_operation_args_sha256(arguments)
-        validated = argument_model.model_validate(arguments)
+        validated = argument_model.model_validate_json(arguments_json)
         normalized = validated.model_dump(mode="json")
         normalized_json = json.dumps(
             normalized,
