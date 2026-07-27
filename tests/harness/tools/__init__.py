@@ -1,0 +1,1 @@
+"""Typed tool registry tests."""
