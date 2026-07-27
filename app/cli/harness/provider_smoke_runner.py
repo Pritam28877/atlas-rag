@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import secrets
+import time
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
@@ -25,6 +26,7 @@ from app.cli.harness.provider_smoke_io import (
     validate_provider_smoke_output_path,
     write_provider_smoke_result,
 )
+from app.cli.harness.smoke_timing import smoke_latency_ms
 from app.services.harness.journal import (
     GlobalJournalReadRequest,
     JournalProviderEgressAuditSink,
@@ -72,6 +74,7 @@ AddressLookup = Callable[
     Awaitable[tuple[str, ...]],
 ]
 Clock = Callable[[], datetime]
+MonotonicClock = Callable[[], float]
 
 
 async def run_provider_smoke(
@@ -81,8 +84,10 @@ async def run_provider_smoke(
     lookup: AddressLookup | None = None,
     environment: Mapping[bytes, bytes] | None = None,
     clock: Clock | None = None,
+    monotonic_clock: MonotonicClock | None = None,
 ) -> ProviderSmokeResult:
     runtime_clock = clock or _utc_now
+    runtime_monotonic = monotonic_clock or time.monotonic
     await validate_private_smoke_input(authorized.config_path)
     await validate_provider_smoke_output_path(authorized.result_path)
     loaded = await load_provider_configuration(authorized.config_path)
@@ -153,6 +158,7 @@ async def run_provider_smoke(
             ),
             clock=runtime_clock,
         )
+        provider_started_at = runtime_monotonic()
         response = await _dispatch_once(
             authorized,
             egress_request,
@@ -193,6 +199,7 @@ async def run_provider_smoke(
             active_leases,
             stream.routing_metadata_sha256,
         )
+        completed_at = runtime_clock()
         result = ProviderSmokeResult(
             provider=authorized.provider,
             model=authorized.model,
@@ -203,11 +210,15 @@ async def run_provider_smoke(
             cached_input_tokens=stream.usage.cached_input_tokens,
             output_tokens=stream.usage.output_tokens,
             reasoning_tokens=stream.usage.reasoning_tokens,
+            latency_ms=smoke_latency_ms(
+                provider_started_at,
+                runtime_monotonic(),
+            ),
             charged_cost_microusd=authorized.cost_cap_microusd,
             routing_metadata_sha256=stream.routing_metadata_sha256,
             audit_events=len(audit_page.events),
             active_credential_leases=active_leases,
-            completed_at=runtime_clock(),
+            completed_at=completed_at,
         )
     finally:
         await _close_runtime_stores(cost_ledger, journal)

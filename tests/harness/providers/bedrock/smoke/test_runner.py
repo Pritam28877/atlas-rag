@@ -137,6 +137,7 @@ def test_bedrock_smoke_runs_two_cost_accounted_calls_and_redacts_evidence(
             credential_backend=backend,
             client_factory=clients,
             clock=lambda: NOW,
+            monotonic_clock=lambda: 1.0,
         )
 
         assert clients.calls == 2
@@ -159,6 +160,8 @@ def test_bedrock_smoke_runs_two_cost_accounted_calls_and_redacts_evidence(
         assert result.cancellation_verified
         assert result.text_verified
         assert result.tool_verified
+        assert result.latency_ms == 0
+        assert result.cancellation_latency_ms == 0
         assert result.charged_cost_microusd == 29
         assert result.signed_cost_cap_microusd == 20_000
         assert result.active_cost_reservations == 0

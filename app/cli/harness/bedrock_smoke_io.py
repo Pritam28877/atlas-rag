@@ -18,6 +18,7 @@ from app.cli.harness.provider_smoke_io import (
     read_private_smoke_input,
     write_private_smoke_output,
 )
+from app.cli.harness.smoke_timing import MAXIMUM_SMOKE_LATENCY_MS
 from app.services.harness.protocol import (
     ModelName,
     Region,
@@ -53,6 +54,8 @@ class BedrockSmokeResult(StrictProtocolModel):
     cached_input_tokens: int = Field(ge=0, le=4_000_000)
     output_tokens: int = Field(ge=0, le=1_024_000)
     reasoning_tokens: int = Field(ge=0, le=1_024_000)
+    latency_ms: int = Field(ge=0, le=MAXIMUM_SMOKE_LATENCY_MS)
+    cancellation_latency_ms: int = Field(ge=0, le=60_000)
     charged_cost_microusd: int = Field(ge=0, le=10_000_000_000)
     signed_cost_cap_microusd: int = Field(ge=2, le=10_000_000_000)
     provider_calls: Literal[2] = 2
