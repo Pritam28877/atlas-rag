@@ -44,6 +44,10 @@ from app.cli.harness.live_matrix_io import (
     LiveSmokeResultKind,
     build_live_matrix_from_manifest,
 )
+from app.cli.harness.live_matrix_preparation import (
+    LiveMatrixPreparationRequest,
+    prepare_live_matrix_manifest,
+)
 from app.cli.harness.live_matrix_smoke import (
     live_observations_from_smoke,
 )
@@ -96,6 +100,7 @@ __all__ = (
     "LocalProbeGateErrorCode",
     "LocalProbeLaunchRequest",
     "LiveMatrixManifest",
+    "LiveMatrixPreparationRequest",
     "LiveSmokeEvidenceReference",
     "LiveSmokeFailureReceipt",
     "LiveSmokeResultKind",
@@ -111,6 +116,7 @@ __all__ = (
     "build_live_matrix_from_manifest",
     "failed_live_observations",
     "live_observations_from_smoke",
+    "prepare_live_matrix_manifest",
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
     "run_provider_smoke",

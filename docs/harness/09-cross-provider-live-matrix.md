@@ -36,21 +36,20 @@ credentials, prompts, outputs, or signing keys in the matrix manifest.
 
 ## 2. Bind provider descriptors
 
-Create the six sorted `LiveProviderTarget` records from the approved provider
-configuration. Derive `LiveProviderDescriptor` values with
-`derive_live_provider_descriptors`; do not copy adapter revisions or supported
-scenarios by hand.
+Retain the verified offline `ConformanceReport` as an owner-only file. Create
+the six sorted `LiveProviderTarget` records from the approved provider
+configuration; do not add adapter revisions or supported scenarios.
 
-The derivation must use the verified offline `ConformanceReport` from the same
-source revision. Each target supplies:
+Each target supplies:
 
 - provider environment: `cloud`, `local`, or `mock`;
 - configured model and its revision SHA-256;
 - smoke route-binding SHA-256;
 - observation time.
 
-The derivation rejects a target set that does not exactly match the conformance
-report and carries forward its adapter revision and supported scenarios.
+The preparation command in step 4 derives descriptors from the report. It
+rejects a target set that does not exactly match the conformance adapters and
+carries forward their revisions and supported scenarios.
 
 ## 3. Produce redacted receipts
 
@@ -90,11 +89,11 @@ Authorized failures may be recorded only as revision- and route-bound
 
 ## 4. Create the manifest
 
-Write `/private/atlas-live-matrix/manifest.json` as a `LiveMatrixManifest` and
-set it to `0600`. Its fields are:
+Write `/private/atlas-live-matrix/preparation.json` as a
+`LiveMatrixPreparationRequest` and set it to `0600`. Its fields are:
 
 - `schema_version`: `1`;
-- `providers`: six sorted conformance-derived descriptors;
+- `targets`: six sorted approved provider targets from step 2;
 - `evidence`: sorted references to existing private receipts;
 - `required_live_providers`:
   `["bedrock", "local-compatible", "vertex"]`;
@@ -111,7 +110,21 @@ Evidence kinds are:
 | Any bound failed attempt | `failure` |
 
 The mock provider has no live receipt. Omit any optional provider that was not
-run. Manifest, receipt, and output paths must be distinct absolute paths.
+run. Report, preparation, manifest, receipt, and output paths must be distinct
+absolute paths.
+
+Derive and create the owner-only manifest:
+
+```bash
+uv run --locked python scripts/prepare_harness_live_matrix.py \
+  --conformance-report-path /private/atlas-live-matrix/conformance.json \
+  --preparation-path /private/atlas-live-matrix/preparation.json \
+  --manifest-path /private/atlas-live-matrix/manifest.json
+```
+
+Success prints only `status` and the provider count. Invalid or permissive
+inputs, mismatched target sets, path collisions, and existing output paths fail
+without a manifest.
 
 ## 5. Build the matrix
 
