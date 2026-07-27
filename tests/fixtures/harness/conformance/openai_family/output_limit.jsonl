@@ -1,0 +1,1 @@
+{"response":{"incomplete_details":{"reason":"max_output_tokens"},"status":"incomplete","usage":{"input_tokens":3,"output_tokens":2,"total_tokens":5}},"sequence_number":1,"type":"response.incomplete"}
