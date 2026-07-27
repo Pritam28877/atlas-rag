@@ -925,6 +925,137 @@ export type StatusRequestSha256 = string;
 export type StatusResponseSha256 = string;
 export type HasMore = boolean;
 export type NextCursor = string | null;
+export type CapabilitiesSha256 = string;
+export type CgroupDelegated = boolean;
+export type CgroupV2 = boolean;
+export type ContainmentAvailable = boolean;
+export type DetectedAt = string;
+export type FilesystemIsolation = boolean;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "SandboxIsolationMode".
+ */
+export type SandboxIsolationMode = "production" | "read_only_degraded" | "unavailable";
+export type NativeBackend = string;
+export type NetworkIsolation = boolean;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "SandboxPlatform".
+ */
+export type SandboxPlatform = "linux" | "macos" | "windows" | "other";
+export type ProcessTreeIsolation = boolean;
+export type ProxyEgress = boolean;
+/**
+ * @maxItems 16
+ */
+export type Reasons =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
+export type ResourceLimitsEnforced = boolean;
+export type SideEffectsSupported = boolean;
+export type SyscallFiltering = boolean;
 export type Capability4 = string;
 export type EvaluatedAt = string;
 /**
@@ -1984,6 +2115,16 @@ export type ReasoningTokens = number;
  * via the `definition` "RootUri".
  */
 export type RootUri = string;
+export type CapabilitiesSha2561 = string;
+export type DecisionSha256 = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "SandboxAdmissionOutcome".
+ */
+export type SandboxAdmissionOutcome = "admitted" | "denied";
+export type ProfileSha256 = string;
+export type Reason18 = string;
+export type SideEffecting = boolean;
 export type DeliveredAt = string;
 export type DestinationSha2562 = string;
 /**
@@ -3182,6 +3323,28 @@ export interface PageInfo {
   next_cursor?: NextCursor;
 }
 /**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "PlatformIsolationCapabilities".
+ */
+export interface PlatformIsolationCapabilities {
+  capabilities_sha256: CapabilitiesSha256;
+  cgroup_delegated: CgroupDelegated;
+  cgroup_v2: CgroupV2;
+  containment_available: ContainmentAvailable;
+  detected_at: DetectedAt;
+  filesystem_isolation: FilesystemIsolation;
+  mode: SandboxIsolationMode;
+  native_backend: NativeBackend;
+  network_isolation: NetworkIsolation;
+  platform: SandboxPlatform;
+  process_tree_isolation: ProcessTreeIsolation;
+  proxy_egress: ProxyEgress;
+  reasons: Reasons;
+  resource_limits_enforced: ResourceLimitsEnforced;
+  side_effects_supported: SideEffectsSupported;
+  syscall_filtering: SyscallFiltering;
+}
+/**
  * Auditable result of intersecting policy and current grant capability.
  *
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -3481,6 +3644,20 @@ export interface ProviderTokenUsage {
   input_tokens: InputTokens2;
   output_tokens: OutputTokens1;
   reasoning_tokens: ReasoningTokens;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "SandboxAdmissionDecision".
+ */
+export interface SandboxAdmissionDecision {
+  capabilities_sha256: CapabilitiesSha2561;
+  decision_sha256: DecisionSha256;
+  mode: SandboxIsolationMode;
+  outcome: SandboxAdmissionOutcome;
+  platform: SandboxPlatform;
+  profile_sha256: ProfileSha256;
+  reason: Reason18;
+  side_effecting: SideEffecting;
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema

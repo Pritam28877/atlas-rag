@@ -2682,6 +2682,105 @@
       "title": "PageRequest",
       "type": "object"
     },
+    "PlatformIsolationCapabilities": {
+      "additionalProperties": false,
+      "properties": {
+        "capabilities_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Capabilities Sha256",
+          "type": "string"
+        },
+        "cgroup_delegated": {
+          "title": "Cgroup Delegated",
+          "type": "boolean"
+        },
+        "cgroup_v2": {
+          "title": "Cgroup V2",
+          "type": "boolean"
+        },
+        "containment_available": {
+          "title": "Containment Available",
+          "type": "boolean"
+        },
+        "detected_at": {
+          "format": "date-time",
+          "title": "Detected At",
+          "type": "string"
+        },
+        "filesystem_isolation": {
+          "title": "Filesystem Isolation",
+          "type": "boolean"
+        },
+        "mode": {
+          "$ref": "#/$defs/SandboxIsolationMode"
+        },
+        "native_backend": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+          "title": "Native Backend",
+          "type": "string"
+        },
+        "network_isolation": {
+          "title": "Network Isolation",
+          "type": "boolean"
+        },
+        "platform": {
+          "$ref": "#/$defs/SandboxPlatform"
+        },
+        "process_tree_isolation": {
+          "title": "Process Tree Isolation",
+          "type": "boolean"
+        },
+        "proxy_egress": {
+          "title": "Proxy Egress",
+          "type": "boolean"
+        },
+        "reasons": {
+          "items": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "pattern": "^[^\\x00]+$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Reasons",
+          "type": "array"
+        },
+        "resource_limits_enforced": {
+          "title": "Resource Limits Enforced",
+          "type": "boolean"
+        },
+        "side_effects_supported": {
+          "title": "Side Effects Supported",
+          "type": "boolean"
+        },
+        "syscall_filtering": {
+          "title": "Syscall Filtering",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "platform",
+        "mode",
+        "native_backend",
+        "containment_available",
+        "filesystem_isolation",
+        "process_tree_isolation",
+        "network_isolation",
+        "syscall_filtering",
+        "resource_limits_enforced",
+        "cgroup_v2",
+        "cgroup_delegated",
+        "proxy_egress",
+        "side_effects_supported",
+        "reasons",
+        "detected_at",
+        "capabilities_sha256"
+      ],
+      "title": "PlatformIsolationCapabilities",
+      "type": "object"
+    },
     "PolicyDecisionRecord": {
       "additionalProperties": false,
       "description": "Auditable result of intersecting policy and current grant capability.",
@@ -4208,6 +4307,85 @@
       "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
       "type": "string"
     },
+    "SandboxAdmissionDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "capabilities_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Capabilities Sha256",
+          "type": "string"
+        },
+        "decision_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Decision Sha256",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/SandboxIsolationMode"
+        },
+        "outcome": {
+          "$ref": "#/$defs/SandboxAdmissionOutcome"
+        },
+        "platform": {
+          "$ref": "#/$defs/SandboxPlatform"
+        },
+        "profile_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Profile Sha256",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "pattern": "^[^\\x00]+$",
+          "title": "Reason",
+          "type": "string"
+        },
+        "side_effecting": {
+          "title": "Side Effecting",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "outcome",
+        "platform",
+        "mode",
+        "capabilities_sha256",
+        "profile_sha256",
+        "side_effecting",
+        "reason",
+        "decision_sha256"
+      ],
+      "title": "SandboxAdmissionDecision",
+      "type": "object"
+    },
+    "SandboxAdmissionOutcome": {
+      "enum": [
+        "admitted",
+        "denied"
+      ],
+      "title": "SandboxAdmissionOutcome",
+      "type": "string"
+    },
+    "SandboxIsolationMode": {
+      "enum": [
+        "production",
+        "read_only_degraded",
+        "unavailable"
+      ],
+      "title": "SandboxIsolationMode",
+      "type": "string"
+    },
+    "SandboxPlatform": {
+      "enum": [
+        "linux",
+        "macos",
+        "windows",
+        "other"
+      ],
+      "title": "SandboxPlatform",
+      "type": "string"
+    },
     "SecretDeliveryReceipt": {
       "additionalProperties": false,
       "properties": {
@@ -5704,6 +5882,9 @@
     "PageInfo": {
       "$ref": "#/$defs/PageInfo"
     },
+    "PlatformIsolationCapabilities": {
+      "$ref": "#/$defs/PlatformIsolationCapabilities"
+    },
     "PolicyDecisionRecord": {
       "$ref": "#/$defs/PolicyDecisionRecord"
     },
@@ -5733,6 +5914,9 @@
     },
     "ProviderStreamBatch": {
       "$ref": "#/$defs/ProviderStreamBatch"
+    },
+    "SandboxAdmissionDecision": {
+      "$ref": "#/$defs/SandboxAdmissionDecision"
     },
     "SecretDeliveryReceipt": {
       "$ref": "#/$defs/SecretDeliveryReceipt"

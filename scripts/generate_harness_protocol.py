@@ -61,6 +61,10 @@ from app.services.harness.protocol.recovery import (
     OperationReconciliationDecision,
     OperationStatusProof,
 )
+from app.services.harness.protocol.sandbox import (
+    PlatformIsolationCapabilities,
+    SandboxAdmissionDecision,
+)
 from app.services.harness.protocol.secret_delivery import (
     SecretDeliveryReceipt,
     SecretInjectionRequest,
@@ -108,6 +112,8 @@ PROTOCOL_MODELS: tuple[type[BaseModel], ...] = (
     SecretDeliveryReceipt,
     OperationStatusProof,
     OperationReconciliationDecision,
+    PlatformIsolationCapabilities,
+    SandboxAdmissionDecision,
     ArtifactRecord,
     TaskNodeRecord,
     ProviderRouteDecisionRecord,
