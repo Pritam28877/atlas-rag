@@ -15,7 +15,7 @@ evidence.
 | CLI, TUI, SDK, IDE reconnect | `app/cli/harness/`, `sdk/typescript/`, `tests/harness/cli/`, `tests/harness/sdk/` | Contract coverage exists; live reconnect evidence is pending | Blocks release if not recorded |
 | Replay, fixtures, and benchmarks | `app/services/harness/evaluation/`, `tests/harness/evaluation/` | Non-live reports and regression gates pass | Does not close live gates |
 | Backup, restore, rollback, and drills | `app/services/harness/recovery/`, `docs/harness/12-operations-runbook.md` | Disposable contracts and procedures are recorded | Execute and retain drill evidence |
-| Provenance, licenses, SBOM, and packages | `docs/harness/05-provenance-and-license.md`, `scripts/verify_harness_{provenance,supply_chain,sbom,packages}.py` | Known release blockers remain in supply-chain policy | Blocks release |
+| Provenance, licenses, SBOM, and packages | `docs/harness/05-provenance-and-license.md`, `docs/harness/17-supply-chain-blocker-status.md`, `scripts/verify_harness_{provenance,supply_chain,sbom,packages}.py` | Known release blockers remain in supply-chain policy | Blocks release |
 | Soak and human approval | `docs/harness/14-independent-review-and-soak.md`, `docs/harness/15-release-decision.md` | Not executed or signed | Blocks release |
 
 ## Reproduction gate
