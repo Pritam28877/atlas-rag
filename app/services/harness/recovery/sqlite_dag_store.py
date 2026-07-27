@@ -1,4 +1,4 @@
-"""SQLite-backed durable DAG leases and fenced checkpoints."""
+"""SQLite-backed durable DAG leases, recovery, and fenced checkpoints."""
 
 from __future__ import annotations
 
@@ -6,7 +6,17 @@ import sqlite3
 from datetime import datetime
 
 from app.services.harness.journal.sqlite_connection import SQLiteConnectionOwner
-from app.services.harness.protocol.base import BoundedLabel, Sha256, TaskId
+from app.services.harness.protocol.base import (
+    BoundedLabel,
+    BoundedReason,
+    Sha256,
+    TaskId,
+)
+from app.services.harness.recovery.sqlite_dag_recovery import (
+    SQLiteDagRecoveryMixin,
+    dag_row_to_record,
+    parse_dag_datetime,
+)
 from app.services.harness.scheduler.dag import TaskGraphDefinition
 from app.services.harness.scheduler.durable import (
     DagLease,
@@ -14,9 +24,15 @@ from app.services.harness.scheduler.durable import (
     DagNodeStatus,
     DagStoreConflict,
 )
+from app.services.harness.scheduler.recovery import (
+    MAXIMUM_RECOVERY_EVIDENCE_PAGE,
+    DagReconciliation,
+    DagRecoveryEvidence,
+    DagWorkerObservation,
+)
 
 
-class SQLiteDurableDagStore:
+class SQLiteDurableDagStore(SQLiteDagRecoveryMixin):
     """Durable store adapter; all mutations use one serialized SQLite owner."""
 
     def __init__(
@@ -72,6 +88,40 @@ class SQLiteDurableDagStore:
             )
         )
 
+    async def cancel_nodes(
+        self,
+        task_ids: tuple[TaskId, ...],
+        reason: BoundedReason,
+        observed_at: datetime,
+    ) -> tuple[DagReconciliation, ...]:
+        return await self._connection_owner.execute(
+            lambda connection: self._cancel_nodes(
+                connection,
+                task_ids,
+                reason,
+                observed_at,
+            )
+        )
+
+    async def reconcile_worker(
+        self,
+        observation: DagWorkerObservation,
+    ) -> DagReconciliation:
+        return await self._connection_owner.execute(
+            lambda connection: self._reconcile_worker(connection, observation)
+        )
+
+    async def recovery_evidence(
+        self,
+        *,
+        limit: int = MAXIMUM_RECOVERY_EVIDENCE_PAGE,
+    ) -> tuple[DagRecoveryEvidence, ...]:
+        if not 1 <= limit <= MAXIMUM_RECOVERY_EVIDENCE_PAGE:
+            raise ValueError("recovery evidence page exceeds bound")
+        return await self._connection_owner.execute(
+            lambda connection: self._read_evidence(connection, limit)
+        )
+
     def _initialize(self, connection: sqlite3.Connection) -> None:
         connection.execute(
             """
@@ -115,6 +165,21 @@ class SQLiteDurableDagStore:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS harness_dag_recovery_evidence (
+                evidence_sha256 TEXT PRIMARY KEY,
+                graph_id TEXT NOT NULL,
+                task_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                owner_id TEXT,
+                lease_generation INTEGER NOT NULL,
+                result_sha256 TEXT,
+                reason TEXT,
+                observed_at TEXT NOT NULL
+            )
+            """
+        )
         for node in self._graph.nodes:
             connection.execute(
                 """
@@ -140,7 +205,7 @@ class SQLiteDurableDagStore:
             """,
             (self._graph.graph_id,),
         ).fetchall()
-        return tuple(_row_to_record(row) for row in rows)
+        return tuple(dag_row_to_record(row) for row in rows)
 
     def _claim(
         self,
@@ -163,7 +228,7 @@ class SQLiteDurableDagStore:
             raise DagStoreConflict("DAG node does not exist")
         status = str(row["status"])
         generation = int(row["lease_generation"])
-        lease_expires_at = _parse_datetime(row["lease_expires_at"])
+        lease_expires_at = parse_dag_datetime(row["lease_expires_at"])
         if (
             status == DagNodeStatus.RUNNING.value
             and lease_expires_at is not None
@@ -258,27 +323,4 @@ class SQLiteDurableDagStore:
         ).fetchone()
         if row is None:
             raise DagStoreConflict("DAG checkpoint disappeared")
-        return _row_to_record(row)
-
-
-def _row_to_record(row: sqlite3.Row) -> DagNodeRecord:
-    return DagNodeRecord(
-        task_id=str(row["task_id"]),
-        status=DagNodeStatus(str(row["status"])),
-        owner_id=row["owner_id"],
-        lease_generation=int(row["lease_generation"]),
-        lease_expires_at=_parse_datetime(row["lease_expires_at"]),
-        result_sha256=row["result_sha256"],
-        failure_reason=row["failure_reason"],
-    )
-
-
-def _parse_datetime(value: object) -> datetime | None:
-    if value is None:
-        return None
-    if not isinstance(value, str):
-        raise DagStoreConflict("DAG lease timestamp is invalid")
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError as error:
-        raise DagStoreConflict("DAG lease timestamp is invalid") from error
+        return dag_row_to_record(row)
