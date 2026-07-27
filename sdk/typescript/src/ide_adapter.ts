@@ -54,7 +54,12 @@ export class IdeWorkspaceAdapter {
   }
 
   snapshot(): IdeSnapshot {
-    return this.snapshotValue;
+    return {
+      ...this.snapshotValue,
+      threads: [...this.snapshotValue.threads],
+      tasks: [...this.snapshotValue.tasks],
+      events: [...this.snapshotValue.events],
+    };
   }
 
   dispose(): void {

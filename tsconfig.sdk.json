@@ -20,6 +20,7 @@
   "files": [
     "generated/harness/protocol/atlas-harness.d.ts",
     "sdk/typescript/src/index.ts",
-    "sdk/typescript/typecheck.ts"
+    "sdk/typescript/typecheck.ts",
+    "sdk/typescript/cross_client_typecheck.ts"
   ]
 }
