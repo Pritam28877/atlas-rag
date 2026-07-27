@@ -10,6 +10,19 @@ from app.services.harness.policy.approvals import (
     revoke_approval,
 )
 from app.services.harness.policy.compiler import compile_capability_decision
+from app.services.harness.policy.explanation import (
+    ExplainedPolicyLayer,
+    ExplainedPolicyRule,
+    PolicyDecisionExplanation,
+    explain_policy_decision,
+)
+from app.services.harness.policy.linting import (
+    PolicyLintCode,
+    PolicyLintFinding,
+    PolicyLintReport,
+    PolicyLintSeverity,
+    lint_policy_bundle,
+)
 from app.services.harness.policy.models import (
     CapabilityKind,
     CapabilityLimits,
@@ -46,6 +59,8 @@ __all__ = (
     "CapabilityTarget",
     "ChildAgentTarget",
     "EffectivePolicyDecision",
+    "ExplainedPolicyLayer",
+    "ExplainedPolicyRule",
     "EvaluatedPolicyRule",
     "ExecutableTarget",
     "ExtensionTarget",
@@ -57,8 +72,13 @@ __all__ = (
     "NetworkTarget",
     "PolicyBundle",
     "PolicyDocument",
+    "PolicyDecisionExplanation",
     "PolicyEffect",
     "PolicyLayer",
+    "PolicyLintCode",
+    "PolicyLintFinding",
+    "PolicyLintReport",
+    "PolicyLintSeverity",
     "PolicyRule",
     "ResourceTarget",
     "SecretTarget",
@@ -67,6 +87,8 @@ __all__ = (
     "authorize_with_approval",
     "compile_capability_decision",
     "expire_approval",
+    "explain_policy_decision",
+    "lint_policy_bundle",
     "policy_bundle_version",
     "policy_document_version",
     "request_capability_approval",

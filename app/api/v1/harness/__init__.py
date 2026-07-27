@@ -1,3 +1,3 @@
-"""Atlas Harness API composition boundary; no routes are registered yet."""
+"""Inert Atlas Harness API package boundary."""
 
 __all__: tuple[str, ...] = ()
