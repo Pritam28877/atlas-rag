@@ -30,6 +30,20 @@ from app.services.harness.sandbox.supervisor import (
     SandboxProcessResult,
     SandboxSupervisor,
 )
+from app.services.harness.sandbox.worker_scope_contracts import (
+    WorkerScopeError,
+    WorkerScopeRecord,
+    WorkerScopeRequest,
+    WorkerScopeState,
+    WorkerWorkspaceView,
+    compile_worker_scope,
+    worker_scope_sha256,
+    worker_workspace_view_sha256,
+)
+from app.services.harness.sandbox.worker_scope_manager import (
+    InMemoryWorkerWorkspaceOwner,
+    WorkerScopeManager,
+)
 
 __all__ = (
     "SandboxCapabilityGrant",
@@ -47,6 +61,16 @@ __all__ = (
     "SandboxResourceLimits",
     "SandboxSupervisor",
     "SandboxSupervisorError",
+    "WorkerScopeError",
+    "WorkerScopeRecord",
+    "WorkerScopeRequest",
+    "WorkerScopeState",
+    "WorkerWorkspaceView",
+    "InMemoryWorkerWorkspaceOwner",
+    "WorkerScopeManager",
+    "compile_worker_scope",
+    "worker_scope_sha256",
+    "worker_workspace_view_sha256",
     "compile_sandbox_profile",
     "compile_sandbox_admission",
     "detect_platform_isolation",
