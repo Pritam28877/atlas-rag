@@ -87,7 +87,12 @@
     {
       "name": "recovery",
       "layer": "adapter",
-      "allowed_harness_dependencies": ["journal", "protocol", "runtime"]
+      "allowed_harness_dependencies": [
+        "journal",
+        "protocol",
+        "runtime",
+        "scheduler"
+      ]
     },
     {
       "name": "artifacts",

@@ -1,0 +1,1 @@
+"""Durable recovery adapter tests."""

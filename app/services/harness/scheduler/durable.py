@@ -57,6 +57,7 @@ class DurableDagStore(Protocol):
         self,
         task_id: TaskId,
         owner_id: BoundedLabel,
+        now: datetime,
         expires_at: datetime,
     ) -> DagLease: ...
 
@@ -93,10 +94,22 @@ class InMemoryDurableDagStore:
         self,
         task_id: TaskId,
         owner_id: BoundedLabel,
+        now: datetime,
         expires_at: datetime,
     ) -> DagLease:
         async with self._lock:
             record = self._records.get(task_id)
+            if record is not None and (
+                record.status is DagNodeStatus.RUNNING
+                and record.lease_expires_at is not None
+                and record.lease_expires_at <= now
+            ):
+                record = DagNodeRecord(
+                    task_id=record.task_id,
+                    status=DagNodeStatus.READY,
+                    lease_generation=record.lease_generation,
+                )
+                self._records[task_id] = record
             if record is None or record.status is not DagNodeStatus.READY:
                 raise DagStoreConflict("DAG node is not ready")
             next_generation = record.lease_generation + 1
@@ -173,14 +186,16 @@ class DurableDagScheduler:
         active = frozenset(
             record.task_id
             for record in records
-            if record.status is not DagNodeStatus.READY
+            if _record_is_active(record, now)
         )
         ready = ready_task_ids(self._graph, completed=completed, active=active)
         leases: list[DagLease] = []
         expires_at = now + timedelta(milliseconds=lease_duration_ms)
         for task_id in ready[:limit]:
             try:
-                leases.append(await self._store.claim(task_id, owner_id, expires_at))
+                leases.append(
+                    await self._store.claim(task_id, owner_id, now, expires_at)
+                )
             except DagStoreConflict:
                 continue
         return tuple(leases)
@@ -212,3 +227,11 @@ class DurableDagScheduler:
             result_sha256=None,
             failure_reason=reason,
         )
+
+
+def _record_is_active(record: DagNodeRecord, now: datetime) -> bool:
+    if record.status is DagNodeStatus.READY:
+        return False
+    if record.status is not DagNodeStatus.RUNNING:
+        return True
+    return record.lease_expires_at is None or record.lease_expires_at > now

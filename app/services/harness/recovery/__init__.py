@@ -18,6 +18,7 @@ from app.services.harness.recovery.coordinator import (
     StartupRecoveryReport,
     StartupRecoveryStatus,
 )
+from app.services.harness.recovery.sqlite_dag_store import SQLiteDurableDagStore
 
 __all__ = (
     "RecoveryCoordinator",
@@ -32,4 +33,5 @@ __all__ = (
     "RecoveryProjectionRebuilder",
     "StartupRecoveryReport",
     "StartupRecoveryStatus",
+    "SQLiteDurableDagStore",
 )
