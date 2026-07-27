@@ -6,3 +6,4 @@
 - `test_profile.py`: exact capability-to-isolation compilation.
 - `test_linux.py`: fail-closed bubblewrap command construction.
 - `test_supervisor.py`: bounded spawn, output, cancellation, and reap.
+- `test_worker_scope.py`: child capability, budget, overlay, lease, and cleanup bounds.
