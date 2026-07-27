@@ -10,7 +10,7 @@ evidence.
 | Requirement area | Authoritative implementation/evidence | Current state | Release consequence |
 | --- | --- | --- | --- |
 | Protocol, journal, projection, and retention | `app/services/harness/protocol/`, `app/services/harness/journal/`, `tests/test_harness_*` | Non-live tests pass | Keep open if a durability drill is missing |
-| Provider adapters and live matrix | `docs/harness/08-vertex-local-live-smokes.md`, `docs/harness/09-cross-provider-live-matrix.md`, `scripts/run_harness_*smoke.py` | P14.3/P15.3 still in progress | Blocks release |
+| Provider adapters and live matrix | `docs/harness/08-vertex-local-live-smokes.md`, `docs/harness/09-cross-provider-live-matrix.md`, `docs/harness/16-live-gate-status.md`, `scripts/run_harness_*smoke.py` | P14.3/P15.3 still in progress | Blocks release |
 | Policy, operations, sandbox, and security | `docs/harness/04-threat-model.md`, `docs/harness/10-security-review-evidence.md`, `docs/harness/python-privileged-reachability.json` | Linux host is read-only degraded; independent review is pending | Blocks production claim |
 | CLI, TUI, SDK, IDE reconnect | `app/cli/harness/`, `sdk/typescript/`, `tests/harness/cli/`, `tests/harness/sdk/` | Contract coverage exists; live reconnect evidence is pending | Blocks release if not recorded |
 | Replay, fixtures, and benchmarks | `app/services/harness/evaluation/`, `tests/harness/evaluation/` | Non-live reports and regression gates pass | Does not close live gates |
