@@ -34,13 +34,15 @@ def test_adapter_smoke_maps_text_and_cost_once() -> None:
     )
 
     assert tuple(item.scenario for item in observations) == (
+        ConformanceScenario.CANCELLATION,
         ConformanceScenario.TEXT_STREAM,
         ConformanceScenario.USAGE_COST,
     )
-    assert observations[0].charged_cost_microusd is None
-    assert observations[1].charged_cost_microusd == 0
-    assert observations[1].usage is not None
-    assert observations[0].trace_sha256 == observations[1].trace_sha256
+    assert observations[0].cancellation_latency_ms == 2
+    assert observations[1].charged_cost_microusd is None
+    assert observations[2].charged_cost_microusd == 0
+    assert observations[2].usage is not None
+    assert observations[0].trace_sha256 == observations[2].trace_sha256
 
 
 def test_bedrock_smoke_maps_cancellation_tools_and_aggregate_usage() -> None:

@@ -49,8 +49,10 @@ class AdapterSmokeResult(StrictProtocolModel):
     output_tokens: int = Field(ge=0, le=512_000)
     reasoning_tokens: int = Field(ge=0, le=512_000)
     latency_ms: int = Field(ge=0, le=MAXIMUM_SMOKE_LATENCY_MS)
+    cancellation_latency_ms: int = Field(ge=0, le=60_000)
     charged_cost_microusd: int = Field(ge=0, le=1_000_000)
     output_verified: Literal[True] = True
+    cancellation_verified: Literal[True] = True
     active_credential_leases: Literal[0] = 0
     completed_at: UtcTimestamp
 
@@ -63,6 +65,7 @@ def build_adapter_smoke_result(
     events: Sequence[ProviderStreamEvent],
     route_binding_sha256: Sha256,
     latency_ms: int,
+    cancellation_latency_ms: int,
     charged_cost_microusd: int,
     completed_at: datetime,
 ) -> AdapterSmokeResult:
@@ -124,6 +127,7 @@ def build_adapter_smoke_result(
         output_tokens=usage.output_tokens,
         reasoning_tokens=usage.reasoning_tokens,
         latency_ms=latency_ms,
+        cancellation_latency_ms=cancellation_latency_ms,
         charged_cost_microusd=charged_cost_microusd,
         completed_at=completed_at,
     )

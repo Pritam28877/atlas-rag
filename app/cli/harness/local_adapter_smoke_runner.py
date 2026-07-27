@@ -22,6 +22,7 @@ from app.cli.harness.adapter_smoke_runtime import (
     select_adapter_smoke_route,
     smoke_binding_sha256,
     smoke_identifier,
+    verify_pre_cancelled_adapter_stream,
 )
 from app.cli.harness.local_adapter_credentials import (
     acquire_local_adapter_credential,
@@ -63,6 +64,7 @@ from app.services.harness.providers.local_compatible_policy import (
 )
 from app.services.harness.providers.local_compatible_stream_transport import (
     BoundedLocalCompatibleResponsesTransport,
+    LocalCompatibleTransportErrorCode,
     LocalStreamingConnector,
 )
 from app.services.harness.providers.openai_decoder import OpenAIResponsesDecoder
@@ -165,6 +167,25 @@ async def run_local_adapter_smoke(
             clock=runtime_clock,
             maximum_concurrent_streams=1,
         )
+        pre_cancelled = asyncio.Event()
+        pre_cancelled.set()
+        cancellation_latency_ms = (
+            await verify_pre_cancelled_adapter_stream(
+                transport.stream(
+                    canonical_request,
+                    compiled,
+                    route,
+                    credential,
+                    OpenAIResponsesDecoder(_zero_cost),
+                    cancellation=pre_cancelled,
+                    deadline_at=deadline_at,
+                ),
+                expected_error_code=(
+                    LocalCompatibleTransportErrorCode.CANCELLED
+                ),
+                monotonic_clock=runtime_monotonic,
+            )
+        )
         events = []
         output_bytes = 0
         provider_started_at = runtime_monotonic()
@@ -203,6 +224,7 @@ async def run_local_adapter_smoke(
                 provider_started_at,
                 runtime_monotonic(),
             ),
+            cancellation_latency_ms=cancellation_latency_ms,
             charged_cost_microusd=0,
             completed_at=provider_completed_at,
         )

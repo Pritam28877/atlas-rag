@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 import os
 import secrets
-from collections.abc import Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
 from datetime import datetime
 
 from app.cli.harness.adapter_smoke_contracts import AuthorizedAdapterSmoke
+from app.cli.harness.smoke_timing import smoke_latency_ms
 from app.services.harness.journal import SQLiteProviderCostLedger
 from app.services.harness.protocol import (
     DataClassification,
@@ -24,6 +25,24 @@ from app.services.harness.providers import (
 )
 
 ADAPTER_SMOKE_GATE_VALUE = b"enabled"
+
+
+async def verify_pre_cancelled_adapter_stream(
+    stream: AsyncIterator[object],
+    *,
+    expected_error_code: object,
+    monotonic_clock: Callable[[], float],
+) -> int:
+    started_at = monotonic_clock()
+    try:
+        async for _event in stream:
+            raise ValueError(
+                "pre-cancelled adapter smoke emitted an event"
+            )
+    except Exception as error:
+        if getattr(error, "code", None) is not expected_error_code:
+            raise
+    return smoke_latency_ms(started_at, monotonic_clock())
 
 
 def require_adapter_smoke_gate(

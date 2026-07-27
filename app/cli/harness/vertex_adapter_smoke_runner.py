@@ -23,6 +23,7 @@ from app.cli.harness.adapter_smoke_runtime import (
     select_adapter_smoke_route,
     smoke_binding_sha256,
     smoke_identifier,
+    verify_pre_cancelled_adapter_stream,
 )
 from app.cli.harness.provider_smoke_builders import (
     build_canonical_smoke_request,
@@ -63,6 +64,7 @@ from app.services.harness.providers.vertex_policy import (
 from app.services.harness.providers.vertex_stream_transport import (
     BoundedVertexGenerateContentTransport,
     VertexStreamingConnector,
+    VertexTransportErrorCode,
 )
 
 Clock = Callable[[], datetime]
@@ -170,6 +172,27 @@ async def run_vertex_adapter_smoke(
             clock=runtime_clock,
             maximum_concurrent_streams=1,
         )
+        pre_cancelled = asyncio.Event()
+        pre_cancelled.set()
+        cancellation_latency_ms = (
+            await verify_pre_cancelled_adapter_stream(
+                transport.stream(
+                    canonical_request,
+                    compiled,
+                    route,
+                    credential,
+                    VertexGenerateContentDecoder(
+                        _fixed_cost(
+                            authorized.cost_cap_microusd
+                        )
+                    ),
+                    cancellation=pre_cancelled,
+                    deadline_at=deadline_at,
+                ),
+                expected_error_code=VertexTransportErrorCode.CANCELLED,
+                monotonic_clock=runtime_monotonic,
+            )
+        )
         events = []
         output_bytes = 0
         provider_call_started = True
@@ -210,6 +233,7 @@ async def run_vertex_adapter_smoke(
                 provider_started_at,
                 runtime_monotonic(),
             ),
+            cancellation_latency_ms=cancellation_latency_ms,
             charged_cost_microusd=authorized.cost_cap_microusd,
             completed_at=provider_completed_at,
         )
