@@ -52,6 +52,12 @@ from app.services.harness.runtime.peer_auth import (
     PeerSessionTokenManager,
     VerifiedPeerSession,
 )
+from app.services.harness.runtime.provider_failover import (
+    ProviderAttemptEffectState,
+    ProviderFailoverDecision,
+    ProviderFailoverDecisionCode,
+    plan_provider_failover,
+)
 from app.services.harness.runtime.provider_router import (
     MAXIMUM_PROVIDER_CANDIDATES,
     ProviderRoutingError,
@@ -132,6 +138,9 @@ __all__ = (
     "PeerSessionTokenManager",
     "ProviderRoutingError",
     "ProviderRoutingErrorCode",
+    "ProviderAttemptEffectState",
+    "ProviderFailoverDecision",
+    "ProviderFailoverDecisionCode",
     "PublishDisposition",
     "RequestAdmission",
     "RecoveryLease",
@@ -157,5 +166,6 @@ __all__ = (
     "encode_frame",
     "classify_operation_recovery",
     "expire_recovery_lease",
+    "plan_provider_failover",
     "select_provider_route",
 )
