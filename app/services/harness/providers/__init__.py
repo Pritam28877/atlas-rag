@@ -89,6 +89,15 @@ from app.services.harness.providers.configured_catalog import (
     ConfiguredCatalogErrorCode,
     ConfiguredModelCatalog,
 )
+from app.services.harness.providers.conformance_contracts import (
+    CONFORMANCE_SCENARIOS,
+    ConformanceAdapterDescriptor,
+    ConformanceCaseStatus,
+    ConformanceComparisonStatus,
+    ConformanceFailureCode,
+    ConformanceReport,
+    ConformanceScenario,
+)
 from app.services.harness.providers.credential_broker import (
     ConfiguredCredentialBroker,
 )
@@ -230,6 +239,13 @@ __all__ = (
     "ConfiguredRouteInventory",
     "ConfiguredRouteInventoryError",
     "ConfiguredRouteInventoryErrorCode",
+    "CONFORMANCE_SCENARIOS",
+    "ConformanceAdapterDescriptor",
+    "ConformanceCaseStatus",
+    "ConformanceComparisonStatus",
+    "ConformanceFailureCode",
+    "ConformanceReport",
+    "ConformanceScenario",
     "CredentialBrokerError",
     "CredentialBrokerErrorCode",
     "CredentialLease",
