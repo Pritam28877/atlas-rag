@@ -21,6 +21,14 @@ from app.services.harness.tools.contracts import (
     canonical_tool_schema,
     tool_descriptor_sha256,
 )
+from app.services.harness.tools.discovery import (
+    ProgressiveToolDiscovery,
+    ToolCatalogSummary,
+    ToolDiscoveryError,
+    ToolDiscoveryErrorCode,
+    ToolDiscoveryRequest,
+    ToolDiscoveryResult,
+)
 from app.services.harness.tools.dispatch_admission import (
     ToolDispatchAdmissionError,
     ToolDispatchAdmissionErrorCode,
@@ -100,6 +108,12 @@ __all__ = (
     "ToolDispatchAdmissionError",
     "ToolDispatchAdmissionErrorCode",
     "ToolDispatchDurabilityError",
+    "ToolCatalogSummary",
+    "ToolDiscoveryError",
+    "ToolDiscoveryErrorCode",
+    "ToolDiscoveryRequest",
+    "ToolDiscoveryResult",
+    "ProgressiveToolDiscovery",
     "ToolDispatchOutcome",
     "ToolDispatchStatus",
     "ToolOutputContract",
