@@ -1,5 +1,13 @@
 """Typed and bounded Atlas Harness tools."""
 
+from app.services.harness.tools.builtins import (
+    BUILTIN_TOOL_VERSION,
+    PATCH_FILE_TOOL_NAME,
+    READ_FILE_TOOL_NAME,
+    SEARCH_FILES_TOOL_NAME,
+    builtin_tool_registrations,
+    builtin_tool_registry,
+)
 from app.services.harness.tools.contracts import (
     DEFAULT_TOOL_OUTPUT_BYTES,
     MAXIMUM_TOOL_OUTPUT_BYTES,
@@ -49,12 +57,14 @@ from app.services.harness.tools.registry import (
 )
 
 __all__ = (
+    "BUILTIN_TOOL_VERSION",
     "DEFAULT_TOOL_OUTPUT_BYTES",
     "MAXIMUM_REGISTERED_TOOLS",
     "MAXIMUM_TOOL_OUTPUT_BYTES",
     "PatchFileArguments",
     "PatchFileEdit",
     "PatchFileResult",
+    "PATCH_FILE_TOOL_NAME",
     "PROCESS_TOOL_CAPABILITY",
     "PROCESS_TOOL_NAME",
     "PROCESS_TOOL_VERSION",
@@ -62,9 +72,11 @@ __all__ = (
     "ProcessToolErrorCode",
     "ReadFileArguments",
     "ReadFileResult",
+    "READ_FILE_TOOL_NAME",
     "SearchFilesArguments",
     "SearchFilesResult",
     "SearchMatch",
+    "SEARCH_FILES_TOOL_NAME",
     "RunProcessArguments",
     "RunProcessResult",
     "SandboxedProcessService",
@@ -82,6 +94,8 @@ __all__ = (
     "WorkspaceFileErrorCode",
     "WorkspaceFileService",
     "build_tool_descriptor",
+    "builtin_tool_registrations",
+    "builtin_tool_registry",
     "canonical_tool_schema",
     "tool_descriptor_sha256",
 )
