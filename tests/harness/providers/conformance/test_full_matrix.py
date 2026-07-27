@@ -9,23 +9,15 @@ from app.services.harness.providers import (
 from app.services.harness.providers.conformance_runner import (
     BoundedConformanceRunner,
 )
+from app.services.harness.providers.conformance_suite import (
+    recorded_conformance_adapters,
+)
 from tests.harness.providers.conformance.fixtures import NOW
-from tests.harness.providers.conformance.mock_provider import (
-    mock_conformance_adapter,
-)
-from tests.harness.providers.conformance.native_cloud import (
-    native_cloud_adapters,
-)
-from tests.harness.providers.conformance.openai_family import (
-    openai_family_adapters,
-)
 
 
 def test_all_six_adapters_pass_one_scenario_vocabulary() -> None:
-    adapters = (
-        mock_conformance_adapter(),
-        *native_cloud_adapters(),
-        *openai_family_adapters(),
+    adapters = recorded_conformance_adapters(
+        clock=lambda: NOW,
     )
     report = asyncio.run(
         BoundedConformanceRunner(clock=lambda: NOW).run(

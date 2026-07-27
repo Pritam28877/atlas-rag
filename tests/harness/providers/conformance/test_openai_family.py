@@ -14,14 +14,16 @@ from app.services.harness.providers import (
 from app.services.harness.providers.conformance_runner import (
     BoundedConformanceRunner,
 )
-from tests.harness.providers.conformance.fixtures import NOW
-from tests.harness.providers.conformance.openai_family import (
-    openai_family_adapters,
+from app.services.harness.providers.conformance_suite import (
+    openai_family_conformance_adapters,
 )
+from tests.harness.providers.conformance.fixtures import NOW
 
 
 def test_openai_family_passes_the_complete_scenario_vocabulary() -> None:
-    adapters = openai_family_adapters()
+    adapters = openai_family_conformance_adapters(
+        clock=lambda: NOW,
+    )
     report = asyncio.run(
         BoundedConformanceRunner(clock=lambda: NOW).run(
             adapters,
