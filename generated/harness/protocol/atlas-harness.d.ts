@@ -249,6 +249,16 @@ export type Limit = number;
 export type RequiredCapabilities = string[];
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ChildEnvironmentName".
+ */
+export type ChildEnvironmentName = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "SecretHandle".
+ */
+export type SecretHandle = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ClientId".
  */
 export type ClientId = string;
@@ -1954,6 +1964,445 @@ export type ReasoningTokens = number;
  * via the `definition` "RootUri".
  */
 export type RootUri = string;
+export type DeliveredAt = string;
+export type DestinationSha2562 = string;
+/**
+ * @minItems 1
+ * @maxItems 16
+ */
+export type EnvironmentNames =
+  | [ChildEnvironmentName]
+  | [ChildEnvironmentName, ChildEnvironmentName]
+  | [ChildEnvironmentName, ChildEnvironmentName, ChildEnvironmentName]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ]
+  | [
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+      ChildEnvironmentName,
+    ];
+export type ReceiptSha2562 = string;
+/**
+ * @minItems 1
+ * @maxItems 16
+ */
+export type SecretHandleSha256S =
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ]
+  | [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
+/**
+ * @minItems 1
+ * @maxItems 16
+ */
+export type Bindings =
+  | [ChildSecretBinding]
+  | [ChildSecretBinding, ChildSecretBinding]
+  | [ChildSecretBinding, ChildSecretBinding, ChildSecretBinding]
+  | [ChildSecretBinding, ChildSecretBinding, ChildSecretBinding, ChildSecretBinding]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ]
+  | [
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+      ChildSecretBinding,
+    ];
+export type DestinationSha2563 = string;
+/**
+ * @maxItems 64
+ */
+export type InheritedEnvironmentNames = ChildEnvironmentName[];
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "TaskGraphId".
@@ -2189,6 +2638,14 @@ export interface CapabilityListCommand {
 export interface PageRequest {
   cursor?: Cursor;
   limit?: Limit;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ChildSecretBinding".
+ */
+export interface ChildSecretBinding {
+  environment_name: ChildEnvironmentName;
+  secret_handle: SecretHandle;
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -2977,6 +3434,28 @@ export interface ProviderTokenUsage {
   input_tokens: InputTokens2;
   output_tokens: OutputTokens1;
   reasoning_tokens: ReasoningTokens;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "SecretDeliveryReceipt".
+ */
+export interface SecretDeliveryReceipt {
+  delivered_at: DeliveredAt;
+  destination_sha256: DestinationSha2562;
+  environment_names: EnvironmentNames;
+  operation_id: OperationId;
+  receipt_sha256: ReceiptSha2562;
+  secret_handle_sha256s: SecretHandleSha256S;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "SecretInjectionRequest".
+ */
+export interface SecretInjectionRequest {
+  bindings: Bindings;
+  destination_sha256: DestinationSha2563;
+  inherited_environment_names: InheritedEnvironmentNames;
+  operation_id: OperationId;
 }
 /**
  * One bounded DAG node with explicit ownership and workspace isolation.

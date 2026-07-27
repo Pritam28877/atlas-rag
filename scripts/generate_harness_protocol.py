@@ -57,6 +57,10 @@ from app.services.harness.protocol.operation_admission import (
     OperationDurabilityReceipt,
     OperationFence,
 )
+from app.services.harness.protocol.secret_delivery import (
+    SecretDeliveryReceipt,
+    SecretInjectionRequest,
+)
 from scripts.harness_protocol_fixtures import (
     FIXTURE_PATHS,
     build_compatibility_fixture_documents,
@@ -96,6 +100,8 @@ PROTOCOL_MODELS: tuple[type[BaseModel], ...] = (
     OperationFence,
     OperationDurabilityReceipt,
     OperationDispatchPermit,
+    SecretInjectionRequest,
+    SecretDeliveryReceipt,
     ArtifactRecord,
     TaskNodeRecord,
     ProviderRouteDecisionRecord,

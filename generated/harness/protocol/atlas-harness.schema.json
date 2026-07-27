@@ -762,6 +762,29 @@
       "title": "CapabilityListCommand",
       "type": "object"
     },
+    "ChildEnvironmentName": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Z_][A-Z0-9_]*$",
+      "type": "string"
+    },
+    "ChildSecretBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "environment_name": {
+          "$ref": "#/$defs/ChildEnvironmentName"
+        },
+        "secret_handle": {
+          "$ref": "#/$defs/SecretHandle"
+        }
+      },
+      "required": [
+        "secret_handle",
+        "environment_name"
+      ],
+      "title": "ChildSecretBinding",
+      "type": "object"
+    },
     "ClientId": {
       "maxLength": 36,
       "minLength": 36,
@@ -4055,6 +4078,102 @@
       "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
       "type": "string"
     },
+    "SecretDeliveryReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "delivered_at": {
+          "format": "date-time",
+          "title": "Delivered At",
+          "type": "string"
+        },
+        "destination_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Destination Sha256",
+          "type": "string"
+        },
+        "environment_names": {
+          "items": {
+            "$ref": "#/$defs/ChildEnvironmentName"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Environment Names",
+          "type": "array"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/OperationId"
+        },
+        "receipt_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Receipt Sha256",
+          "type": "string"
+        },
+        "secret_handle_sha256s": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Secret Handle Sha256S",
+          "type": "array"
+        }
+      },
+      "required": [
+        "operation_id",
+        "destination_sha256",
+        "secret_handle_sha256s",
+        "environment_names",
+        "delivered_at",
+        "receipt_sha256"
+      ],
+      "title": "SecretDeliveryReceipt",
+      "type": "object"
+    },
+    "SecretHandle": {
+      "maxLength": 256,
+      "minLength": 8,
+      "pattern": "^secret:[a-z0-9][a-z0-9._/-]+$",
+      "type": "string"
+    },
+    "SecretInjectionRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "bindings": {
+          "items": {
+            "$ref": "#/$defs/ChildSecretBinding"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Bindings",
+          "type": "array"
+        },
+        "destination_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Destination Sha256",
+          "type": "string"
+        },
+        "inherited_environment_names": {
+          "items": {
+            "$ref": "#/$defs/ChildEnvironmentName"
+          },
+          "maxItems": 64,
+          "title": "Inherited Environment Names",
+          "type": "array"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/OperationId"
+        }
+      },
+      "required": [
+        "operation_id",
+        "destination_sha256",
+        "bindings",
+        "inherited_environment_names"
+      ],
+      "title": "SecretInjectionRequest",
+      "type": "object"
+    },
     "SequencePrecondition": {
       "enum": [
         "optional",
@@ -5478,6 +5597,12 @@
     },
     "ProviderStreamBatch": {
       "$ref": "#/$defs/ProviderStreamBatch"
+    },
+    "SecretDeliveryReceipt": {
+      "$ref": "#/$defs/SecretDeliveryReceipt"
+    },
+    "SecretInjectionRequest": {
+      "$ref": "#/$defs/SecretInjectionRequest"
     },
     "TaskNodeRecord": {
       "$ref": "#/$defs/TaskNodeRecord"
