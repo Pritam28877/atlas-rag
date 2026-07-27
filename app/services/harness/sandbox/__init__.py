@@ -1,5 +1,10 @@
 """Owned Atlas Harness OS-process isolation adapters."""
 
+from app.services.harness.sandbox.admission import compile_sandbox_admission
+from app.services.harness.sandbox.capabilities import (
+    detect_platform_isolation,
+    unsupported_platform_capabilities,
+)
 from app.services.harness.sandbox.environment import SandboxChildEnvironment
 from app.services.harness.sandbox.errors import (
     SandboxOutputLimitExceeded,
@@ -43,5 +48,8 @@ __all__ = (
     "SandboxSupervisor",
     "SandboxSupervisorError",
     "compile_sandbox_profile",
+    "compile_sandbox_admission",
+    "detect_platform_isolation",
     "sandbox_destination_sha256",
+    "unsupported_platform_capabilities",
 )
