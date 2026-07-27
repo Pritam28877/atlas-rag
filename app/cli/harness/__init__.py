@@ -43,6 +43,9 @@ from app.cli.harness.local_probe_contracts import (
     LocalProbeLaunchRequest,
     authorize_local_probe,
 )
+from app.cli.harness.local_probe_runner import (
+    run_local_capability_probe,
+)
 from app.cli.harness.provider_smoke_contracts import (
     AuthorizedProviderSmoke,
     ProviderSmokeGateError,
@@ -93,6 +96,7 @@ __all__ = (
     "run_vertex_adapter_smoke",
     "run_bedrock_smoke",
     "run_local_adapter_smoke",
+    "run_local_capability_probe",
     "sign_bedrock_smoke_grant",
     "verify_bedrock_smoke_grant",
     "write_adapter_smoke_result",
