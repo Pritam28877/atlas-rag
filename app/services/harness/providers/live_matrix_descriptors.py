@@ -14,6 +14,8 @@ from app.services.harness.protocol import (
 from app.services.harness.protocol.routing import ModelName
 from app.services.harness.providers.conformance_contracts import (
     MAXIMUM_CONFORMANCE_ADAPTERS,
+    ConformanceCaseStatus,
+    ConformanceComparisonStatus,
     ConformanceReport,
 )
 from app.services.harness.providers.live_matrix_contracts import (
@@ -35,6 +37,7 @@ def derive_live_provider_descriptors(
     report: ConformanceReport,
     targets: Sequence[LiveProviderTarget],
 ) -> tuple[LiveProviderDescriptor, ...]:
+    _require_descriptor_evidence(report)
     if not 1 <= len(targets) <= MAXIMUM_CONFORMANCE_ADAPTERS:
         raise ValueError("live provider target count is invalid")
     canonical_targets = tuple(sorted(targets, key=_target_provider))
@@ -79,6 +82,43 @@ def derive_live_provider_descriptors(
             )
         )
     return tuple(descriptors)
+
+
+def _require_descriptor_evidence(report: ConformanceReport) -> None:
+    adapters = {
+        adapter.provider: adapter for adapter in report.adapters
+    }
+    for observation in report.observations:
+        supported = observation.scenario in adapters[
+            observation.provider
+        ].supported_scenarios
+        expected_case_status = (
+            ConformanceCaseStatus.PASSED
+            if supported
+            else ConformanceCaseStatus.UNSUPPORTED
+        )
+        if observation.status is not expected_case_status:
+            raise ValueError(
+                "live descriptors require passing conformance evidence"
+            )
+    for comparison in report.comparisons:
+        expected_providers = tuple(
+            adapter.provider
+            for adapter in report.adapters
+            if comparison.scenario in adapter.supported_scenarios
+        )
+        expected_comparison_status = (
+            ConformanceComparisonStatus.EQUIVALENT
+            if len(expected_providers) >= 2
+            else ConformanceComparisonStatus.INSUFFICIENT
+        )
+        if (
+            comparison.eligible_providers != expected_providers
+            or comparison.status is not expected_comparison_status
+        ):
+            raise ValueError(
+                "live descriptors require equivalent conformance evidence"
+            )
 
 
 def _target_provider(target: LiveProviderTarget) -> str:
