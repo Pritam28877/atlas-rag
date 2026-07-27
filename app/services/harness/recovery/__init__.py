@@ -8,6 +8,17 @@ from app.services.harness.recovery.background_job_startup import (
     BackgroundJobStartupRecovery,
     BackgroundJobStartupReport,
 )
+from app.services.harness.recovery.backup_restore import (
+    BackupComponent,
+    BackupComponentKind,
+    BackupManifest,
+    RestoreVerification,
+    backup_manifest_sha256,
+    build_backup_manifest,
+    component_from_path,
+    snapshot_sqlite_database,
+    verify_restore,
+)
 from app.services.harness.recovery.coordinator import (
     RecoveryCoordinator,
     RecoveryCoordinatorError,
@@ -26,6 +37,15 @@ __all__ = (
     "BackgroundJobRetentionCleaner",
     "BackgroundJobStartupRecovery",
     "BackgroundJobStartupReport",
+    "BackupComponent",
+    "BackupComponentKind",
+    "BackupManifest",
+    "RestoreVerification",
+    "backup_manifest_sha256",
+    "build_backup_manifest",
+    "component_from_path",
+    "snapshot_sqlite_database",
+    "verify_restore",
     "RecoveryCoordinatorError",
     "RecoveryCoordinatorErrorCode",
     "RecoveryEvidenceStore",
