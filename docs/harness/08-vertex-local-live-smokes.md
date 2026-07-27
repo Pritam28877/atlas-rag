@@ -110,14 +110,17 @@ only hashes, token counts, bounded cost, verification flags, and route binding:
 jq '{provider, model, maximum_provider_calls, canonical_shape, event_count,
   output_sha256, canonical_events_sha256, route_binding_sha256,
   input_tokens, cached_input_tokens, output_tokens, reasoning_tokens,
-  charged_cost_microusd, output_verified, active_credential_leases}' \
+  cancellation_latency_ms, charged_cost_microusd, output_verified,
+  cancellation_verified, active_credential_leases}' \
   /private/local-smoke-result.json \
   /private/vertex-smoke-result.json
 ```
 
 Expected invariants are `maximum_provider_calls == 1`,
 `canonical_shape == "text_usage_completed"`, `output_verified == true`, and
-`active_credential_leases == 0`. The output text itself is never persisted.
+`cancellation_verified == true`, with `cancellation_latency_ms <= 60000` and
+`active_credential_leases == 0`. The cancellation probe stops before connector
+invocation, and the output text itself is never persisted.
 
 ## Sources
 
