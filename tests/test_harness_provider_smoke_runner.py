@@ -131,6 +131,7 @@ def test_openai_and_openrouter_smokes_run_through_audited_runtime(
         assert connector.credential.released
         assert result.output_verified
         assert result.charged_cost_microusd == 50
+        assert len(result.route_binding_sha256) == 64
         assert result.audit_events == 2
         assert result.active_credential_leases == 0
         assert (result.routing_metadata_sha256 is not None) == (

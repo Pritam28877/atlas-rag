@@ -158,6 +158,7 @@ def test_bedrock_smoke_runs_two_cost_accounted_calls_and_redacts_evidence(
         }
         assert result.provider_calls == 2
         assert result.cancellation_verified
+        assert len(result.route_binding_sha256) == 64
         assert result.text_verified
         assert result.tool_verified
         assert result.latency_ms == 0

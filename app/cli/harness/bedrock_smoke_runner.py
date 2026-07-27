@@ -8,6 +8,7 @@ import time
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
+from app.cli.harness.adapter_smoke_runtime import smoke_binding_sha256
 from app.cli.harness.bedrock_smoke_attempt import (
     BedrockSmokeAttemptExecutor,
     BedrockSmokeCallEvidence,
@@ -276,6 +277,10 @@ def _result(
             runtime.authorized.grant.authorization_id.encode()
         ).hexdigest(),
         destination_sha256=runtime.route.destination_sha256,
+        route_binding_sha256=smoke_binding_sha256(
+            runtime.route.model_dump_json().encode(),
+            runtime.model.model_dump_json().encode(),
+        ),
         text_request_sha256=requests.text_sha256,
         tool_request_sha256=requests.tool_sha256,
         text_provider_metadata_sha256=(
