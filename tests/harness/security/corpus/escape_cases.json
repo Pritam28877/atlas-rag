@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "environment.parent_secret",
+      "category": "secret",
+      "expected": "blocked"
+    },
+    {
+      "id": "extension.mcp_process",
+      "category": "extension",
+      "expected": "disabled"
+    },
+    {
+      "id": "extension.plugin_process",
+      "category": "extension",
+      "expected": "disabled"
+    },
+    {
+      "id": "filesystem.declared_write",
+      "category": "filesystem",
+      "expected": "blocked"
+    },
+    {
+      "id": "filesystem.host_path",
+      "category": "filesystem",
+      "expected": "hidden"
+    },
+    {
+      "id": "filesystem.path_traversal",
+      "category": "filesystem",
+      "expected": "rejected"
+    },
+    {
+      "id": "filesystem.symlink_escape",
+      "category": "filesystem",
+      "expected": "rejected"
+    },
+    {
+      "id": "filesystem.undeclared_write",
+      "category": "filesystem",
+      "expected": "blocked"
+    },
+    {
+      "id": "network.direct_egress",
+      "category": "network",
+      "expected": "blocked"
+    },
+    {
+      "id": "network.redirect_without_proxy",
+      "category": "network",
+      "expected": "rejected"
+    },
+    {
+      "id": "output.combined_limit",
+      "category": "output",
+      "expected": "terminated"
+    },
+    {
+      "id": "output.secret_canary",
+      "category": "secret",
+      "expected": "redacted"
+    },
+    {
+      "id": "parser.document_process",
+      "category": "parser",
+      "expected": "disabled"
+    },
+    {
+      "id": "process.descendant_after_cancel",
+      "category": "process",
+      "expected": "reaped"
+    },
+    {
+      "id": "system.host_block_device",
+      "category": "device",
+      "expected": "hidden"
+    }
+  ]
+}

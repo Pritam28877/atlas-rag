@@ -114,5 +114,23 @@ def prepare_child_environment(
     return dict(environment.parent_environment), packet
 
 
+def redact_secret_output(
+    output: bytes,
+    secret_environment: Mapping[str, memoryview],
+) -> bytes:
+    if not output or not secret_environment:
+        return output
+    redacted = bytearray(output)
+    for secret_view in secret_environment.values():
+        if not secret_view:
+            continue
+        offset = redacted.find(secret_view)
+        while offset >= 0:
+            end = offset + len(secret_view)
+            redacted[offset:end] = b"*" * len(secret_view)
+            offset = redacted.find(secret_view, end)
+    return bytes(redacted)
+
+
 def _zero_packet(packet: bytearray) -> None:
     packet[:] = bytes(len(packet))
