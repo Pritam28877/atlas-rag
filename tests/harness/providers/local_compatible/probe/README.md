@@ -6,3 +6,4 @@
 - `test_contracts.py`: six-call admission bounds.
 - `test_offline_conformance.py`: six-case adapter proof.
 - `test_runner.py`: gated runtime and redaction.
+- `test_cli.py`: command admission and output.
