@@ -1,0 +1,6 @@
+{"messageStart":{"role":"assistant"}}
+{"contentBlockStart":{"contentBlockIndex":0,"start":{"toolUse":{"name":"weather.lookup","toolUseId":"bedrock_call"}}}}
+{"contentBlockDelta":{"contentBlockIndex":0,"delta":{"toolUse":{"input":"{\"city\":\"Pune\"}"}}}}
+{"contentBlockStop":{"contentBlockIndex":0}}
+{"messageStop":{"stopReason":"tool_use"}}
+{"metadata":{"metrics":{"latencyMs":1},"usage":{"inputTokens":5,"outputTokens":2,"totalTokens":7}}}
