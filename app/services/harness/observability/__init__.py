@@ -1,3 +1,13 @@
 """Redacted and bounded Atlas Harness observability."""
 
-__all__: tuple[str, ...] = ()
+from app.services.harness.observability.redaction import (
+    RedactionResult,
+    canonical_digest,
+    redact,
+)
+
+__all__ = (
+    "RedactionResult",
+    "canonical_digest",
+    "redact",
+)
