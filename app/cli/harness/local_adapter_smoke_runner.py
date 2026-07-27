@@ -22,6 +22,9 @@ from app.cli.harness.adapter_smoke_runtime import (
     smoke_binding_sha256,
     smoke_identifier,
 )
+from app.cli.harness.local_adapter_credentials import (
+    acquire_local_adapter_credential,
+)
 from app.cli.harness.provider_smoke_builders import (
     build_canonical_smoke_request,
     build_smoke_context,
@@ -35,9 +38,6 @@ from app.services.harness.journal import SQLiteProviderCostLedger
 from app.services.harness.protocol import ProviderTextDelta
 from app.services.harness.providers import (
     ConfiguredCredentialBroker,
-    EnvironmentCredentialBackend,
-    EnvironmentCredentialReference,
-    LoadedProviderConfiguration,
     SystemProviderAddressResolver,
     load_provider_configuration,
 )
@@ -53,11 +53,9 @@ from app.services.harness.providers.local_compatible_httpcore import (
     LocalCompatibleHttpCoreConnector,
 )
 from app.services.harness.providers.local_compatible_identity import (
-    LocalAuthenticationMode,
     LocalCompatibleIdentityReference,
 )
 from app.services.harness.providers.local_compatible_policy import (
-    AuthorizedLocalCompatibleRoute,
     LocalCompatibleRoutePolicy,
     authorize_local_compatible_route,
 )
@@ -141,14 +139,17 @@ async def run_local_adapter_smoke(
     credential: CredentialLease | None = None
     try:
         await tracker.reserve(runtime_clock())
-        broker, credential = await _local_credential(
-            authorized,
-            loaded,
-            route,
-            identity,
-            environment,
-            runtime_clock,
-            deadline_at,
+        broker, credential = await acquire_local_adapter_credential(
+            loaded=loaded,
+            route=route,
+            identity=identity,
+            credential_environment_variable=(
+                authorized.credential_environment_variable
+            ),
+            environment=environment,
+            clock=runtime_clock,
+            deadline_at=deadline_at,
+            lease_ttl_seconds=authorized.timeout_seconds,
         )
         selected_connector = connector or LocalCompatibleHttpCoreConnector(
             SystemProviderAddressResolver(),
@@ -252,53 +253,6 @@ async def _load_local_contracts(
         LocalCompatibleIdentityReference.model_validate_json(contents[1]),
         LocalCompatibleProbe.model_validate_json(contents[2]),
     )
-
-
-async def _local_credential(
-    authorized: AuthorizedAdapterSmoke,
-    loaded: LoadedProviderConfiguration,
-    route: AuthorizedLocalCompatibleRoute,
-    identity: LocalCompatibleIdentityReference,
-    environment: Mapping[bytes, bytes] | None,
-    clock: Clock,
-    deadline_at: datetime,
-) -> tuple[
-    ConfiguredCredentialBroker | None,
-    CredentialLease | None,
-]:
-    if identity.authentication is LocalAuthenticationMode.NONE:
-        if authorized.credential_environment_variable is not None:
-            raise ValueError("credential environment is unexpected")
-        return None, None
-    variable = authorized.credential_environment_variable
-    if variable is None:
-        raise ValueError("local bearer environment is missing")
-    backend = EnvironmentCredentialBackend(
-        (
-            EnvironmentCredentialReference(
-                handle=route.credential_handle,
-                environment_variable=variable,
-                lease_ttl_seconds=authorized.timeout_seconds,
-            ),
-        ),
-        development_mode=True,
-        clock=clock,
-        environment=environment,
-    )
-    broker = ConfiguredCredentialBroker(
-        loaded,
-        backend,
-        clock=clock,
-        maximum_active_leases=1,
-    )
-    credential = await broker.acquire(
-        route.credential_handle,
-        provider="local-compatible",
-        destination_sha256=route.destination_sha256,
-        cancellation=asyncio.Event(),
-        deadline_at=deadline_at,
-    )
-    return broker, credential
 
 
 def _zero_cost(

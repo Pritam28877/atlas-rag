@@ -1,19 +1,34 @@
 import asyncio
 import sqlite3
 from collections.abc import AsyncGenerator
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
 
+from app.cli.harness.local_adapter_credentials import (
+    acquire_local_adapter_credential,
+)
 from app.cli.harness.local_adapter_smoke_runner import (
     run_local_adapter_smoke,
 )
 from app.cli.harness.provider_smoke_decode import EXPECTED_SMOKE_RESPONSE
 from app.services.harness.providers.egress_contracts import ProviderEgressRequest
+from app.services.harness.providers.local_compatible_identity import (
+    LocalAuthenticationMode,
+)
+from app.services.harness.providers.local_compatible_policy import (
+    authorize_local_compatible_route,
+)
 from app.services.harness.providers.local_compatible_stream_transport import (
     LocalCompatibleTransportError,
 )
-from tests.harness.providers.local_compatible.fixtures import NOW
+from tests.harness.providers.local_compatible.fixtures import (
+    NOW,
+    configuration,
+    identity,
+    route_policy,
+)
 from tests.harness.providers.local_compatible.smoke.fixtures import (
     authorized_smoke,
     completed_sse,
@@ -118,6 +133,34 @@ def test_malformed_stream_releases_cost_and_writes_no_result(
     assert authorized.database_path.exists()
     assert not authorized.result_path.exists()
     assert _reservation_status(authorized.database_path) == "released"
+
+
+def test_bearer_environment_must_match_identity_reference() -> None:
+    loaded, configured_route = configuration()
+    bearer_identity = identity(
+        LocalAuthenticationMode.BEARER_ENVIRONMENT,
+        bearer_environment_variable="LOCAL_MODEL_TOKEN",
+    )
+    route = authorize_local_compatible_route(
+        loaded,
+        configured_route,
+        route_policy(),
+        bearer_identity,
+    )
+
+    with pytest.raises(ValueError, match="bearer environment is missing"):
+        asyncio.run(
+            acquire_local_adapter_credential(
+                loaded=loaded,
+                route=route,
+                identity=bearer_identity,
+                credential_environment_variable="OTHER_MODEL_TOKEN",
+                environment={b"OTHER_MODEL_TOKEN": b"secret"},
+                clock=lambda: NOW,
+                deadline_at=NOW + timedelta(seconds=10),
+                lease_ttl_seconds=10,
+            )
+        )
 
 
 def _reservation_status(database_path: Path) -> str:

@@ -36,6 +36,13 @@ from app.cli.harness.bedrock_smoke_runner import run_bedrock_smoke
 from app.cli.harness.local_adapter_smoke_runner import (
     run_local_adapter_smoke,
 )
+from app.cli.harness.local_probe_contracts import (
+    AuthorizedLocalProbe,
+    LocalProbeGateError,
+    LocalProbeGateErrorCode,
+    LocalProbeLaunchRequest,
+    authorize_local_probe,
+)
 from app.cli.harness.provider_smoke_contracts import (
     AuthorizedProviderSmoke,
     ProviderSmokeGateError,
@@ -57,6 +64,7 @@ __all__ = (
     "AdapterSmokeResult",
     "AtlasLocalAppServer",
     "AuthorizedAdapterSmoke",
+    "AuthorizedLocalProbe",
     "AuthorizedProviderSmoke",
     "AuthorizedBedrockSmoke",
     "BedrockSmokeBinding",
@@ -67,6 +75,9 @@ __all__ = (
     "BedrockSmokeResult",
     "HarnessConnectionFactory",
     "LocalAppServerSnapshot",
+    "LocalProbeGateError",
+    "LocalProbeGateErrorCode",
+    "LocalProbeLaunchRequest",
     "ProviderSmokeGateError",
     "ProviderSmokeGateErrorCode",
     "ProviderSmokeLaunchRequest",
@@ -74,6 +85,7 @@ __all__ = (
     "SignedBedrockSmokeGrant",
     "admit_bedrock_smoke",
     "authorize_adapter_smoke",
+    "authorize_local_probe",
     "build_adapter_smoke_result",
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
