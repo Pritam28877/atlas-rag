@@ -27,6 +27,18 @@ from app.services.harness.tools.file_errors import (
     WorkspaceFileErrorCode,
 )
 from app.services.harness.tools.file_service import WorkspaceFileService
+from app.services.harness.tools.process_contracts import (
+    RunProcessArguments,
+    RunProcessResult,
+)
+from app.services.harness.tools.process_service import (
+    PROCESS_TOOL_CAPABILITY,
+    PROCESS_TOOL_NAME,
+    PROCESS_TOOL_VERSION,
+    ProcessToolError,
+    ProcessToolErrorCode,
+    SandboxedProcessService,
+)
 from app.services.harness.tools.registry import (
     MAXIMUM_REGISTERED_TOOLS,
     ToolRegistration,
@@ -43,11 +55,19 @@ __all__ = (
     "PatchFileArguments",
     "PatchFileEdit",
     "PatchFileResult",
+    "PROCESS_TOOL_CAPABILITY",
+    "PROCESS_TOOL_NAME",
+    "PROCESS_TOOL_VERSION",
+    "ProcessToolError",
+    "ProcessToolErrorCode",
     "ReadFileArguments",
     "ReadFileResult",
     "SearchFilesArguments",
     "SearchFilesResult",
     "SearchMatch",
+    "RunProcessArguments",
+    "RunProcessResult",
+    "SandboxedProcessService",
     "StrictToolArguments",
     "ToolDescriptor",
     "ToolOutputContract",
