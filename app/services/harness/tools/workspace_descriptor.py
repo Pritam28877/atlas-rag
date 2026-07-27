@@ -8,11 +8,12 @@ import stat
 import threading
 import time
 from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path
 
 from app.services.harness.tools.file_contracts import (
     MAXIMUM_MATCH_TEXT_BYTES,
+    PatchFileArguments,
+    PatchFileResult,
     ReadFileArguments,
     ReadFileResult,
     SearchFilesArguments,
@@ -20,24 +21,11 @@ from app.services.harness.tools.file_contracts import (
     SearchMatch,
     validate_workspace_relative_path,
 )
-
-
-class WorkspaceFileErrorCode(StrEnum):
-    CAPACITY = "capacity"
-    CANCELLED = "cancelled"
-    CLOSED = "closed"
-    INVALID_PATH = "invalid_path"
-    INVALID_TEXT = "invalid_text"
-    IO = "io"
-    NOT_FOUND = "not_found"
-    TIMEOUT = "timeout"
-    UNSUPPORTED = "unsupported"
-
-
-class WorkspaceFileError(RuntimeError):
-    def __init__(self, code: WorkspaceFileErrorCode) -> None:
-        super().__init__("workspace file operation failed")
-        self.code = code
+from app.services.harness.tools.file_errors import (
+    WorkspaceFileError,
+    WorkspaceFileErrorCode,
+)
+from app.services.harness.tools.workspace_patch import patch_workspace_file
 
 
 @dataclass(slots=True)
@@ -178,6 +166,26 @@ class WorkspaceDescriptor:
         finally:
             for _, descriptor in pending:
                 os.close(descriptor)
+
+    def patch(
+        self,
+        arguments: PatchFileArguments,
+        *,
+        stop: threading.Event,
+        deadline: float,
+    ) -> PatchFileResult:
+        self._check_runtime(stop, deadline)
+        parts = validate_workspace_relative_path(arguments.path)
+        parent = self._open_directory_parts(parts[:-1])
+        try:
+            return patch_workspace_file(
+                parent,
+                parts[-1],
+                arguments,
+                check_runtime=lambda: self._check_runtime(stop, deadline),
+            )
+        finally:
+            os.close(parent)
 
     def close(self) -> None:
         if self._root_descriptor >= 0:

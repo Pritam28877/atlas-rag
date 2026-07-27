@@ -187,6 +187,9 @@ class _BlockingBackend:
     def search(self, arguments, *, stop, deadline):
         return self.read(arguments, stop=stop, deadline=deadline)
 
+    def patch(self, arguments, *, stop, deadline):
+        return self.read(arguments, stop=stop, deadline=deadline)
+
     def close(self) -> None:
         return None
 

@@ -17,6 +17,9 @@ MAXIMUM_SEARCH_FILES = 4096
 MAXIMUM_SEARCH_MATCHES = 1000
 MAXIMUM_SEARCH_QUERY_BYTES = 4096
 MAXIMUM_MATCH_TEXT_BYTES = 4096
+MAXIMUM_PATCH_EDITS = 64
+MAXIMUM_PATCH_TEXT_BYTES = 48 * 1024
+MAXIMUM_PATCH_FILE_BYTES = 1024 * 1024
 
 WorkspaceRelativePath = Annotated[
     str,
@@ -131,3 +134,59 @@ class SearchFilesResult(StrictProtocolModel):
     scanned_bytes: int = Field(ge=0, le=MAXIMUM_SEARCH_BYTES)
     skipped_binary_files: int = Field(ge=0, le=MAXIMUM_SEARCH_FILES)
     truncated: bool
+
+
+class PatchFileEdit(StrictProtocolModel):
+    old_text: str = Field(
+        max_length=MAXIMUM_PATCH_TEXT_BYTES,
+        pattern=r"^[^\x00]*$",
+    )
+    new_text: str = Field(
+        max_length=MAXIMUM_PATCH_TEXT_BYTES,
+        pattern=r"^[^\x00]*$",
+    )
+
+
+class PatchFileArguments(StrictToolArguments):
+    path: WorkspaceRelativePath
+    expected_sha256: Sha256 | None
+    edits: tuple[PatchFileEdit, ...] = Field(
+        min_length=1,
+        max_length=MAXIMUM_PATCH_EDITS,
+    )
+
+    @model_validator(mode="after")
+    def validate_patch(self) -> Self:
+        validate_workspace_relative_path(self.path)
+        text_bytes = 0
+        empty_old_text_edits = 0
+        for edit in self.edits:
+            if edit.old_text == edit.new_text:
+                raise ValueError("patch edit must change text")
+            text_bytes += len(edit.old_text.encode())
+            text_bytes += len(edit.new_text.encode())
+            if not edit.old_text:
+                empty_old_text_edits += 1
+        if text_bytes > MAXIMUM_PATCH_TEXT_BYTES:
+            raise ValueError("patch text exceeds the byte limit")
+        if empty_old_text_edits > 1 or (
+            empty_old_text_edits == 1 and self.edits[0].old_text
+        ):
+            raise ValueError("only the first patch edit may replace empty text")
+        return self
+
+
+class PatchFileResult(StrictProtocolModel):
+    path: WorkspaceRelativePath
+    previous_sha256: Sha256 | None
+    content_sha256: Sha256
+    content_bytes: int = Field(ge=0, le=MAXIMUM_PATCH_FILE_BYTES)
+    edits_applied: int = Field(ge=1, le=MAXIMUM_PATCH_EDITS)
+    created: bool
+
+    @model_validator(mode="after")
+    def validate_path(self) -> Self:
+        validate_workspace_relative_path(self.path)
+        if self.created != (self.previous_sha256 is None):
+            raise ValueError("patch creation metadata is inconsistent")
+        return self
