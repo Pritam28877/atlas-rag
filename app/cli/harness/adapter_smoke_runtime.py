@@ -117,6 +117,10 @@ class AdapterSmokeCostTracker:
         self._reservation_id = smoke_identifier("pcs")
         self._active = False
 
+    @property
+    def active(self) -> bool:
+        return self._active
+
     async def reserve(self, observed_at: datetime) -> None:
         decision = await self._ledger.reserve(
             ProviderCostReservationRequest(
