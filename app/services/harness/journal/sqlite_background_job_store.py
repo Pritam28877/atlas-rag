@@ -11,12 +11,14 @@ from app.services.harness.journal.errors import (
     BackgroundJobStoreConflictCode,
 )
 from app.services.harness.journal.sqlite_background_job_operations import (
+    delete_expired_background_job,
     purge_expired_background_jobs,
     save_background_job,
 )
 from app.services.harness.journal.sqlite_background_job_rows import (
     decode_background_job,
     load_background_job_row,
+    load_expired_background_jobs,
     load_owned_background_jobs,
     load_recoverable_background_jobs,
 )
@@ -140,6 +142,38 @@ class SQLiteBackgroundJobStore:
                 connection,
                 expired_at_or_before=expired_at_or_before,
                 maximum_records=maximum_records,
+            )
+        )
+
+    async def load_expired(
+        self,
+        *,
+        expired_at_or_before: datetime,
+        maximum_records: int = 128,
+    ) -> tuple[BackgroundJobRecord, ...]:
+        self._require_utc(expired_at_or_before)
+        if not 1 <= maximum_records <= MAXIMUM_BACKGROUND_JOB_PURGE_BATCH:
+            raise ValueError("background job expiry batch must be between 1 and 256")
+        return await self._connection_owner.execute(
+            lambda connection: load_expired_background_jobs(
+                connection,
+                expired_at_or_before=expired_at_or_before,
+                maximum_records=maximum_records,
+            )
+        )
+
+    async def delete_expired(
+        self,
+        job: BackgroundJobRecord,
+        *,
+        expired_at_or_before: datetime,
+    ) -> bool:
+        self._require_utc(expired_at_or_before)
+        return await self._connection_owner.execute(
+            lambda connection: delete_expired_background_job(
+                connection,
+                job,
+                expired_at_or_before=expired_at_or_before,
             )
         )
 

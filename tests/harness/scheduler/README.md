@@ -4,4 +4,6 @@
 - `test_sqlite_background_job_store.py`: durable ownership and cleanup.
 - `test_background_job_coordinator.py`: execution, artifacts, and cancellation.
 - `test_background_job_output_bounds.py`: fail-closed artifact output limits.
+- `test_background_job_retention.py`: bounded TTL job cleanup.
+- `test_background_job_startup.py`: restart resume and reconciliation.
 - `fixtures.py`: shared durable job records and operation setup.

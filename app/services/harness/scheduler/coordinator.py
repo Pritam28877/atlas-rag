@@ -15,15 +15,15 @@ from app.services.harness.protocol.background_job_execution import (
     BackgroundJobExecutor,
     BackgroundJobStore,
 )
+from app.services.harness.protocol.background_job_updates import (
+    request_background_job_cancellation,
+)
 from app.services.harness.protocol.background_jobs import (
     TERMINAL_BACKGROUND_JOB_STATES,
     BackgroundJobConfiguration,
     BackgroundJobRecord,
     BackgroundJobState,
     JobExecutionOwnerId,
-)
-from app.services.harness.scheduler.job_updates import (
-    request_background_job_cancellation,
 )
 from app.services.harness.scheduler.runner import BackgroundJobRunner
 
@@ -115,6 +115,17 @@ class BackgroundJobCoordinator:
             owner_principal_id,
             operation_id,
         )
+
+    async def resume_durable(self, job: BackgroundJobRecord) -> None:
+        self._require_running()
+        if job.state is not BackgroundJobState.QUEUED:
+            _reject(BackgroundJobCoordinatorErrorCode.STATE)
+        await self._reserve_submission(job.operation_id)
+        try:
+            self._queue.put_nowait(job)
+        except BaseException:
+            await self._release_submission(job.operation_id)
+            raise
 
     async def cancel(
         self,

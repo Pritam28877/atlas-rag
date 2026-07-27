@@ -87,6 +87,22 @@ def decode_operation(row: sqlite3.Row) -> OperationRecord:
     return operation
 
 
+def load_operation(
+    connection: sqlite3.Connection,
+    workspace_id: str,
+    operation_id: str,
+) -> OperationRecord | None:
+    row = connection.execute(
+        """
+        SELECT operation_id, operation_state, idempotency_class, operation_json
+        FROM harness_recovery_operations
+        WHERE workspace_id = ? AND operation_id = ?
+        """,
+        (workspace_id, operation_id),
+    ).fetchone()
+    return decode_operation(row) if row is not None else None
+
+
 def decode_lease(row: sqlite3.Row) -> RecoveryLease:
     try:
         return _decode_lease(row)
