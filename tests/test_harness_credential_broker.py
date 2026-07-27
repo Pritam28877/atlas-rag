@@ -52,6 +52,27 @@ class RecordedSecretBackend:
         )
 
 
+class CancellationResistantBackend:
+    def __init__(self) -> None:
+        self.started = asyncio.Event()
+        self.blocked = asyncio.Event()
+        self.buffers: list[bytearray] = []
+
+    async def load(self, handle: str) -> CredentialSecretMaterial:
+        del handle
+        self.started.set()
+        try:
+            await self.blocked.wait()
+        except asyncio.CancelledError:
+            pass
+        secret = bytearray(b"late-secret")
+        self.buffers.append(secret)
+        return CredentialSecretMaterial(
+            secret,
+            expires_at=NOW + timedelta(minutes=5),
+        )
+
+
 def broker(
     backend: RecordedSecretBackend,
     *,
@@ -235,6 +256,27 @@ def test_cancellation_and_deadline_stop_blocked_resolution() -> None:
 
     asyncio.run(cancelled_scenario())
     asyncio.run(deadline_scenario())
+
+
+def test_cancelled_resolution_zeros_material_returned_after_cancel() -> None:
+    async def scenario() -> None:
+        backend = CancellationResistantBackend()
+        configured_broker = broker(backend)
+        cancellation = asyncio.Event()
+        task = asyncio.create_task(
+            acquire(configured_broker, cancellation=cancellation)
+        )
+        await backend.started.wait()
+        cancellation.set()
+
+        with pytest.raises(CredentialBrokerError) as captured:
+            await task
+
+        assert captured.value.code is CredentialBrokerErrorCode.CANCELLED
+        assert backend.buffers == [bytearray(len(b"late-secret"))]
+        assert await configured_broker.active_leases() == 0
+
+    asyncio.run(scenario())
 
 
 def test_backend_errors_and_foreign_release_are_sanitized() -> None:
