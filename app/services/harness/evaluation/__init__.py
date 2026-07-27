@@ -20,6 +20,12 @@ from app.services.harness.evaluation.fixtures import (
     build_fixture,
     fixture_sha256,
 )
+from app.services.harness.evaluation.release import (
+    ReleaseBlocker,
+    ReleaseDecision,
+    ReleaseStatus,
+    build_release_decision,
+)
 from app.services.harness.evaluation.trace_replay import (
     ReplayDivergence,
     ReplayResult,
@@ -52,6 +58,10 @@ __all__ = (
     "fixture_sha256",
     "compare_reports",
     "run_bounded",
+    "ReleaseBlocker",
+    "ReleaseDecision",
+    "ReleaseStatus",
+    "build_release_decision",
     "replay_trace",
     "replay_trace_sha256",
 )
