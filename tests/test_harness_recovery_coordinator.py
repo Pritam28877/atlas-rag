@@ -252,15 +252,18 @@ def test_recovery_is_integrity_first_ordered_and_idempotent() -> None:
         assert report.projections_rebuilt == 2
         assert report.operations_checked == 3
         assert report.prepared_operations == 1
-        assert report.retryable_operations == 1
-        assert report.needs_operator_operations == 1
+        assert report.retryable_operations == 0
+        assert report.needs_operator_operations == 2
         assert report.active_leases == 1
         assert report.expired_leases == 1
         assert repeated.expired_leases == 0
         assert rebuilder.names == ["alpha", "zeta", "alpha", "zeta"]
-        assert store.operation_saves == 1
+        assert store.operation_saves == 2
         assert store.lease_saves == 1
         assert store.operations[identifier("opn", 3)].state is (
+            OperationState.AMBIGUOUS
+        )
+        assert store.operations[identifier("opn", 2)].state is (
             OperationState.AMBIGUOUS
         )
 

@@ -903,6 +903,26 @@ export type ExpiresAt3 = string;
 export type FencingToken1 = number;
 export type IssuedAt1 = string;
 export type LeaseSha256 = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "OperationReconciliationOutcome".
+ */
+export type OperationReconciliationOutcome =
+  "retry_proven_not_started" | "terminal_proven";
+export type ProofSha256 = string;
+export type ArgsSha2562 = string;
+export type FailureReason = string | null;
+export type FencingToken2 = number;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "OperationStatusProofKind".
+ */
+export type OperationStatusProofKind = "not_started" | "completed" | "failed";
+export type ObservedAt = string;
+export type ProofSha2561 = string;
+export type ResultSha2561 = string | null;
+export type StatusRequestSha256 = string;
+export type StatusResponseSha256 = string;
 export type HasMore = boolean;
 export type NextCursor = string | null;
 export type Capability4 = string;
@@ -967,7 +987,7 @@ export type Allowed = boolean;
 export type AlreadyExists = boolean;
 export type Reason13 = string;
 export type ActiveReservations = number;
-export type ObservedAt = string;
+export type ObservedAt1 = string;
 export type TurnReservedMicrousd = number;
 export type TurnSettledMicrousd = number;
 export type WorkspaceReservedMicrousd = number;
@@ -3125,6 +3145,33 @@ export interface OperationFence {
   workspace_id: WorkspaceId;
 }
 /**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "OperationReconciliationDecision".
+ */
+export interface OperationReconciliationDecision {
+  operation: OperationRecord;
+  outcome: OperationReconciliationOutcome;
+  proof_sha256: ProofSha256;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "OperationStatusProof".
+ */
+export interface OperationStatusProof {
+  args_sha256: ArgsSha2562;
+  failure_reason?: FailureReason;
+  fencing_token: FencingToken2;
+  kind: OperationStatusProofKind;
+  observed_at: ObservedAt;
+  operation_id: OperationId;
+  proof_sha256: ProofSha2561;
+  result_sha256?: ResultSha2561;
+  status_request_sha256: StatusRequestSha256;
+  status_response_sha256: StatusResponseSha256;
+  tool_name: ToolName;
+  tool_version: ToolVersion;
+}
+/**
  * Pagination result metadata without an unbounded total count.
  *
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -3250,7 +3297,7 @@ export interface ProviderCostReservationDecision {
  */
 export interface ProviderCostSnapshot {
   active_reservations: ActiveReservations;
-  observed_at: ObservedAt;
+  observed_at: ObservedAt1;
   turn_id: TurnId;
   turn_reserved_microusd: TurnReservedMicrousd;
   turn_settled_microusd: TurnSettledMicrousd;
