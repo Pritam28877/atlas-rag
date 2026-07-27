@@ -20,6 +20,7 @@ from tests.harness.providers.live_matrix.fixtures import (
     descriptors,
 )
 from tests.harness.providers.live_matrix.smoke_fixtures import (
+    failure_receipt,
     provider_result,
 )
 
@@ -92,6 +93,46 @@ def test_permissive_smoke_result_is_rejected_without_output(
         asyncio.run(build_live_matrix_from_manifest(manifest_path))
 
     assert not matrix_path.exists()
+
+
+def test_private_failure_receipt_populates_failed_matrix_cells(
+    tmp_path: Path,
+) -> None:
+    tmp_path.chmod(0o700)
+    failure_path = tmp_path / "vertex-failure.json"
+    matrix_path = tmp_path / "matrix.json"
+    manifest_path = tmp_path / "manifest.json"
+    _write_private(failure_path, failure_receipt().model_dump_json())
+    manifest = LiveMatrixManifest(
+        providers=descriptors(),
+        evidence=(
+            LiveSmokeEvidenceReference(
+                provider="vertex",
+                kind=LiveSmokeResultKind.FAILURE,
+                result_path=failure_path,
+            ),
+        ),
+        required_live_providers=REQUIRED_PROVIDERS,
+        authorized_cost_cap_microusd=20,
+        result_path=matrix_path,
+    )
+    _write_private(manifest_path, manifest.model_dump_json())
+
+    matrix = asyncio.run(
+        build_live_matrix_from_manifest(
+            manifest_path,
+            clock=lambda: NOW + timedelta(seconds=2),
+        )
+    )
+
+    failed = tuple(
+        observation
+        for observation in matrix.observations
+        if observation.provider == "vertex"
+        and observation.status.value == "failed"
+    )
+    assert len(failed) == 2
+    assert matrix.charged_cost_microusd == 4
 
 
 def _write_private(path: Path, content: str) -> None:
