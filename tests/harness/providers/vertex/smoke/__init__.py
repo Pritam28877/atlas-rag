@@ -1,0 +1,1 @@
+"""Vertex smoke tests."""

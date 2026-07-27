@@ -45,6 +45,9 @@ from app.cli.harness.provider_smoke_contracts import (
 )
 from app.cli.harness.provider_smoke_io import ProviderSmokeResult
 from app.cli.harness.provider_smoke_runner import run_provider_smoke
+from app.cli.harness.vertex_adapter_smoke_runner import (
+    run_vertex_adapter_smoke,
+)
 
 __all__ = (
     "AdmittedBedrockSmokeLaunch",
@@ -75,6 +78,7 @@ __all__ = (
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
     "run_provider_smoke",
+    "run_vertex_adapter_smoke",
     "run_bedrock_smoke",
     "run_local_adapter_smoke",
     "sign_bedrock_smoke_grant",
