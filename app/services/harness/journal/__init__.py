@@ -19,6 +19,8 @@ from app.services.harness.journal.contracts import (
 from app.services.harness.journal.errors import (
     ApprovalStoreConflict,
     ApprovalStoreConflictCode,
+    BackgroundJobStoreConflict,
+    BackgroundJobStoreConflictCode,
     JournalBusyError,
     JournalStorageError,
     ProviderCostLedgerConflict,
@@ -40,6 +42,9 @@ from app.services.harness.journal.provider_egress_audit import (
 )
 from app.services.harness.journal.sqlite import SQLiteEventJournal
 from app.services.harness.journal.sqlite_approval_store import SQLiteApprovalStore
+from app.services.harness.journal.sqlite_background_job_store import (
+    SQLiteBackgroundJobStore,
+)
 from app.services.harness.journal.sqlite_integrity import (
     SQLiteJournalIntegrityVerifier,
 )
@@ -60,6 +65,8 @@ from app.services.harness.journal.sqlite_storage_store import SQLiteStorageStore
 __all__ = (
     "ApprovalStoreConflict",
     "ApprovalStoreConflictCode",
+    "BackgroundJobStoreConflict",
+    "BackgroundJobStoreConflictCode",
     "AppendRequest",
     "AppendResult",
     "AppendStatus",
@@ -85,6 +92,7 @@ __all__ = (
     "RecoveryStoreConflict",
     "SQLiteEventJournal",
     "SQLiteApprovalStore",
+    "SQLiteBackgroundJobStore",
     "SQLiteJournalIntegrityVerifier",
     "SQLiteProviderCostLedger",
     "SQLiteRecoveryStore",

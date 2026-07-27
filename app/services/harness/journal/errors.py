@@ -11,6 +11,22 @@ class JournalStorageError(RuntimeError):
     """A journal backend failed without exposing storage internals."""
 
 
+class BackgroundJobStoreConflictCode(StrEnum):
+    CAPACITY = "capacity"
+    FENCING = "fencing"
+    IDENTITY = "identity"
+    OWNER = "owner"
+    STATE = "state"
+
+
+class BackgroundJobStoreConflict(RuntimeError):
+    """A background-job write conflicts with durable ownership or state."""
+
+    def __init__(self, code: BackgroundJobStoreConflictCode) -> None:
+        super().__init__("background job durability operation rejected")
+        self.code = code
+
+
 class ApprovalStoreConflictCode(StrEnum):
     CAPACITY = "capacity"
     CONCURRENT_TRANSITION = "concurrent_transition"

@@ -1,6 +1,6 @@
 """Validated and bounded Atlas Harness task scheduling."""
 
-from app.services.harness.scheduler.contracts import (
+from app.services.harness.protocol.background_jobs import (
     BACKGROUND_JOB_TRANSITIONS,
     MAXIMUM_BACKGROUND_JOB_BYTES,
     MAXIMUM_BACKGROUND_JOB_PAGE,

@@ -3,6 +3,9 @@
 from app.services.harness.journal.sqlite_approval_schema import (
     SQLITE_APPROVAL_SCHEMA,
 )
+from app.services.harness.journal.sqlite_background_job_schema import (
+    SQLITE_BACKGROUND_JOB_SCHEMA,
+)
 from app.services.harness.journal.sqlite_operation_schema import (
     SQLITE_OPERATION_ADMISSION_SCHEMA,
 )
@@ -180,6 +183,19 @@ BEGIN IMMEDIATE;
     + SQLITE_OPERATION_ADMISSION_SCHEMA
     + """
 UPDATE harness_journal_schema SET schema_version = 10 WHERE singleton = 1;
+COMMIT;
+PRAGMA foreign_keys = ON;
+"""
+)
+
+SQLITE_MIGRATE_V10_TO_V11 = (
+    """
+PRAGMA foreign_keys = OFF;
+BEGIN IMMEDIATE;
+"""
+    + SQLITE_BACKGROUND_JOB_SCHEMA
+    + """
+UPDATE harness_journal_schema SET schema_version = 11 WHERE singleton = 1;
 COMMIT;
 PRAGMA foreign_keys = ON;
 """
