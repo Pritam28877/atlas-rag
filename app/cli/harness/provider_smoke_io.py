@@ -11,6 +11,7 @@ from typing import Literal
 
 from pydantic import Field, ValidationError
 
+from app.cli.harness.smoke_timing import MAXIMUM_SMOKE_LATENCY_MS
 from app.services.harness.protocol import (
     ProviderName,
     RequestId,
@@ -36,6 +37,7 @@ class ProviderSmokeResult(StrictProtocolModel):
     cached_input_tokens: int = Field(ge=0, le=2_000_000)
     output_tokens: int = Field(ge=0, le=512_000)
     reasoning_tokens: int = Field(ge=0, le=512_000)
+    latency_ms: int = Field(ge=0, le=MAXIMUM_SMOKE_LATENCY_MS)
     charged_cost_microusd: int = Field(ge=1, le=10_000_000_000)
     routing_metadata_sha256: Sha256 | None = None
     output_verified: Literal[True] = True

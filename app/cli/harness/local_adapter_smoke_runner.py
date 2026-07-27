@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import time
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
@@ -34,6 +35,7 @@ from app.cli.harness.provider_smoke_io import (
     validate_private_smoke_input,
     validate_provider_smoke_output_path,
 )
+from app.cli.harness.smoke_timing import smoke_latency_ms
 from app.services.harness.journal import SQLiteProviderCostLedger
 from app.services.harness.protocol import ProviderTextDelta
 from app.services.harness.providers import (
@@ -66,6 +68,7 @@ from app.services.harness.providers.local_compatible_stream_transport import (
 from app.services.harness.providers.openai_decoder import OpenAIResponsesDecoder
 
 Clock = Callable[[], datetime]
+MonotonicClock = Callable[[], float]
 MAXIMUM_ADAPTER_SMOKE_INPUT_BYTES = 64 * 1024
 
 
@@ -75,10 +78,12 @@ async def run_local_adapter_smoke(
     connector: LocalStreamingConnector | None = None,
     environment: Mapping[bytes, bytes] | None = None,
     clock: Clock | None = None,
+    monotonic_clock: MonotonicClock | None = None,
 ) -> AdapterSmokeResult:
     if authorized.provider != "local-compatible":
         raise ValueError("local smoke received another provider")
     runtime_clock = clock or _utc_now
+    runtime_monotonic = monotonic_clock or time.monotonic
     require_adapter_smoke_gate(authorized, environment)
     await _validate_paths(authorized)
     loaded = await load_provider_configuration(
@@ -162,6 +167,7 @@ async def run_local_adapter_smoke(
         )
         events = []
         output_bytes = 0
+        provider_started_at = runtime_monotonic()
         async with asyncio.timeout(authorized.timeout_seconds):
             async for event in transport.stream(
                 canonical_request,
@@ -180,6 +186,7 @@ async def run_local_adapter_smoke(
                     or output_bytes > MAXIMUM_ADAPTER_SMOKE_OUTPUT_BYTES
                 ):
                     raise ValueError("local smoke response exceeded its bound")
+        provider_completed_at = runtime_clock()
         await transport.close()
         await tracker.settle(runtime_clock())
         result = build_adapter_smoke_result(
@@ -192,8 +199,12 @@ async def run_local_adapter_smoke(
                 identity.model_dump_json().encode(),
                 probe.model_dump_json().encode(),
             ),
+            latency_ms=smoke_latency_ms(
+                provider_started_at,
+                runtime_monotonic(),
+            ),
             charged_cost_microusd=0,
-            completed_at=runtime_clock(),
+            completed_at=provider_completed_at,
         )
     except BaseException:
         await tracker.release(runtime_clock())

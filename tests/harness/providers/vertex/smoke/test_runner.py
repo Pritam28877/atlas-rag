@@ -86,6 +86,7 @@ def test_vertex_smoke_runs_one_regional_call_and_redacts(
             credential_loader=loader,
             environment={b"ATLAS_VERTEX_SMOKE_ENABLED": b"enabled"},
             clock=lambda: NOW,
+            monotonic_clock=lambda: 1.0,
         )
     )
 
@@ -97,6 +98,7 @@ def test_vertex_smoke_runs_one_regional_call_and_redacts(
     assert connector.request is not None
     assert connector.request.metadata.provider == "vertex"
     assert result.canonical_shape == "text_usage_completed"
+    assert result.latency_ms == 0
     assert result.charged_cost_microusd == 10_000
     persisted = authorized.result_path.read_text()
     database = authorized.database_path.read_bytes()

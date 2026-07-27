@@ -12,6 +12,7 @@ from pydantic import Field
 
 from app.cli.harness.provider_smoke_decode import EXPECTED_SMOKE_RESPONSE
 from app.cli.harness.provider_smoke_io import write_private_smoke_output
+from app.cli.harness.smoke_timing import MAXIMUM_SMOKE_LATENCY_MS
 from app.services.harness.protocol import (
     ProviderCompleted,
     ProviderFinishReason,
@@ -47,6 +48,7 @@ class AdapterSmokeResult(StrictProtocolModel):
     cached_input_tokens: int = Field(ge=0, le=2_000_000)
     output_tokens: int = Field(ge=0, le=512_000)
     reasoning_tokens: int = Field(ge=0, le=512_000)
+    latency_ms: int = Field(ge=0, le=MAXIMUM_SMOKE_LATENCY_MS)
     charged_cost_microusd: int = Field(ge=0, le=1_000_000)
     output_verified: Literal[True] = True
     active_credential_leases: Literal[0] = 0
@@ -60,6 +62,7 @@ def build_adapter_smoke_result(
     request_id: RequestId,
     events: Sequence[ProviderStreamEvent],
     route_binding_sha256: Sha256,
+    latency_ms: int,
     charged_cost_microusd: int,
     completed_at: datetime,
 ) -> AdapterSmokeResult:
@@ -120,6 +123,7 @@ def build_adapter_smoke_result(
         cached_input_tokens=usage.cached_input_tokens,
         output_tokens=usage.output_tokens,
         reasoning_tokens=usage.reasoning_tokens,
+        latency_ms=latency_ms,
         charged_cost_microusd=charged_cost_microusd,
         completed_at=completed_at,
     )

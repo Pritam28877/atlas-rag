@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import time
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
@@ -27,6 +28,7 @@ from app.cli.harness.bedrock_smoke_runtime import (
     BedrockSmokeRuntime,
     load_bedrock_smoke_runtime,
 )
+from app.cli.harness.smoke_timing import smoke_latency_ms
 from app.services.harness.journal import SQLiteProviderCostLedger
 from app.services.harness.protocol import (
     ProviderCostLimits,
@@ -49,6 +51,7 @@ from app.services.harness.providers import (
 )
 
 Clock = Callable[[], datetime]
+MonotonicClock = Callable[[], float]
 
 
 async def run_bedrock_smoke(
@@ -58,8 +61,10 @@ async def run_bedrock_smoke(
     credential_backend: BedrockBlockingCredentialBackend | None = None,
     client_factory: BedrockRuntimeClientFactory | None = None,
     clock: Clock | None = None,
+    monotonic_clock: MonotonicClock | None = None,
 ) -> BedrockSmokeResult:
     runtime_clock = clock or _utc_now
+    runtime_monotonic = monotonic_clock or time.monotonic
     runtime = await load_bedrock_smoke_runtime(
         launch,
         environment=environment,
@@ -90,12 +95,14 @@ async def run_bedrock_smoke(
     )
     ledger: SQLiteProviderCostLedger | None = None
     try:
-        await _verify_cancellation(
+        smoke_started_at = runtime_monotonic()
+        cancellation_latency_ms = await _verify_cancellation(
             runtime,
             requests,
             resolver,
             transport,
             deadline_at,
+            runtime_monotonic,
         )
         ledger = await SQLiteProviderCostLedger.open(
             launch.database_path,
@@ -143,13 +150,16 @@ async def run_bedrock_smoke(
             > runtime.authorized.grant.total_cost_cap_microusd
         ):
             raise ValueError("Bedrock smoke cost evidence is inconsistent")
+        completed_at = runtime_clock()
         result = _result(
             runtime,
             requests,
             text_evidence,
             tool_evidence,
             snapshot.workspace_settled_microusd,
-            runtime_clock(),
+            smoke_latency_ms(smoke_started_at, runtime_monotonic()),
+            cancellation_latency_ms,
+            completed_at,
         )
     finally:
         await _close_runtime(ledger, transport, resolver)
@@ -163,7 +173,9 @@ async def _verify_cancellation(
     resolver: BoundedBedrockCredentialResolver,
     transport: BoundedBedrockConverseTransport,
     deadline_at: datetime,
-) -> None:
+    monotonic_clock: MonotonicClock,
+) -> int:
+    started_at = monotonic_clock()
     credential = await resolver.resolve(
         runtime.identity,
         cancellation=asyncio.Event(),
@@ -188,6 +200,7 @@ async def _verify_cancellation(
     views = credential.views()
     if any(bytes(view).strip(b"\x00") for view in views if view is not None):
         raise ValueError("cancelled Bedrock credential was not cleared")
+    return smoke_latency_ms(started_at, monotonic_clock())
 
 
 async def _dispatch_call(
@@ -252,6 +265,8 @@ def _result(
     text: BedrockSmokeCallEvidence,
     tool: BedrockSmokeCallEvidence,
     charged_cost_microusd: int,
+    latency_ms: int,
+    cancellation_latency_ms: int,
     completed_at: datetime,
 ) -> BedrockSmokeResult:
     return BedrockSmokeResult(
@@ -277,6 +292,8 @@ def _result(
         reasoning_tokens=(
             text.usage.reasoning_tokens + tool.usage.reasoning_tokens
         ),
+        latency_ms=latency_ms,
+        cancellation_latency_ms=cancellation_latency_ms,
         charged_cost_microusd=charged_cost_microusd,
         signed_cost_cap_microusd=(
             runtime.authorized.grant.total_cost_cap_microusd
