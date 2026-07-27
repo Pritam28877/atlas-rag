@@ -1,0 +1,1 @@
+{"candidates":[{"content":{"parts":[{"text":"Bounded reasoning.","thought":true},{"text":"Atlas conformance."}],"role":"model"},"finishReason":"STOP","index":0}],"usageMetadata":{"candidatesTokenCount":2,"promptTokenCount":4,"thoughtsTokenCount":1,"totalTokenCount":7}}

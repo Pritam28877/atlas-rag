@@ -1,0 +1,3 @@
+{"messageStart":{"role":"assistant"}}
+{"messageStop":{"stopReason":"content_filtered"}}
+{"metadata":{"metrics":{"latencyMs":1},"usage":{"inputTokens":5,"outputTokens":0,"totalTokens":5}}}

@@ -1,0 +1,1 @@
+{"candidates":[{"content":{"parts":[{"functionCall":{"args":{"city":"Pune"},"name":"weather.lookup"}}],"role":"model"},"finishReason":"STOP","index":0}],"usageMetadata":{"candidatesTokenCount":2,"promptTokenCount":5,"totalTokenCount":7}}
