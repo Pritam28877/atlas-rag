@@ -16,6 +16,28 @@ export type AggregateId = string;
  * via the `definition` "ApprovalId".
  */
 export type ApprovalId = string;
+export type AuthorizationSha256 = string;
+export type Generation = number;
+export type PreviousReceiptSha256 = string | null;
+export type ReceiptSha256 = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "DurableApprovalState".
+ */
+export type DurableApprovalState =
+  | "requested"
+  | "approved"
+  | "denied"
+  | "expired"
+  | "revoked"
+  | "cancelled"
+  | "consumed";
+export type TransitionedAt = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "WorkspaceId".
+ */
+export type WorkspaceId = string;
 export type Capability = string;
 export type DecidedAt = string | null;
 /**
@@ -49,6 +71,24 @@ export type ApprovalScope = "once" | "session" | "workspace";
  */
 export type ApprovalState =
   "requested" | "approved" | "denied" | "expired" | "cancelled";
+export type AuthorizationSha2561 = string;
+export type Capability1 = string;
+export type ExpiresAt1 = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "GrantId".
+ */
+export type GrantId = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "DecisionId".
+ */
+export type DecisionId = string;
+export type PolicyVersion1 = string;
+export type ProposalSha256 = string;
+export type RequestedAt1 = string;
+export type ScopeBindingSha256 = string;
+export type TargetSha256 = string;
 export type IdempotencyKey = string;
 export type Kind = "approval.respond";
 export type Reason1 = string;
@@ -91,11 +131,6 @@ export type TaskId = string;
  * via the `definition` "TurnId".
  */
 export type TurnId = string;
-/**
- * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "WorkspaceId".
- */
-export type WorkspaceId = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "AuthenticationMethod".
@@ -634,21 +669,21 @@ export type TokenCount = number;
 export type Sources = ContextSourceReference[];
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "DecisionId".
- */
-export type DecisionId = string;
-/**
- * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "DecisionOutcome".
  */
 export type DecisionOutcome = "allow" | "deny" | "require_approval";
+export type DecidedAt1 = string | null;
+export type Generation1 = number;
+export type LatestReceiptSha256 = string;
+export type Reason9 = string;
+export type RevokedAt = string | null;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "EgressAuditOutcome".
  */
 export type EgressAuditOutcome = "authorized" | "failed" | "succeeded";
 export type FixtureSha256 = string;
-export type Reason9 = string;
+export type Reason10 = string;
 export type Name = string;
 export type ScorePpm = number;
 export type CompletedAt = string | null;
@@ -693,11 +728,6 @@ export type ToolOutputBytes = number;
  */
 export type EventActorKind = "authenticated" | "system";
 export type AggregateSequence = number;
-/**
- * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "GrantId".
- */
-export type GrantId = string;
 export type OccurredAt = string;
 export type Payload1 = InlinePayload | BlobPayload;
 export type SchemaVersion1 = string;
@@ -706,10 +736,10 @@ export type SchemaVersion1 = string;
  * @maxItems 64
  */
 export type Capabilities = [string, ...string[]];
-export type ExpiresAt1 = string;
+export type ExpiresAt2 = string;
 export type IssuedAt = string;
-export type PolicyVersion1 = string;
-export type RevokedAt = string | null;
+export type PolicyVersion2 = string;
+export type RevokedAt1 = string | null;
 /**
  * @minItems 1
  * @maxItems 16
@@ -819,7 +849,7 @@ export type MaxProcesses = number;
 export type AmbiguousAt = string | null;
 export type ArgsSha256 = string;
 export type Attempt = number;
-export type Capability1 = string;
+export type Capability2 = string;
 export type DispatchedAt = string | null;
 export type IdempotencyKey15 = string;
 export type LeaseFencingToken = number;
@@ -845,15 +875,15 @@ export type ToolName = string;
 export type ToolVersion = string;
 export type HasMore = boolean;
 export type NextCursor = string | null;
-export type Capability2 = string;
+export type Capability3 = string;
 export type EvaluatedAt = string;
 /**
  * @minItems 1
  * @maxItems 64
  */
 export type MatchedRuleIds1 = [string, ...string[]];
-export type PolicyVersion2 = string;
-export type Reason10 = string;
+export type PolicyVersion3 = string;
+export type Reason11 = string;
 export type ContentSha2564 = string;
 export type RawJson = string;
 export type ReaderSchemaVersion = string;
@@ -868,7 +898,7 @@ export type SubjectSha256 = string;
  */
 export type ProviderCallId = string;
 export type Kind23 = "cancelled";
-export type Reason11 = string;
+export type Reason12 = string;
 export type Sequence = number;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -890,7 +920,7 @@ export type ActualCostMicrousd = number | null;
 export type Attempt1 = number;
 export type EstimatedCostMicrousd = number;
 export type ProviderRequestSha256 = string;
-export type RequestedAt1 = string;
+export type RequestedAt2 = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "ProviderCostReservationId".
@@ -905,7 +935,7 @@ export type ProviderCostReservationStatus = "reserved" | "released" | "settled";
 export type UpdatedAt = string;
 export type Allowed = boolean;
 export type AlreadyExists = boolean;
-export type Reason12 = string;
+export type Reason13 = string;
 export type ActiveReservations = number;
 export type ObservedAt = string;
 export type TurnReservedMicrousd = number;
@@ -932,7 +962,7 @@ export type InspectionPolicyRevisionSha256 = string;
  * via the `definition` "ProviderName".
  */
 export type ProviderName = string;
-export type Reason13 = string;
+export type Reason14 = string;
 export type RecordedAt = string;
 export type RedirectCount = number;
 export type ResponseBytes = number | null;
@@ -951,7 +981,7 @@ export type ProviderFailureClass =
   | "malformed"
   | "internal";
 export type Kind25 = "error";
-export type Reason14 = string;
+export type Reason15 = string;
 export type RetryAllowed = boolean;
 export type Sequence2 = number;
 export type Kind26 = "reasoning_delta";
@@ -1310,10 +1340,10 @@ export type ProviderRetryDecisionCode =
   | "retry_prohibited"
   | "wall_time_exhausted";
 export type CurrentAttempt = number;
-export type DecidedAt1 = string;
+export type DecidedAt2 = string;
 export type DelayMs = number | null;
 export type NextAttempt = number | null;
-export type Reason15 = string;
+export type Reason16 = string;
 export type Retry = boolean;
 /**
  * @minItems 1
@@ -1673,7 +1703,7 @@ export type RetentionDays = number;
  */
 export type RouteId = string;
 export type TrainingEnabled = boolean;
-export type DecidedAt2 = string;
+export type DecidedAt3 = string;
 /**
  * @maxItems 64
  */
@@ -1681,7 +1711,7 @@ export type EligibleRoutes = ProviderRoute[];
 export type HealthSnapshotSha2561 = string | null;
 export type ModelRevisionSha2562 = string | null;
 export type PriceVersionSha2561 = string | null;
-export type Reason16 = string;
+export type Reason17 = string;
 /**
  * @maxItems 16
  */
@@ -1971,10 +2001,24 @@ export type TurnState =
   | "failed"
   | "cancelled";
 export type CreatedAt5 = string;
-export type PolicyVersion3 = string;
+export type PolicyVersion4 = string;
 export type RepositoryFingerprintSha2561 = string;
 
 export interface AtlasHarnessProtocol {}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ApprovalReceipt".
+ */
+export interface ApprovalReceipt {
+  approval_id: ApprovalId;
+  authorization_sha256: AuthorizationSha256;
+  generation: Generation;
+  previous_receipt_sha256?: PreviousReceiptSha256;
+  receipt_sha256: ReceiptSha256;
+  state: DurableApprovalState;
+  transitioned_at: TransitionedAt;
+  workspace_id: WorkspaceId;
+}
 /**
  * Hash-bound approval that narrows authority for one exact operation.
  *
@@ -1995,6 +2039,27 @@ export interface ApprovalRecord {
   requested_at: RequestedAt;
   scope: ApprovalScope;
   state: ApprovalState;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ApprovalRequestBinding".
+ */
+export interface ApprovalRequestBinding {
+  approval_id: ApprovalId;
+  authorization_sha256: AuthorizationSha2561;
+  capability: Capability1;
+  expires_at: ExpiresAt1;
+  grant_id: GrantId;
+  operation_id: OperationId;
+  policy_decision_id: DecisionId;
+  policy_version: PolicyVersion1;
+  principal_id: PrincipalId;
+  proposal_sha256: ProposalSha256;
+  requested_at: RequestedAt1;
+  scope: ApprovalScope;
+  scope_binding_sha256: ScopeBindingSha256;
+  target_sha256: TargetSha256;
+  workspace_id: WorkspaceId;
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -2355,11 +2420,26 @@ export interface ContextSourceReference {
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "DurableApprovalRecord".
+ */
+export interface DurableApprovalRecord {
+  binding: ApprovalRequestBinding;
+  decided_at?: DecidedAt1;
+  decided_by_principal_id?: PrincipalId | null;
+  generation: Generation1;
+  latest_receipt_sha256: LatestReceiptSha256;
+  reason: Reason9;
+  revoked_at?: RevokedAt;
+  revoked_by_principal_id?: PrincipalId | null;
+  state: DurableApprovalState;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "EvaluationFailure".
  */
 export interface EvaluationFailure {
   fixture_sha256: FixtureSha256;
-  reason: Reason9;
+  reason: Reason10;
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -2444,12 +2524,12 @@ export interface TraceLink {
  */
 export interface GrantRecord {
   capabilities: Capabilities;
-  expires_at: ExpiresAt1;
+  expires_at: ExpiresAt2;
   grant_id: GrantId;
   issued_at: IssuedAt;
-  policy_version: PolicyVersion1;
+  policy_version: PolicyVersion2;
   principal_id: PrincipalId;
-  revoked_at?: RevokedAt;
+  revoked_at?: RevokedAt1;
   roles: Roles;
   state: GrantState;
   workspace_id: WorkspaceId;
@@ -2492,7 +2572,7 @@ export interface OperationRecord {
   approval_id?: ApprovalId | null;
   args_sha256: ArgsSha256;
   attempt: Attempt;
-  capability: Capability1;
+  capability: Capability2;
   dispatched_at?: DispatchedAt;
   idempotency_class: IdempotencyClass;
   idempotency_key: IdempotencyKey15;
@@ -2528,13 +2608,13 @@ export interface PageInfo {
  * via the `definition` "PolicyDecisionRecord".
  */
 export interface PolicyDecisionRecord {
-  capability: Capability2;
+  capability: Capability3;
   decision_id: DecisionId;
   evaluated_at: EvaluatedAt;
   matched_rule_ids: MatchedRuleIds1;
   outcome: DecisionOutcome;
-  policy_version: PolicyVersion2;
-  reason: Reason10;
+  policy_version: PolicyVersion3;
+  reason: Reason11;
   trace: TraceLink;
 }
 /**
@@ -2573,7 +2653,7 @@ export interface PrincipalRecord {
  */
 export interface ProviderCancelled {
   kind?: Kind23;
-  reason: Reason11;
+  reason: Reason12;
   sequence: Sequence;
 }
 /**
@@ -2615,7 +2695,7 @@ export interface ProviderCostReservationRequest {
   limits: ProviderCostLimits;
   provider_request_sha256: ProviderRequestSha256;
   request_id: RequestId;
-  requested_at: RequestedAt1;
+  requested_at: RequestedAt2;
   reservation_id: ProviderCostReservationId;
   turn_id: TurnId;
   workspace_id: WorkspaceId;
@@ -2628,7 +2708,7 @@ export interface ProviderCostReservationDecision {
   allowed: Allowed;
   already_exists?: AlreadyExists;
   code: ProviderCostAdmissionCode;
-  reason: Reason12;
+  reason: Reason13;
   reservation?: ProviderCostReservation | null;
 }
 /**
@@ -2658,7 +2738,7 @@ export interface ProviderEgressAuditRecord {
   inspection_policy_revision_sha256: InspectionPolicyRevisionSha256;
   outcome: EgressAuditOutcome;
   provider: ProviderName;
-  reason: Reason13;
+  reason: Reason14;
   recorded_at: RecordedAt;
   redirect_count: RedirectCount;
   request_id: RequestId;
@@ -2673,7 +2753,7 @@ export interface ProviderEgressAuditRecord {
 export interface ProviderError {
   failure_class: ProviderFailureClass;
   kind?: Kind25;
-  reason: Reason14;
+  reason: Reason15;
   retry_allowed: RetryAllowed;
   sequence: Sequence2;
 }
@@ -2710,10 +2790,10 @@ export interface ProviderRequirements {
 export interface ProviderRetryDecision {
   code: ProviderRetryDecisionCode;
   current_attempt: CurrentAttempt;
-  decided_at: DecidedAt1;
+  decided_at: DecidedAt2;
   delay_ms?: DelayMs;
   next_attempt?: NextAttempt;
-  reason: Reason15;
+  reason: Reason16;
   retry: Retry;
 }
 /**
@@ -2750,7 +2830,7 @@ export interface ProviderRoute {
  * via the `definition` "ProviderRouteDecisionRecord".
  */
 export interface ProviderRouteDecisionRecord {
-  decided_at: DecidedAt2;
+  decided_at: DecidedAt3;
   eligible_routes: EligibleRoutes;
   provider_decision_id: ProviderDecisionId;
   rejected_routes: RejectedRoutes;
@@ -2770,7 +2850,7 @@ export interface RejectedProviderRoute {
   model_revision_sha256?: ModelRevisionSha2562;
   price_version_sha256?: PriceVersionSha2561;
   provider?: ProviderName | null;
-  reason: Reason16;
+  reason: Reason17;
   rejection_codes?: RejectionCodes;
   route_id: RouteId;
 }
@@ -2893,7 +2973,7 @@ export interface TurnRecord {
 export interface WorkspaceRecord {
   created_at: CreatedAt5;
   owner_principal_id: PrincipalId;
-  policy_version: PolicyVersion3;
+  policy_version: PolicyVersion4;
   repository_fingerprint_sha256: RepositoryFingerprintSha2561;
   root_uri: RootUri;
   tenant_id: TenantId;
