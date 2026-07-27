@@ -15,6 +15,9 @@ from app.services.harness.providers.conformance_recorded import (
     RecordedDecoderConformanceAdapter,
     recorded_records_sha256,
 )
+from app.services.harness.providers.conformance_resources import (
+    CONFORMANCE_FIXTURE_ROOT,
+)
 from app.services.harness.providers.openai_decoder import (
     OpenAIResponsesDecoder,
 )
@@ -23,13 +26,7 @@ from app.services.harness.providers.openrouter_decoder import (
 )
 from tests.harness.providers.conformance.fixtures import NOW
 
-FIXTURES = (
-    Path(__file__).parents[3]
-    / "fixtures"
-    / "harness"
-    / "conformance"
-    / "openai_family"
-)
+FIXTURES = CONFORMANCE_FIXTURE_ROOT / "openai_family"
 SOURCE_ROOT = Path(__file__).parents[4] / "app" / "services" / "harness"
 
 
