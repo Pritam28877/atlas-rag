@@ -33,6 +33,12 @@ from app.cli.harness.bedrock_smoke_contracts import (
 )
 from app.cli.harness.bedrock_smoke_io import BedrockSmokeResult
 from app.cli.harness.bedrock_smoke_runner import run_bedrock_smoke
+from app.cli.harness.live_matrix_io import (
+    LiveMatrixManifest,
+    LiveSmokeEvidenceReference,
+    LiveSmokeResultKind,
+    build_live_matrix_from_manifest,
+)
 from app.cli.harness.live_matrix_smoke import (
     live_observations_from_smoke,
 )
@@ -84,6 +90,9 @@ __all__ = (
     "LocalProbeGateError",
     "LocalProbeGateErrorCode",
     "LocalProbeLaunchRequest",
+    "LiveMatrixManifest",
+    "LiveSmokeEvidenceReference",
+    "LiveSmokeResultKind",
     "ProviderSmokeGateError",
     "ProviderSmokeGateErrorCode",
     "ProviderSmokeLaunchRequest",
@@ -93,6 +102,7 @@ __all__ = (
     "authorize_adapter_smoke",
     "authorize_local_probe",
     "build_adapter_smoke_result",
+    "build_live_matrix_from_manifest",
     "live_observations_from_smoke",
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
