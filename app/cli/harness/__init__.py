@@ -33,6 +33,9 @@ from app.cli.harness.bedrock_smoke_contracts import (
 )
 from app.cli.harness.bedrock_smoke_io import BedrockSmokeResult
 from app.cli.harness.bedrock_smoke_runner import run_bedrock_smoke
+from app.cli.harness.live_matrix_smoke import (
+    live_observations_from_smoke,
+)
 from app.cli.harness.local_adapter_smoke_runner import (
     run_local_adapter_smoke,
 )
@@ -90,6 +93,7 @@ __all__ = (
     "authorize_adapter_smoke",
     "authorize_local_probe",
     "build_adapter_smoke_result",
+    "live_observations_from_smoke",
     "authorize_provider_smoke",
     "bedrock_smoke_model_sha256",
     "run_provider_smoke",

@@ -31,6 +31,7 @@ class ProviderSmokeResult(StrictProtocolModel):
     provider: ProviderName
     model: ModelName
     request_id: RequestId
+    route_binding_sha256: Sha256
     response_status: int = Field(ge=200, le=299)
     response_body_sha256: Sha256
     input_tokens: int = Field(ge=0, le=2_000_000)

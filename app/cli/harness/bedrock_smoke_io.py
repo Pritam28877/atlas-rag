@@ -46,6 +46,7 @@ class BedrockSmokeResult(StrictProtocolModel):
     region: Region
     authorization_id_sha256: Sha256
     destination_sha256: Sha256
+    route_binding_sha256: Sha256
     text_request_sha256: Sha256
     tool_request_sha256: Sha256
     text_provider_metadata_sha256: Sha256 | None = None

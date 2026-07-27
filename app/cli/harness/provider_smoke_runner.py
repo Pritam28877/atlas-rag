@@ -8,6 +8,7 @@ import time
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
+from app.cli.harness.adapter_smoke_runtime import smoke_binding_sha256
 from app.cli.harness.provider_smoke_builders import (
     build_canonical_smoke_request,
     build_smoke_context,
@@ -204,6 +205,10 @@ async def run_provider_smoke(
             provider=authorized.provider,
             model=authorized.model,
             request_id=request_id,
+            route_binding_sha256=smoke_binding_sha256(
+                route.model_dump_json().encode(),
+                model.model_dump_json().encode(),
+            ),
             response_status=response.status,
             response_body_sha256=response_body_sha256(response.body()),
             input_tokens=stream.usage.input_tokens,
