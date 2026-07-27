@@ -33,6 +33,10 @@ from app.cli.harness.bedrock_smoke_contracts import (
 )
 from app.cli.harness.bedrock_smoke_io import BedrockSmokeResult
 from app.cli.harness.bedrock_smoke_runner import run_bedrock_smoke
+from app.cli.harness.conformance_report_runner import (
+    PackagedConformanceReportRequest,
+    run_packaged_conformance_report,
+)
 from app.cli.harness.live_matrix_failure import (
     LiveSmokeFailureReceipt,
     failed_live_observations,
@@ -104,6 +108,7 @@ __all__ = (
     "LiveSmokeEvidenceReference",
     "LiveSmokeFailureReceipt",
     "LiveSmokeResultKind",
+    "PackagedConformanceReportRequest",
     "ProviderSmokeGateError",
     "ProviderSmokeGateErrorCode",
     "ProviderSmokeLaunchRequest",
@@ -124,6 +129,7 @@ __all__ = (
     "run_bedrock_smoke",
     "run_local_adapter_smoke",
     "run_local_capability_probe",
+    "run_packaged_conformance_report",
     "sign_bedrock_smoke_grant",
     "verify_bedrock_smoke_grant",
     "write_adapter_smoke_result",

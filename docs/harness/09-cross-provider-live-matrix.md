@@ -36,8 +36,20 @@ credentials, prompts, outputs, or signing keys in the matrix manifest.
 
 ## 2. Bind provider descriptors
 
-Retain the verified offline `ConformanceReport` as an owner-only file. Create
-the six sorted `LiveProviderTarget` records from the approved provider
+Generate the verified offline `ConformanceReport` from packaged,
+checksum-pinned recordings:
+
+```bash
+uv run --locked python scripts/run_harness_conformance.py \
+  --timeout-seconds 30 \
+  --result-path /private/atlas-live-matrix/conformance.json
+```
+
+The command makes no network calls. It writes a new owner-only report only when
+all supported cases pass and every eligible comparison is equivalent; stdout
+contains only status and dimension counts.
+
+Create the six sorted `LiveProviderTarget` records from the approved provider
 configuration; do not add adapter revisions or supported scenarios.
 
 Each target supplies:

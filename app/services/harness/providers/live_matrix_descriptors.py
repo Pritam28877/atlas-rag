@@ -37,7 +37,7 @@ def derive_live_provider_descriptors(
     report: ConformanceReport,
     targets: Sequence[LiveProviderTarget],
 ) -> tuple[LiveProviderDescriptor, ...]:
-    _require_descriptor_evidence(report)
+    require_live_descriptor_evidence(report)
     if not 1 <= len(targets) <= MAXIMUM_CONFORMANCE_ADAPTERS:
         raise ValueError("live provider target count is invalid")
     canonical_targets = tuple(sorted(targets, key=_target_provider))
@@ -84,7 +84,9 @@ def derive_live_provider_descriptors(
     return tuple(descriptors)
 
 
-def _require_descriptor_evidence(report: ConformanceReport) -> None:
+def require_live_descriptor_evidence(
+    report: ConformanceReport,
+) -> None:
     adapters = {
         adapter.provider: adapter for adapter in report.adapters
     }
