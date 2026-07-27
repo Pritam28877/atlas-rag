@@ -8,19 +8,17 @@ from app.services.harness.providers import (
 from app.services.harness.providers.conformance_runner import (
     BoundedConformanceRunner,
 )
+from app.services.harness.providers.conformance_suite import (
+    native_cloud_conformance_adapters,
+    openai_family_conformance_adapters,
+)
 from tests.harness.providers.conformance.fixtures import NOW
-from tests.harness.providers.conformance.native_cloud import (
-    native_cloud_adapters,
-)
-from tests.harness.providers.conformance.openai_family import (
-    openai_family_adapters,
-)
 
 
 def test_native_cloud_and_openai_family_are_contract_equivalent() -> None:
     adapters = (
-        *native_cloud_adapters(),
-        *openai_family_adapters(),
+        *native_cloud_conformance_adapters(clock=lambda: NOW),
+        *openai_family_conformance_adapters(clock=lambda: NOW),
     )
     report = asyncio.run(
         BoundedConformanceRunner(clock=lambda: NOW).run(

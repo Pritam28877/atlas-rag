@@ -9,27 +9,19 @@ from app.services.harness.providers.conformance_contracts import (
 from app.services.harness.providers.conformance_runner import (
     BoundedConformanceRunner,
 )
+from app.services.harness.providers.conformance_suite import (
+    recorded_conformance_adapters,
+)
 from app.services.harness.providers.live_matrix_descriptors import (
     LiveProviderTarget,
 )
 from tests.harness.providers.conformance.fixtures import NOW
-from tests.harness.providers.conformance.mock_provider import (
-    mock_conformance_adapter,
-)
-from tests.harness.providers.conformance.native_cloud import (
-    native_cloud_adapters,
-)
-from tests.harness.providers.conformance.openai_family import (
-    openai_family_adapters,
-)
 from tests.harness.providers.live_matrix.fixtures import descriptors
 
 
 def conformance_report() -> ConformanceReport:
-    adapters = (
-        mock_conformance_adapter(),
-        *native_cloud_adapters(),
-        *openai_family_adapters(),
+    adapters = recorded_conformance_adapters(
+        clock=lambda: NOW,
     )
     return asyncio.run(
         BoundedConformanceRunner(clock=lambda: NOW).run(
