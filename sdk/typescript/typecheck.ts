@@ -1,5 +1,6 @@
 import {
   HarnessClient,
+  IdeWorkspaceAdapter,
   type HarnessTransport,
 } from "./src/index";
 import type { ThreadListCommand, WorkspaceId } from "../../generated/harness/protocol/atlas-harness";
@@ -12,4 +13,6 @@ const transport: HarnessTransport = {
   },
 };
 const client = new HarnessClient(transport, { workspaceId, clientId: "cli_22222222222222222222222222222222" });
+const adapter = new IdeWorkspaceAdapter(workspaceId);
+adapter.subscribe(() => undefined);
 void client.execute(command);
