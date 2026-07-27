@@ -48,7 +48,10 @@ def live_observations_from_smoke(
         cancellation_latency = (
             result.cancellation_latency_ms
             if (
-                isinstance(result, BedrockSmokeResult)
+                isinstance(
+                    result,
+                    (AdapterSmokeResult, BedrockSmokeResult),
+                )
                 and scenario is ConformanceScenario.CANCELLATION
             )
             else None
@@ -92,6 +95,12 @@ def _scenarios(
             ConformanceScenario.CANCELLATION,
             ConformanceScenario.TEXT_STREAM,
             ConformanceScenario.TOOL_CALLS,
+            ConformanceScenario.USAGE_COST,
+        )
+    if isinstance(result, AdapterSmokeResult):
+        return (
+            ConformanceScenario.CANCELLATION,
+            ConformanceScenario.TEXT_STREAM,
             ConformanceScenario.USAGE_COST,
         )
     return (

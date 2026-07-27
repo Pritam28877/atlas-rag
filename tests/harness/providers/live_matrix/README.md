@@ -7,4 +7,4 @@
 - `test_descriptors.py`: conformance-bound revisions.
 - `test_failure.py`: redacted failed-run evidence.
 - `test_io.py`: private artifact aggregation.
-- `test_smoke_mapping.py`: redacted smoke ingestion.
+- `test_smoke_mapping.py`: smoke and cancellation ingestion.

@@ -48,6 +48,7 @@ def test_equivalent_events_produce_redacted_provider_neutral_shape() -> None:
         events=events,
         route_binding_sha256="a" * 64,
         latency_ms=10,
+        cancellation_latency_ms=2,
         charged_cost_microusd=100,
         completed_at=NOW,
     )
@@ -109,6 +110,7 @@ def test_wrong_output_or_non_equivalent_shape_is_rejected(events) -> None:
             events=events,
             route_binding_sha256="a" * 64,
             latency_ms=10,
+            cancellation_latency_ms=2,
             charged_cost_microusd=0,
             completed_at=NOW,
         )
@@ -124,6 +126,7 @@ def test_result_file_contains_hashes_not_provider_output(
         events=_events(),
         route_binding_sha256="b" * 64,
         latency_ms=10,
+        cancellation_latency_ms=2,
         charged_cost_microusd=0,
         completed_at=NOW + timedelta(seconds=1),
     )

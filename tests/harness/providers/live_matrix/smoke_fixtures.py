@@ -29,6 +29,7 @@ def adapter_result() -> AdapterSmokeResult:
         output_tokens=1,
         reasoning_tokens=0,
         latency_ms=5,
+        cancellation_latency_ms=2,
         charged_cost_microusd=0,
         completed_at=NOW + timedelta(seconds=1),
     )

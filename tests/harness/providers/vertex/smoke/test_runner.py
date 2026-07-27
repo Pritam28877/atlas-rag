@@ -98,6 +98,8 @@ def test_vertex_smoke_runs_one_regional_call_and_redacts(
     assert connector.request is not None
     assert connector.request.metadata.provider == "vertex"
     assert result.canonical_shape == "text_usage_completed"
+    assert result.cancellation_verified
+    assert result.cancellation_latency_ms == 0
     assert result.latency_ms == 0
     assert result.charged_cost_microusd == 10_000
     persisted = authorized.result_path.read_text()

@@ -78,6 +78,8 @@ def test_local_smoke_runs_one_production_adapter_call_and_redacts(
     assert connector.request is not None
     assert connector.request.metadata.provider == "local-compatible"
     assert result.canonical_shape == "text_usage_completed"
+    assert result.cancellation_verified
+    assert result.cancellation_latency_ms == 0
     assert result.latency_ms == 0
     assert result.charged_cost_microusd == 0
     assert result.active_credential_leases == 0
