@@ -12,7 +12,7 @@ from scripts.verify_harness_privileged_operations import (
     validate_registry,
 )
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = (
     ROOT / "docs" / "harness" / "python-privileged-operation-registry.json"
 )
