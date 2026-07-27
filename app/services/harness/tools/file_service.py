@@ -11,16 +11,18 @@ from pathlib import Path
 from typing import Protocol, TypeVar
 
 from app.services.harness.tools.file_contracts import (
+    PatchFileArguments,
+    PatchFileResult,
     ReadFileArguments,
     ReadFileResult,
     SearchFilesArguments,
     SearchFilesResult,
 )
-from app.services.harness.tools.workspace_descriptor import (
-    WorkspaceDescriptor,
+from app.services.harness.tools.file_errors import (
     WorkspaceFileError,
     WorkspaceFileErrorCode,
 )
+from app.services.harness.tools.workspace_descriptor import WorkspaceDescriptor
 
 ResultType = TypeVar("ResultType")
 MAXIMUM_FILE_OPERATION_TIMEOUT_MS = 60_000
@@ -42,6 +44,14 @@ class WorkspaceFileBackend(Protocol):
         stop: threading.Event,
         deadline: float,
     ) -> SearchFilesResult: ...
+
+    def patch(
+        self,
+        arguments: PatchFileArguments,
+        *,
+        stop: threading.Event,
+        deadline: float,
+    ) -> PatchFileResult: ...
 
     def close(self) -> None: ...
 
@@ -115,6 +125,23 @@ class WorkspaceFileService:
     ) -> SearchFilesResult:
         return await self._execute(
             lambda stop, deadline: self._files.search(
+                arguments,
+                stop=stop,
+                deadline=deadline,
+            ),
+            cancellation=cancellation,
+            timeout_ms=timeout_ms,
+        )
+
+    async def patch(
+        self,
+        arguments: PatchFileArguments,
+        *,
+        cancellation: asyncio.Event,
+        timeout_ms: int,
+    ) -> PatchFileResult:
+        return await self._execute(
+            lambda stop, deadline: self._files.patch(
                 arguments,
                 stop=stop,
                 deadline=deadline,

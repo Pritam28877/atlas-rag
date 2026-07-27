@@ -13,11 +13,18 @@ from app.services.harness.tools.contracts import (
     tool_descriptor_sha256,
 )
 from app.services.harness.tools.file_contracts import (
+    PatchFileArguments,
+    PatchFileEdit,
+    PatchFileResult,
     ReadFileArguments,
     ReadFileResult,
     SearchFilesArguments,
     SearchFilesResult,
     SearchMatch,
+)
+from app.services.harness.tools.file_errors import (
+    WorkspaceFileError,
+    WorkspaceFileErrorCode,
 )
 from app.services.harness.tools.file_service import WorkspaceFileService
 from app.services.harness.tools.registry import (
@@ -28,15 +35,14 @@ from app.services.harness.tools.registry import (
     ToolRegistryError,
     ToolRegistryErrorCode,
 )
-from app.services.harness.tools.workspace_descriptor import (
-    WorkspaceFileError,
-    WorkspaceFileErrorCode,
-)
 
 __all__ = (
     "DEFAULT_TOOL_OUTPUT_BYTES",
     "MAXIMUM_REGISTERED_TOOLS",
     "MAXIMUM_TOOL_OUTPUT_BYTES",
+    "PatchFileArguments",
+    "PatchFileEdit",
+    "PatchFileResult",
     "ReadFileArguments",
     "ReadFileResult",
     "SearchFilesArguments",
