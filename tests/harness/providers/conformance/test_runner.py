@@ -9,13 +9,15 @@ from app.services.harness.protocol import (
     ProviderTextDelta,
 )
 from app.services.harness.providers import (
-    BoundedConformanceRunner,
     ConformanceCaseStatus,
     ConformanceComparisonStatus,
     ConformanceFailureCode,
+    ConformanceScenario,
+)
+from app.services.harness.providers.conformance_runner import (
+    BoundedConformanceRunner,
     ConformanceRunnerError,
     ConformanceRunnerErrorCode,
-    ConformanceScenario,
 )
 from tests.harness.providers.conformance.fixtures import (
     NOW,
