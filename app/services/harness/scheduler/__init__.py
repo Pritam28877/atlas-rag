@@ -1,7 +1,17 @@
 """Validated and bounded Atlas Harness task scheduling."""
 
+from app.services.harness.protocol.background_job_execution import (
+    BackgroundJobArtifactWriter,
+    BackgroundJobCoordinatorError,
+    BackgroundJobCoordinatorErrorCode,
+    BackgroundJobExecutionResult,
+    BackgroundJobExecutor,
+    BackgroundJobStore,
+)
 from app.services.harness.protocol.background_jobs import (
     BACKGROUND_JOB_TRANSITIONS,
+    MAXIMUM_AGGREGATE_BACKGROUND_JOB_BYTES,
+    MAXIMUM_BACKGROUND_JOB_ARGUMENT_BYTES,
     MAXIMUM_BACKGROUND_JOB_BYTES,
     MAXIMUM_BACKGROUND_JOB_PAGE,
     MAXIMUM_BACKGROUND_JOBS,
@@ -14,18 +24,28 @@ from app.services.harness.protocol.background_jobs import (
     JobExecutionOwnerId,
     require_background_job_transition,
 )
+from app.services.harness.scheduler.coordinator import BackgroundJobCoordinator
 
 __all__ = (
     "BACKGROUND_JOB_TRANSITIONS",
+    "MAXIMUM_AGGREGATE_BACKGROUND_JOB_BYTES",
+    "MAXIMUM_BACKGROUND_JOB_ARGUMENT_BYTES",
     "MAXIMUM_BACKGROUND_JOB_BYTES",
     "MAXIMUM_BACKGROUND_JOB_PAGE",
     "MAXIMUM_BACKGROUND_JOBS",
     "TERMINAL_BACKGROUND_JOB_STATES",
     "BackgroundJobArtifact",
+    "BackgroundJobArtifactWriter",
     "BackgroundJobConfiguration",
+    "BackgroundJobCoordinator",
+    "BackgroundJobCoordinatorError",
+    "BackgroundJobCoordinatorErrorCode",
+    "BackgroundJobExecutionResult",
+    "BackgroundJobExecutor",
     "BackgroundJobPage",
     "BackgroundJobRecord",
     "BackgroundJobState",
     "JobExecutionOwnerId",
+    "BackgroundJobStore",
     "require_background_job_transition",
 )

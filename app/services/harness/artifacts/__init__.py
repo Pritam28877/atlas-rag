@@ -1,5 +1,8 @@
 """Content-addressed Atlas Harness artifact adapters."""
 
+from app.services.harness.artifacts.background_job_writer import (
+    LocalBackgroundJobArtifactWriter,
+)
 from app.services.harness.artifacts.contracts import (
     BlobErrorCode,
     BlobMetadata,
@@ -52,6 +55,7 @@ __all__ = (
     "BlobReservationStatus",
     "GarbageCollectionPlan",
     "LocalBlobStore",
+    "LocalBackgroundJobArtifactWriter",
     "LocalGarbageCollector",
     "RetainedBlob",
     "RetentionEvidence",
