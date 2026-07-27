@@ -3,6 +3,9 @@
 from app.services.harness.journal.sqlite_approval_schema import (
     SQLITE_APPROVAL_SCHEMA,
 )
+from app.services.harness.journal.sqlite_operation_schema import (
+    SQLITE_OPERATION_ADMISSION_SCHEMA,
+)
 from app.services.harness.journal.sqlite_provider_cost_schema import (
     SQLITE_PROVIDER_COST_SCHEMA,
 )
@@ -22,7 +25,7 @@ from app.services.harness.journal.sqlite_storage_schema import (
     SQLITE_STORAGE_SCHEMA,
 )
 
-SQLITE_SCHEMA_VERSION = 9
+SQLITE_SCHEMA_VERSION = 10
 
 SQLITE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS harness_journal_schema (
@@ -31,7 +34,7 @@ CREATE TABLE IF NOT EXISTS harness_journal_schema (
 );
 
 INSERT OR IGNORE INTO harness_journal_schema (singleton, schema_version)
-VALUES (1, 9);
+VALUES (1, 10);
 
 CREATE TABLE IF NOT EXISTS harness_journal_positions (
     workspace_id TEXT PRIMARY KEY,
@@ -295,4 +298,5 @@ END;
     + SQLITE_SESSION_SCHEMA
     + SQLITE_PROVIDER_COST_SCHEMA
     + SQLITE_APPROVAL_SCHEMA
+    + SQLITE_OPERATION_ADMISSION_SCHEMA
 )

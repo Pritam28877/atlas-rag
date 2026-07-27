@@ -217,7 +217,7 @@ def test_v1_migration_preserves_facts_and_uses_workspace_positions(
             2,
             3,
         )
-        assert schema_version == (9,)
+        assert schema_version == (10,)
         key_columns = {
             row[1]: row[5]
             for row in primary_key
@@ -267,7 +267,7 @@ def test_v2_migration_preserves_journal_and_adds_snapshot_schema(
             migrated.close()
 
         assert replay.status is AppendStatus.IDEMPOTENT_REPLAY
-        assert schema_version == (9,)
+        assert schema_version == (10,)
         assert event_count == (2,)
         assert retention_tables == (2,)
 
@@ -329,7 +329,7 @@ def test_v3_migration_preserves_snapshots_and_adds_retention_evidence(
         finally:
             migrated.close()
 
-        assert schema_version == (9,)
+        assert schema_version == (10,)
         assert snapshot_count == (1,)
         assert evidence_tables == (4,)
 
@@ -370,7 +370,7 @@ def test_v4_migration_adds_storage_reservations(tmp_path: Path) -> None:
         finally:
             migrated.close()
 
-        assert version == (9,)
+        assert version == (10,)
         assert tables == (2,)
 
     asyncio.run(scenario())
@@ -411,7 +411,7 @@ def test_v5_migration_adds_recovery_facts(tmp_path: Path) -> None:
         finally:
             migrated.close()
 
-        assert version == (9,)
+        assert version == (10,)
         assert tables == (2,)
 
     asyncio.run(scenario())

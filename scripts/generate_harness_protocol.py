@@ -51,6 +51,12 @@ from app.services.harness.protocol.approvals import (
     ApprovalRequestBinding,
     DurableApprovalRecord,
 )
+from app.services.harness.protocol.operation_admission import (
+    CanonicalOperationRequest,
+    OperationDispatchPermit,
+    OperationDurabilityReceipt,
+    OperationFence,
+)
 from scripts.harness_protocol_fixtures import (
     FIXTURE_PATHS,
     build_compatibility_fixture_documents,
@@ -86,6 +92,10 @@ PROTOCOL_MODELS: tuple[type[BaseModel], ...] = (
     ApprovalRequestBinding,
     DurableApprovalRecord,
     ApprovalReceipt,
+    CanonicalOperationRequest,
+    OperationFence,
+    OperationDurabilityReceipt,
+    OperationDispatchPermit,
     ArtifactRecord,
     TaskNodeRecord,
     ProviderRouteDecisionRecord,

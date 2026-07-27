@@ -134,8 +134,15 @@ class OperationRecord(StrictProtocolModel):
 
     @model_validator(mode="after")
     def validate_lifecycle(self) -> Self:
-        dispatched = self.state is not OperationState.PREPARED
-        if dispatched != (self.dispatched_at is not None):
+        requires_dispatch = self.state in {
+            OperationState.DISPATCHED,
+            OperationState.COMPLETED,
+            OperationState.FAILED,
+            OperationState.AMBIGUOUS,
+        }
+        if requires_dispatch and self.dispatched_at is None:
+            raise ValueError("dispatched state and dispatched_at must agree")
+        if self.state is OperationState.PREPARED and self.dispatched_at is not None:
             raise ValueError("dispatched state and dispatched_at must agree")
         if self.dispatched_at is not None and self.dispatched_at < self.prepared_at:
             raise ValueError("operation dispatch cannot precede preparation")

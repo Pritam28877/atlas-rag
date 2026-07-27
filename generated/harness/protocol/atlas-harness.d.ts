@@ -211,6 +211,30 @@ export type CanonicalEventType =
   | "Recovery.Reconciled"
   | "Recovery.Failed"
   | "Usage.Updated";
+export type ArgsSha256 = string;
+export type Attempt = number;
+export type Capability2 = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "IdempotencyClass".
+ */
+export type IdempotencyClass = "read_only" | "repeatable" | "non_idempotent";
+export type IdempotencyKey1 = string;
+export type MaxCpuMs = number;
+export type MaxDurationMs = number;
+export type MaxMemoryBytes = number;
+export type MaxOutputBytes = number;
+export type MaxProcesses = number;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ToolName".
+ */
+export type ToolName = string;
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "ToolVersion".
+ */
+export type ToolVersion = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "CapabilityCatalog".
@@ -464,20 +488,20 @@ export type SessionCommandTypes =
  * via the `definition` "WorkspaceAccessMode".
  */
 export type WorkspaceAccessMode = "read_only" | "read_write";
-export type IdempotencyKey1 = string;
+export type IdempotencyKey2 = string;
 export type Kind4 = "workspace.open";
 export type RepositoryFingerprintSha256 = string;
-export type IdempotencyKey2 = string;
+export type IdempotencyKey3 = string;
 export type Kind5 = "workspace.close";
 export type Reason2 = string;
-export type IdempotencyKey3 = string;
+export type IdempotencyKey4 = string;
 export type Kind6 = "thread.create";
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "RetentionClass".
  */
 export type RetentionClass = "ephemeral" | "standard" | "compliance";
-export type IdempotencyKey4 = string;
+export type IdempotencyKey5 = string;
 export type Kind7 = "thread.resume";
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -489,9 +513,9 @@ export type ThreadId = string;
  * via the `definition` "EventId".
  */
 export type EventId = string;
-export type IdempotencyKey5 = string;
-export type Kind8 = "thread.fork";
 export type IdempotencyKey6 = string;
+export type Kind8 = "thread.fork";
+export type IdempotencyKey7 = string;
 export type Kind9 = "thread.archive";
 export type Reason3 = string;
 export type Kind10 = "thread.list";
@@ -509,13 +533,13 @@ export type States =
  */
 export type ThreadState = "active" | "archived" | "deleted";
 export type MaxCostMicrousd = number;
-export type MaxDurationMs = number;
+export type MaxDurationMs1 = number;
 export type MaxInputTokens = number;
 export type MaxOutputTokens = number;
 export type MaxSteps = number;
 export type MaxToolCalls = number;
 export type MaxToolOutputBytes = number;
-export type IdempotencyKey7 = string;
+export type IdempotencyKey8 = string;
 export type InitialPayload = InlinePayload | BlobPayload;
 export type ContentSha2562 = string;
 export type Kind11 = "inline_text";
@@ -523,13 +547,13 @@ export type MediaType2 = string;
 export type SizeBytes2 = number;
 export type Text = string;
 export type Kind12 = "turn.start";
-export type IdempotencyKey8 = string;
+export type IdempotencyKey9 = string;
 export type Kind13 = "turn.steer";
 export type Payload = InlinePayload | BlobPayload;
-export type IdempotencyKey9 = string;
+export type IdempotencyKey10 = string;
 export type Kind14 = "turn.cancel";
 export type Reason4 = string;
-export type IdempotencyKey10 = string;
+export type IdempotencyKey11 = string;
 export type Kind15 = "turn.compact";
 export type Reason5 = string;
 export type TargetInputTokens = number;
@@ -548,11 +572,11 @@ export type OperationsCommandTypes =
   | EvaluationStartCommand
   | EvaluationStatusCommand;
 export type Kind16 = "task.inspect";
-export type IdempotencyKey11 = string;
+export type IdempotencyKey12 = string;
 export type Kind17 = "task.cancel";
 export type Reason6 = string;
 export type FailedAttempt = number;
-export type IdempotencyKey12 = string;
+export type IdempotencyKey13 = string;
 export type Kind18 = "task.retry";
 export type Reason7 = string;
 export type TaskSpecSha256 = string;
@@ -569,7 +593,7 @@ export type EventTypes = EventType[];
 export type HeartbeatIntervalMs = number;
 export type Kind19 = "event.subscribe";
 export type MaxBatchSize = number;
-export type IdempotencyKey13 = string;
+export type IdempotencyKey14 = string;
 export type Kind20 = "event.acknowledge";
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
@@ -583,7 +607,7 @@ export type ConfigurationSha256 = string;
  * @maxItems 1000
  */
 export type FixtureSha256S = [string, ...string[]];
-export type IdempotencyKey14 = string;
+export type IdempotencyKey15 = string;
 export type Kind21 = "evaluation.start";
 export type MaxParallelism = number;
 /**
@@ -806,11 +830,6 @@ export type Role = string;
 export type GrantState = "active" | "revoked" | "expired";
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "IdempotencyClass".
- */
-export type IdempotencyClass = "read_only" | "repeatable" | "non_idempotent";
-/**
- * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "Issuer".
  */
 export type Issuer = string;
@@ -841,41 +860,42 @@ export type Redacted = boolean;
  * via the `definition` "ModelName".
  */
 export type ModelName = string;
-export type MaxCpuMs = number;
-export type MaxDurationMs1 = number;
-export type MaxMemoryBytes = number;
-export type MaxOutputBytes = number;
-export type MaxProcesses = number;
-export type AmbiguousAt = string | null;
-export type ArgsSha256 = string;
-export type Attempt = number;
-export type Capability2 = string;
-export type DispatchedAt = string | null;
-export type IdempotencyKey15 = string;
-export type LeaseFencingToken = number;
-export type PreparedAt = string;
-export type ResultSha256 = string | null;
+export type OperationDurability = "synchronous";
+export type DurableAt1 = string;
+export type FencingToken = number;
+export type OperationSha256 = string;
+export type PreviousReceiptSha2561 = string | null;
+export type ReceiptSha2561 = string;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "OperationState".
  */
 export type OperationState =
   "prepared" | "dispatched" | "completed" | "failed" | "ambiguous" | "cancelled";
+export type FenceSha256 = string;
+export type AmbiguousAt = string | null;
+export type ArgsSha2561 = string;
+export type Attempt1 = number;
+export type Capability3 = string;
+export type DispatchedAt = string | null;
+export type IdempotencyKey16 = string;
+export type LeaseFencingToken = number;
+export type PreparedAt = string;
+export type ResultSha256 = string | null;
 export type StatusReason1 = string | null;
 export type TerminalAt = string | null;
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "ToolName".
+ * via the `definition` "OperationDurability".
  */
-export type ToolName = string;
-/**
- * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "ToolVersion".
- */
-export type ToolVersion = string;
+export type OperationDurability1 = "synchronous";
+export type ExpiresAt3 = string;
+export type FencingToken1 = number;
+export type IssuedAt1 = string;
+export type LeaseSha256 = string;
 export type HasMore = boolean;
 export type NextCursor = string | null;
-export type Capability3 = string;
+export type Capability4 = string;
 export type EvaluatedAt = string;
 /**
  * @minItems 1
@@ -917,7 +937,7 @@ export type MaxCallMicrousd = number;
 export type MaxTurnMicrousd = number;
 export type MaxWorkspaceMicrousd = number;
 export type ActualCostMicrousd = number | null;
-export type Attempt1 = number;
+export type Attempt2 = number;
 export type EstimatedCostMicrousd = number;
 export type ProviderRequestSha256 = string;
 export type RequestedAt2 = string;
@@ -952,7 +972,7 @@ export type ProviderDecisionId = string;
  * via the `definition` "ProviderDeltaText".
  */
 export type ProviderDeltaText = string;
-export type Attempt2 = number;
+export type Attempt3 = number;
 export type BodyBytes = number;
 export type BodySha256 = string;
 export type DestinationSha256 = string;
@@ -1939,7 +1959,7 @@ export type RootUri = string;
  * via the `definition` "TaskGraphId".
  */
 export type TaskGraphId = string;
-export type Attempt3 = number;
+export type Attempt4 = number;
 export type CompletedAt1 = string | null;
 export type CreatedAt3 = string;
 /**
@@ -1983,7 +2003,7 @@ export type UpdatedAt2 = string;
 export type AcceptedAt = string;
 export type CompletedAt2 = string | null;
 export type DeadlineAt = string;
-export type IdempotencyKey16 = string;
+export type IdempotencyKey17 = string;
 export type ProviderPolicyVersion1 = string;
 export type StartedAt2 = string | null;
 /**
@@ -2122,6 +2142,36 @@ export interface BlobPayload {
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "CanonicalOperationRequest".
+ */
+export interface CanonicalOperationRequest {
+  approval_id?: ApprovalId | null;
+  args_sha256: ArgsSha256;
+  attempt: Attempt;
+  capability: Capability2;
+  idempotency_class: IdempotencyClass;
+  idempotency_key: IdempotencyKey1;
+  limits: OperationLimits;
+  operation_id: OperationId;
+  policy_decision_id: DecisionId;
+  tool_name: ToolName;
+  tool_version: ToolVersion;
+  turn_id: TurnId;
+  workspace_id: WorkspaceId;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "OperationLimits".
+ */
+export interface OperationLimits {
+  max_cpu_ms: MaxCpuMs;
+  max_duration_ms: MaxDurationMs;
+  max_memory_bytes: MaxMemoryBytes;
+  max_output_bytes: MaxOutputBytes;
+  max_processes: MaxProcesses;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
  * via the `definition` "CapabilityListCommand".
  */
 export interface CapabilityListCommand {
@@ -2173,7 +2223,7 @@ export interface CommandEnvelope {
  */
 export interface WorkspaceOpenCommand {
   access_mode: WorkspaceAccessMode;
-  idempotency_key: IdempotencyKey1;
+  idempotency_key: IdempotencyKey2;
   kind?: Kind4;
   repository_fingerprint_sha256: RepositoryFingerprintSha256;
 }
@@ -2182,7 +2232,7 @@ export interface WorkspaceOpenCommand {
  * via the `definition` "WorkspaceCloseCommand".
  */
 export interface WorkspaceCloseCommand {
-  idempotency_key: IdempotencyKey2;
+  idempotency_key: IdempotencyKey3;
   kind?: Kind5;
   reason: Reason2;
 }
@@ -2191,7 +2241,7 @@ export interface WorkspaceCloseCommand {
  * via the `definition` "ThreadCreateCommand".
  */
 export interface ThreadCreateCommand {
-  idempotency_key: IdempotencyKey3;
+  idempotency_key: IdempotencyKey4;
   kind?: Kind6;
   retention_class: RetentionClass;
 }
@@ -2200,7 +2250,7 @@ export interface ThreadCreateCommand {
  * via the `definition` "ThreadResumeCommand".
  */
 export interface ThreadResumeCommand {
-  idempotency_key: IdempotencyKey4;
+  idempotency_key: IdempotencyKey5;
   kind?: Kind7;
   thread_id: ThreadId;
 }
@@ -2210,7 +2260,7 @@ export interface ThreadResumeCommand {
  */
 export interface ThreadForkCommand {
   fork_event_id: EventId;
-  idempotency_key: IdempotencyKey5;
+  idempotency_key: IdempotencyKey6;
   kind?: Kind8;
   retention_class: RetentionClass;
   source_thread_id: ThreadId;
@@ -2220,7 +2270,7 @@ export interface ThreadForkCommand {
  * via the `definition` "ThreadArchiveCommand".
  */
 export interface ThreadArchiveCommand {
-  idempotency_key: IdempotencyKey6;
+  idempotency_key: IdempotencyKey7;
   kind?: Kind9;
   reason: Reason3;
   thread_id: ThreadId;
@@ -2241,7 +2291,7 @@ export interface ThreadListCommand {
 export interface TurnStartCommand {
   budget: ExecutionBudget;
   classification: DataClassification;
-  idempotency_key: IdempotencyKey7;
+  idempotency_key: IdempotencyKey8;
   initial_payload: InitialPayload;
   kind?: Kind12;
   requested_agent: AgentName;
@@ -2255,7 +2305,7 @@ export interface TurnStartCommand {
  */
 export interface ExecutionBudget {
   max_cost_microusd: MaxCostMicrousd;
-  max_duration_ms: MaxDurationMs;
+  max_duration_ms: MaxDurationMs1;
   max_input_tokens: MaxInputTokens;
   max_output_tokens: MaxOutputTokens;
   max_steps: MaxSteps;
@@ -2281,7 +2331,7 @@ export interface InlinePayload {
  */
 export interface TurnSteerCommand {
   classification: DataClassification;
-  idempotency_key: IdempotencyKey8;
+  idempotency_key: IdempotencyKey9;
   kind?: Kind13;
   payload: Payload;
   turn_id: TurnId;
@@ -2291,7 +2341,7 @@ export interface TurnSteerCommand {
  * via the `definition` "TurnCancelCommand".
  */
 export interface TurnCancelCommand {
-  idempotency_key: IdempotencyKey9;
+  idempotency_key: IdempotencyKey10;
   kind?: Kind14;
   reason: Reason4;
   turn_id: TurnId;
@@ -2301,7 +2351,7 @@ export interface TurnCancelCommand {
  * via the `definition` "TurnCompactCommand".
  */
 export interface TurnCompactCommand {
-  idempotency_key: IdempotencyKey10;
+  idempotency_key: IdempotencyKey11;
   kind?: Kind15;
   reason: Reason5;
   target_input_tokens: TargetInputTokens;
@@ -2320,7 +2370,7 @@ export interface TaskInspectCommand {
  * via the `definition` "TaskCancelCommand".
  */
 export interface TaskCancelCommand {
-  idempotency_key: IdempotencyKey11;
+  idempotency_key: IdempotencyKey12;
   kind?: Kind17;
   reason: Reason6;
   task_id: TaskId;
@@ -2331,7 +2381,7 @@ export interface TaskCancelCommand {
  */
 export interface TaskRetryCommand {
   failed_attempt: FailedAttempt;
-  idempotency_key: IdempotencyKey12;
+  idempotency_key: IdempotencyKey13;
   kind?: Kind18;
   reason: Reason7;
   task_id: TaskId;
@@ -2353,7 +2403,7 @@ export interface EventSubscribeCommand {
  * via the `definition` "EventAcknowledgeCommand".
  */
 export interface EventAcknowledgeCommand {
-  idempotency_key: IdempotencyKey13;
+  idempotency_key: IdempotencyKey14;
   kind?: Kind20;
   subscription_id: SubscriptionId;
   through_sequence: ThroughSequence;
@@ -2367,7 +2417,7 @@ export interface EvaluationStartCommand {
   classification: DataClassification;
   configuration_sha256: ConfigurationSha256;
   fixture_sha256s: FixtureSha256S;
-  idempotency_key: IdempotencyKey14;
+  idempotency_key: IdempotencyKey15;
   kind?: Kind21;
   max_parallelism?: MaxParallelism;
 }
@@ -2552,14 +2602,28 @@ export interface ItemRecord {
 }
 /**
  * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
- * via the `definition` "OperationLimits".
+ * via the `definition` "OperationDispatchPermit".
  */
-export interface OperationLimits {
-  max_cpu_ms: MaxCpuMs;
-  max_duration_ms: MaxDurationMs1;
-  max_memory_bytes: MaxMemoryBytes;
-  max_output_bytes: MaxOutputBytes;
-  max_processes: MaxProcesses;
+export interface OperationDispatchPermit {
+  dispatched_receipt: OperationDurabilityReceipt;
+  fence_sha256: FenceSha256;
+  operation: OperationRecord;
+  prepared_receipt: OperationDurabilityReceipt;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "OperationDurabilityReceipt".
+ */
+export interface OperationDurabilityReceipt {
+  durability?: OperationDurability;
+  durable_at: DurableAt1;
+  fencing_token: FencingToken;
+  operation_id: OperationId;
+  operation_sha256: OperationSha256;
+  previous_receipt_sha256?: PreviousReceiptSha2561;
+  receipt_sha256: ReceiptSha2561;
+  state: OperationState;
+  workspace_id: WorkspaceId;
 }
 /**
  * Fenced side effect whose ambiguous state is never treated as failure.
@@ -2570,12 +2634,12 @@ export interface OperationLimits {
 export interface OperationRecord {
   ambiguous_at?: AmbiguousAt;
   approval_id?: ApprovalId | null;
-  args_sha256: ArgsSha256;
-  attempt: Attempt;
-  capability: Capability2;
+  args_sha256: ArgsSha2561;
+  attempt: Attempt1;
+  capability: Capability3;
   dispatched_at?: DispatchedAt;
   idempotency_class: IdempotencyClass;
-  idempotency_key: IdempotencyKey15;
+  idempotency_key: IdempotencyKey16;
   lease_fencing_token: LeaseFencingToken;
   limits: OperationLimits;
   operation_id: OperationId;
@@ -2590,6 +2654,18 @@ export interface OperationRecord {
   tool_name: ToolName;
   tool_version: ToolVersion;
   turn_id: TurnId;
+}
+/**
+ * This interface was referenced by `AtlasHarnessProtocol`'s JSON-Schema
+ * via the `definition` "OperationFence".
+ */
+export interface OperationFence {
+  expires_at: ExpiresAt3;
+  fencing_token: FencingToken1;
+  issued_at: IssuedAt1;
+  lease_sha256: LeaseSha256;
+  operation_id: OperationId;
+  workspace_id: WorkspaceId;
 }
 /**
  * Pagination result metadata without an unbounded total count.
@@ -2608,7 +2684,7 @@ export interface PageInfo {
  * via the `definition` "PolicyDecisionRecord".
  */
 export interface PolicyDecisionRecord {
-  capability: Capability3;
+  capability: Capability4;
   decision_id: DecisionId;
   evaluated_at: EvaluatedAt;
   matched_rule_ids: MatchedRuleIds1;
@@ -2690,7 +2766,7 @@ export interface ProviderCostReservation {
  * via the `definition` "ProviderCostReservationRequest".
  */
 export interface ProviderCostReservationRequest {
-  attempt: Attempt1;
+  attempt: Attempt2;
   estimated_cost_microusd: EstimatedCostMicrousd;
   limits: ProviderCostLimits;
   provider_request_sha256: ProviderRequestSha256;
@@ -2730,7 +2806,7 @@ export interface ProviderCostSnapshot {
  * via the `definition` "ProviderEgressAuditRecord".
  */
 export interface ProviderEgressAuditRecord {
-  attempt: Attempt2;
+  attempt: Attempt3;
   body_bytes: BodyBytes;
   body_sha256: BodySha256;
   classification: DataClassification;
@@ -2909,7 +2985,7 @@ export interface ProviderTokenUsage {
  * via the `definition` "TaskNodeRecord".
  */
 export interface TaskNodeRecord {
-  attempt: Attempt3;
+  attempt: Attempt4;
   budget: ExecutionBudget;
   completed_at?: CompletedAt1;
   created_at: CreatedAt3;
@@ -2955,7 +3031,7 @@ export interface TurnRecord {
   budget: ExecutionBudget;
   completed_at?: CompletedAt2;
   deadline_at: DeadlineAt;
-  idempotency_key: IdempotencyKey16;
+  idempotency_key: IdempotencyKey17;
   provider_policy_version: ProviderPolicyVersion1;
   requested_agent: AgentName;
   started_at?: StartedAt2;

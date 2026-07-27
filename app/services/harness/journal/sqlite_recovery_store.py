@@ -8,14 +8,21 @@ from pathlib import Path
 
 from app.services.harness.journal.errors import RecoveryStoreConflict
 from app.services.harness.journal.sqlite_connection import SQLiteConnectionOwner
+from app.services.harness.journal.sqlite_operation_admission import (
+    load_operation_admission_receipts,
+    save_operation,
+    save_operation_admission,
+)
 from app.services.harness.journal.sqlite_recovery_rows import (
     MAXIMUM_RECOVERY_RECORDS,
     decode_lease,
-    decode_operation,
     load_active_leases,
     load_recoverable_operations,
 )
 from app.services.harness.protocol import OperationRecord, WorkspaceId
+from app.services.harness.protocol.operation_admission import (
+    OperationDurabilityReceipt,
+)
 from app.services.harness.protocol.recovery import RecoveryLease
 
 
@@ -53,11 +60,43 @@ class SQLiteRecoveryStore:
         if updated_at < operation.prepared_at:
             raise ValueError("operation update cannot precede preparation")
         return await self._connection_owner.execute(
-            lambda connection: self._save_operation(
+            lambda connection: save_operation(
                 connection,
                 workspace_id,
                 operation,
                 updated_at,
+            )
+        )
+
+    async def save_admission(
+        self,
+        workspace_id: WorkspaceId,
+        operation: OperationRecord,
+        receipt: OperationDurabilityReceipt,
+        *,
+        updated_at: datetime,
+    ) -> tuple[OperationRecord, OperationDurabilityReceipt]:
+        self._require_utc(updated_at)
+        return await self._connection_owner.execute(
+            lambda connection: save_operation_admission(
+                connection,
+                workspace_id,
+                operation,
+                receipt,
+                updated_at,
+            )
+        )
+
+    async def load_admission_receipts(
+        self,
+        workspace_id: WorkspaceId,
+        operation_id: str,
+    ) -> tuple[OperationDurabilityReceipt, ...]:
+        return await self._connection_owner.execute(
+            lambda connection: load_operation_admission_receipts(
+                connection,
+                workspace_id,
+                operation_id,
             )
         )
 
@@ -107,76 +146,6 @@ class SQLiteRecoveryStore:
                 maximum_records,
             )
         )
-
-    @staticmethod
-    def _save_operation(
-        connection: sqlite3.Connection,
-        workspace_id: str,
-        operation: OperationRecord,
-        updated_at: datetime,
-    ) -> OperationRecord:
-        operation_json = operation.model_dump_json()
-        connection.execute("BEGIN IMMEDIATE")
-        try:
-            row = connection.execute(
-                """
-                SELECT operation_id, operation_state, idempotency_class,
-                       operation_json
-                FROM harness_recovery_operations
-                WHERE workspace_id = ? AND operation_id = ?
-                """,
-                (workspace_id, operation.operation_id),
-            ).fetchone()
-            if row is None:
-                connection.execute(
-                    """
-                    INSERT INTO harness_recovery_operations (
-                        workspace_id, operation_id, operation_state,
-                        idempotency_class, operation_json, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        workspace_id,
-                        operation.operation_id,
-                        operation.state.value,
-                        operation.idempotency_class.value,
-                        operation_json,
-                        updated_at.isoformat(),
-                    ),
-                )
-            else:
-                stored = decode_operation(row)
-                if stored == operation:
-                    connection.commit()
-                    return stored
-                if stored.state is operation.state:
-                    raise RecoveryStoreConflict(
-                        "operation state already stores different evidence"
-                    )
-                connection.execute(
-                    """
-                    UPDATE harness_recovery_operations
-                    SET operation_state = ?, operation_json = ?, updated_at = ?
-                    WHERE workspace_id = ? AND operation_id = ?
-                    """,
-                    (
-                        operation.state.value,
-                        operation_json,
-                        updated_at.isoformat(),
-                        workspace_id,
-                        operation.operation_id,
-                    ),
-                )
-            connection.commit()
-            return operation
-        except sqlite3.IntegrityError as error:
-            connection.rollback()
-            raise RecoveryStoreConflict(
-                "operation conflicts with durable recovery evidence"
-            ) from error
-        except BaseException:
-            connection.rollback()
-            raise
 
     @staticmethod
     def _save_lease(
