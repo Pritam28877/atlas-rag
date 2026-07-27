@@ -152,3 +152,57 @@ def test_cancellation_after_resolution_zeros_returned_value() -> None:
         assert backend.values[0] == bytearray(len(backend.values[0]))
 
     asyncio.run(scenario())
+
+
+def test_oversized_secret_is_zeroed_and_rejected() -> None:
+    class OversizedBackend(Backend):
+        async def resolve(
+            self,
+            handle,
+            *,
+            destination_sha256,
+            cancellation,
+            deadline_at,
+        ):
+            value = bytearray(64 * 1024 + 1)
+            self.values.append(value)
+            return value
+
+    async def scenario() -> None:
+        backend = OversizedBackend()
+        with pytest.raises(ChildSecretDeliveryError, match="delivery bounds"):
+            await PerCallSecretBroker(backend).acquire(
+                request().model_copy(update={"bindings": request().bindings[:1]}),
+                parent_environment={},
+                cancellation=asyncio.Event(),
+                deadline_at=NOW + timedelta(seconds=1),
+                delivered_at=NOW,
+            )
+        assert backend.values[0] == bytearray(len(backend.values[0]))
+
+    asyncio.run(scenario())
+
+
+def test_immutable_backend_value_is_rejected() -> None:
+    class ImmutableBackend(Backend):
+        async def resolve(
+            self,
+            handle,
+            *,
+            destination_sha256,
+            cancellation,
+            deadline_at,
+        ):
+            return b"immutable"
+
+    async def scenario() -> None:
+        with pytest.raises(ChildSecretDeliveryError, match="invalid value"):
+            await PerCallSecretBroker(ImmutableBackend()).acquire(
+                request().model_copy(update={"bindings": request().bindings[:1]}),
+                parent_environment={},
+                cancellation=asyncio.Event(),
+                deadline_at=NOW + timedelta(seconds=1),
+                delivered_at=NOW,
+            )
+
+    asyncio.run(scenario())
