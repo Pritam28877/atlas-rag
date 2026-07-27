@@ -638,6 +638,87 @@
       "title": "CanonicalEventType",
       "type": "string"
     },
+    "CanonicalOperationRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ApprovalId"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "args_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Args Sha256",
+          "type": "string"
+        },
+        "attempt": {
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "capability": {
+          "maxLength": 128,
+          "minLength": 3,
+          "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+          "title": "Capability",
+          "type": "string"
+        },
+        "idempotency_class": {
+          "$ref": "#/$defs/IdempotencyClass"
+        },
+        "idempotency_key": {
+          "maxLength": 128,
+          "minLength": 16,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]+$",
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "limits": {
+          "$ref": "#/$defs/OperationLimits"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/OperationId"
+        },
+        "policy_decision_id": {
+          "$ref": "#/$defs/DecisionId"
+        },
+        "tool_name": {
+          "$ref": "#/$defs/ToolName"
+        },
+        "tool_version": {
+          "$ref": "#/$defs/ToolVersion"
+        },
+        "turn_id": {
+          "$ref": "#/$defs/TurnId"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/WorkspaceId"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "turn_id",
+        "idempotency_key",
+        "idempotency_class",
+        "attempt",
+        "tool_name",
+        "tool_version",
+        "args_sha256",
+        "capability",
+        "policy_decision_id",
+        "limits",
+        "operation_id"
+      ],
+      "title": "CanonicalOperationRequest",
+      "type": "object"
+    },
     "CapabilityCatalog": {
       "enum": [
         "model",
@@ -1972,6 +2053,145 @@
       "minLength": 1,
       "pattern": "^[^\\x00-\\x20\\x7f]+$",
       "type": "string"
+    },
+    "OperationDispatchPermit": {
+      "additionalProperties": false,
+      "properties": {
+        "dispatched_receipt": {
+          "$ref": "#/$defs/OperationDurabilityReceipt"
+        },
+        "fence_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Fence Sha256",
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/$defs/OperationRecord"
+        },
+        "prepared_receipt": {
+          "$ref": "#/$defs/OperationDurabilityReceipt"
+        }
+      },
+      "required": [
+        "operation",
+        "fence_sha256",
+        "prepared_receipt",
+        "dispatched_receipt"
+      ],
+      "title": "OperationDispatchPermit",
+      "type": "object"
+    },
+    "OperationDurability": {
+      "enum": [
+        "synchronous"
+      ],
+      "title": "OperationDurability",
+      "type": "string"
+    },
+    "OperationDurabilityReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "durability": {
+          "$ref": "#/$defs/OperationDurability",
+          "default": "synchronous"
+        },
+        "durable_at": {
+          "format": "date-time",
+          "title": "Durable At",
+          "type": "string"
+        },
+        "fencing_token": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "title": "Fencing Token",
+          "type": "integer"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/OperationId"
+        },
+        "operation_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Operation Sha256",
+          "type": "string"
+        },
+        "previous_receipt_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Receipt Sha256"
+        },
+        "receipt_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Receipt Sha256",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/OperationState"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/WorkspaceId"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "operation_id",
+        "state",
+        "fencing_token",
+        "operation_sha256",
+        "durable_at",
+        "receipt_sha256"
+      ],
+      "title": "OperationDurabilityReceipt",
+      "type": "object"
+    },
+    "OperationFence": {
+      "additionalProperties": false,
+      "properties": {
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "fencing_token": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "title": "Fencing Token",
+          "type": "integer"
+        },
+        "issued_at": {
+          "format": "date-time",
+          "title": "Issued At",
+          "type": "string"
+        },
+        "lease_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Lease Sha256",
+          "type": "string"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/OperationId"
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/WorkspaceId"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "operation_id",
+        "lease_sha256",
+        "fencing_token",
+        "issued_at",
+        "expires_at"
+      ],
+      "title": "OperationFence",
+      "type": "object"
     },
     "OperationId": {
       "maxLength": 36,
@@ -5187,6 +5407,9 @@
     "ArtifactRecord": {
       "$ref": "#/$defs/ArtifactRecord"
     },
+    "CanonicalOperationRequest": {
+      "$ref": "#/$defs/CanonicalOperationRequest"
+    },
     "CommandContract": {
       "$ref": "#/$defs/CommandContract"
     },
@@ -5210,6 +5433,15 @@
     },
     "ItemRecord": {
       "$ref": "#/$defs/ItemRecord"
+    },
+    "OperationDispatchPermit": {
+      "$ref": "#/$defs/OperationDispatchPermit"
+    },
+    "OperationDurabilityReceipt": {
+      "$ref": "#/$defs/OperationDurabilityReceipt"
+    },
+    "OperationFence": {
+      "$ref": "#/$defs/OperationFence"
     },
     "OperationRecord": {
       "$ref": "#/$defs/OperationRecord"

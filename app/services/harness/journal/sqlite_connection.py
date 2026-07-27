@@ -24,6 +24,7 @@ from app.services.harness.journal.sqlite_migrations import (
     SQLITE_MIGRATE_V6_TO_V7,
     SQLITE_MIGRATE_V7_TO_V8,
     SQLITE_MIGRATE_V8_TO_V9,
+    SQLITE_MIGRATE_V9_TO_V10,
 )
 from app.services.harness.journal.sqlite_schema import (
     SQLITE_SCHEMA,
@@ -40,6 +41,7 @@ SQLITE_MIGRATIONS = (
     SQLITE_MIGRATE_V6_TO_V7,
     SQLITE_MIGRATE_V7_TO_V8,
     SQLITE_MIGRATE_V8_TO_V9,
+    SQLITE_MIGRATE_V9_TO_V10,
 )
 
 
