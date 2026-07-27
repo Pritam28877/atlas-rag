@@ -11,6 +11,21 @@ class JournalStorageError(RuntimeError):
     """A journal backend failed without exposing storage internals."""
 
 
+class ApprovalStoreConflictCode(StrEnum):
+    CAPACITY = "capacity"
+    CONCURRENT_TRANSITION = "concurrent_transition"
+    IDENTITY = "identity"
+    OWNER = "owner"
+
+
+class ApprovalStoreConflict(RuntimeError):
+    """An approval write conflicts with durable immutable evidence."""
+
+    def __init__(self, code: ApprovalStoreConflictCode) -> None:
+        super().__init__("approval durability operation rejected")
+        self.code = code
+
+
 class RetentionStoreConflict(RuntimeError):
     """Requested immutable retention evidence conflicts with durable state."""
 

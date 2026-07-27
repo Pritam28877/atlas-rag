@@ -1,5 +1,8 @@
 """Forward-only local SQLite journal schema migrations."""
 
+from app.services.harness.journal.sqlite_approval_schema import (
+    SQLITE_APPROVAL_SCHEMA,
+)
 from app.services.harness.journal.sqlite_provider_cost_schema import (
     SQLITE_PROVIDER_COST_SCHEMA,
 )
@@ -148,6 +151,19 @@ BEGIN IMMEDIATE;
     + SQLITE_PROVIDER_COST_SCHEMA
     + """
 UPDATE harness_journal_schema SET schema_version = 8 WHERE singleton = 1;
+COMMIT;
+PRAGMA foreign_keys = ON;
+"""
+)
+
+SQLITE_MIGRATE_V8_TO_V9 = (
+    """
+PRAGMA foreign_keys = OFF;
+BEGIN IMMEDIATE;
+"""
+    + SQLITE_APPROVAL_SCHEMA
+    + """
+UPDATE harness_journal_schema SET schema_version = 9 WHERE singleton = 1;
 COMMIT;
 PRAGMA foreign_keys = ON;
 """

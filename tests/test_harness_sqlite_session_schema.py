@@ -107,7 +107,7 @@ def test_v6_database_migrates_to_session_schema(tmp_path: Path) -> None:
     finally:
         connection.close()
 
-    assert version == (8,)
+    assert version == (9,)
     assert tables == (2,)
 
 

@@ -23,6 +23,7 @@ from app.services.harness.journal.sqlite_migrations import (
     SQLITE_MIGRATE_V5_TO_V6,
     SQLITE_MIGRATE_V6_TO_V7,
     SQLITE_MIGRATE_V7_TO_V8,
+    SQLITE_MIGRATE_V8_TO_V9,
 )
 from app.services.harness.journal.sqlite_schema import (
     SQLITE_SCHEMA,
@@ -30,6 +31,16 @@ from app.services.harness.journal.sqlite_schema import (
 )
 
 ResultType = TypeVar("ResultType")
+SQLITE_MIGRATIONS = (
+    SQLITE_MIGRATE_V1_TO_V2,
+    SQLITE_MIGRATE_V2_TO_V3,
+    SQLITE_MIGRATE_V3_TO_V4,
+    SQLITE_MIGRATE_V4_TO_V5,
+    SQLITE_MIGRATE_V5_TO_V6,
+    SQLITE_MIGRATE_V6_TO_V7,
+    SQLITE_MIGRATE_V7_TO_V8,
+    SQLITE_MIGRATE_V8_TO_V9,
+)
 
 
 class SQLiteConnectionOwner:
@@ -136,52 +147,8 @@ class SQLiteConnectionOwner:
             schema_version = self._schema_version(connection)
             if schema_version is None:
                 connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == 1:
-                connection.executescript(SQLITE_MIGRATE_V1_TO_V2)
-                connection.executescript(SQLITE_MIGRATE_V2_TO_V3)
-                connection.executescript(SQLITE_MIGRATE_V3_TO_V4)
-                connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
-                connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
-                connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
-                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
-                connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == 2:
-                connection.executescript(SQLITE_MIGRATE_V2_TO_V3)
-                connection.executescript(SQLITE_MIGRATE_V3_TO_V4)
-                connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
-                connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
-                connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
-                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
-                connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == 3:
-                connection.executescript(SQLITE_MIGRATE_V3_TO_V4)
-                connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
-                connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
-                connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
-                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
-                connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == 4:
-                connection.executescript(SQLITE_MIGRATE_V4_TO_V5)
-                connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
-                connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
-                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
-                connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == 5:
-                connection.executescript(SQLITE_MIGRATE_V5_TO_V6)
-                connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
-                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
-                connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == 6:
-                connection.executescript(SQLITE_MIGRATE_V6_TO_V7)
-                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
-                connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == 7:
-                connection.executescript(SQLITE_MIGRATE_V7_TO_V8)
-                connection.executescript(SQLITE_SCHEMA)
-            elif schema_version["schema_version"] == SQLITE_SCHEMA_VERSION:
-                connection.executescript(SQLITE_SCHEMA)
             else:
-                raise JournalStorageError("unsupported SQLite journal schema")
+                self._migrate_schema(connection, schema_version)
             connection.execute("PRAGMA foreign_keys = ON")
             migrated_version = self._schema_version(connection)
             if (
@@ -198,6 +165,21 @@ class SQLiteConnectionOwner:
         except BaseException:
             connection.close()
             raise
+
+    @staticmethod
+    def _migrate_schema(
+        connection: sqlite3.Connection,
+        schema_version: sqlite3.Row,
+    ) -> None:
+        stored_version = schema_version["schema_version"]
+        if (
+            not isinstance(stored_version, int)
+            or not 1 <= stored_version <= SQLITE_SCHEMA_VERSION
+        ):
+            raise JournalStorageError("unsupported SQLite journal schema")
+        for migration in SQLITE_MIGRATIONS[stored_version - 1 :]:
+            connection.executescript(migration)
+        connection.executescript(SQLITE_SCHEMA)
 
     @staticmethod
     def _schema_version(connection: sqlite3.Connection) -> sqlite3.Row | None:
